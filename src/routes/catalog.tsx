@@ -130,12 +130,12 @@ function CatalogPage() {
       {activeCount > 0 && (
         <div className="flex flex-wrap gap-2">
           {q && (
-            <FilterPill onClear={() => navigate({ search: (prev) => ({ ...prev, q: undefined, page: 1 }) })}>
+            <FilterPill onClear={() => navigate({ search: (prev: CatalogSearch) => ({ ...prev, q: undefined, page: 1 }) })}>
               «{q}»
             </FilterPill>
           )}
           {flag && (
-            <FilterPill onClear={() => navigate({ search: (prev) => ({ ...prev, flag: undefined, page: 1 }) })}>
+            <FilterPill onClear={() => navigate({ search: (prev: CatalogSearch) => ({ ...prev, flag: undefined, page: 1 }) })}>
               {FLAG_LABELS[flag]}
             </FilterPill>
           )}
