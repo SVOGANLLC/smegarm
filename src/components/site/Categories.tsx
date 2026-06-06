@@ -1,16 +1,16 @@
 import { motion } from "motion/react";
 import { Link } from "@tanstack/react-router";
-import oven from "@/assets/category-oven.jpg";
-import hob from "@/assets/category-hob.jpg";
-import fridge from "@/assets/hero-fridge.jpg";
+import { useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n";
 import { SectionHeader, Reveal } from "./Section";
-import { slugify } from "@/lib/products";
+import { slugify, fetchFeatured } from "@/lib/products";
 
+// Real Smeg products used as category covers (50's Style icons)
+const COVER_SKUS = ["FAB10HLRD6", "SF6905P1", "PV395LN"];
 const main = [
-  { img: fridge, key: "Refrigerators", label: "Refrigerators" },
-  { img: oven, key: "Oven", label: "Ovens" },
-  { img: hob, key: "Hobs", label: "Hobs & Cooktops" },
+  { sku: "FAB10HLRD6", key: "Refrigerators", label: "Refrigerators" },
+  { sku: "SF6905P1", key: "Oven", label: "Ovens" },
+  { sku: "PV395LN", key: "Hobs", label: "Hobs & Cooktops" },
 ];
 
 const small = [
@@ -25,6 +25,13 @@ const small = [
 
 export function Categories() {
   const { t } = useI18n();
+  const { data: covers = [] } = useQuery({
+    queryKey: ["category-covers", COVER_SKUS],
+    queryFn: () => fetchFeatured(COVER_SKUS),
+    staleTime: 5 * 60 * 1000,
+  });
+  const imgFor = (sku: string) => covers.find((p) => p.sku === sku)?.main_image ?? null;
+
   return (
     <section className="py-28 md:py-40">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10">
@@ -38,16 +45,16 @@ export function Categories() {
                 className="group relative block aspect-[3/4] overflow-hidden rounded-sm bg-secondary"
               >
               <Link to="/catalog" search={{ category: slugify(c.key), page: 1 } as never} className="block h-full w-full">
-                <motion.img
-                  src={c.img}
-                  alt={c.label}
-                  loading="lazy"
-                  width={1280}
-                  height={1024}
-                  variants={{ hover: { scale: 1.06 } }}
-                  transition={{ duration: 1.2, ease: [0.2, 0.7, 0.2, 1] }}
-                  className="h-full w-full object-cover"
-                />
+                {imgFor(c.sku) && (
+                  <motion.img
+                    src={imgFor(c.sku)!}
+                    alt={c.label}
+                    loading="lazy"
+                    variants={{ hover: { scale: 1.06 } }}
+                    transition={{ duration: 1.2, ease: [0.2, 0.7, 0.2, 1] }}
+                    className="h-full w-full object-contain p-8"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/55 via-transparent to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-6 text-background md:p-8">
                   <div>
