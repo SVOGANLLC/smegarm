@@ -91,13 +91,18 @@ function ProductPage() {
     <div className="min-h-screen text-foreground transition-colors duration-700" style={themeStyle}>
       <Header />
       <main className="pt-32 pb-24">
-        <div className={`mx-auto max-w-[1400px] px-6 md:px-10 ${theme ? "rounded-lg bg-background/95 backdrop-blur-sm p-6 md:p-12 shadow-2xl my-6" : ""}`}>
+        <div className="mx-auto max-w-[1400px] px-6 md:px-10">
           {theme && (
-            <p className="eyebrow mb-6 inline-block rounded-full border border-border px-3 py-1.5 text-foreground">
+            <p
+              className="eyebrow mb-6 inline-block rounded-full bg-background/85 backdrop-blur-sm px-4 py-1.5 text-foreground shadow-sm"
+              style={theme.accent_color ? { color: theme.accent_color } : undefined}
+            >
               ✦ {theme.name}
             </p>
           )}
-          <nav className="mb-8 flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          <nav
+            className={`mb-8 flex items-center gap-2 text-xs uppercase tracking-[0.18em] ${theme ? "text-foreground/80 [text-shadow:0_1px_2px_rgba(255,255,255,0.6)]" : "text-muted-foreground"}`}
+          >
             <Link to="/catalog" className="hover:text-foreground">
               Каталог
             </Link>
@@ -124,7 +129,7 @@ function ProductPage() {
                     <button
                       key={src + i}
                       onClick={() => setActive(i)}
-                      className={`aspect-square overflow-hidden rounded-sm border bg-secondary transition ${
+                      className={`aspect-square overflow-hidden rounded-sm border bg-white transition ${
                         active === i ? "border-foreground" : "border-transparent hover:border-border"
                       }`}
                     >
@@ -135,7 +140,7 @@ function ProductPage() {
               )}
             </div>
 
-            <div>
+            <div className={theme ? "rounded-lg bg-background/92 backdrop-blur-sm p-6 md:p-8 shadow-xl" : ""}>
               <p className="eyebrow text-muted-foreground">{product.category}</p>
               <h1 className="mt-3 font-serif text-3xl md:text-5xl leading-tight">
                 {product.name}
@@ -194,19 +199,30 @@ function ProductPage() {
           </div>
 
           {specEntries.length > 0 && (
-            <section className="mt-20">
-              <h2 className="font-serif text-2xl md:text-3xl">Характеристики</h2>
-              <dl className="mt-8 grid grid-cols-1 gap-x-10 gap-y-3 border-t border-border pt-6 md:grid-cols-2">
-                {specEntries.map(([k, v]) => (
-                  <div
-                    key={k}
-                    className="flex justify-between gap-6 border-b border-border/60 py-2 text-sm"
-                  >
-                    <dt className="text-muted-foreground">{k}</dt>
-                    <dd className="text-right text-foreground">{String(v)}</dd>
-                  </div>
-                ))}
-              </dl>
+            <section className={`mt-16 ${theme ? "rounded-lg bg-background/92 backdrop-blur-sm p-6 md:p-8 shadow-xl" : ""}`}>
+              <details className="group">
+                <summary className="flex cursor-pointer items-center justify-between gap-6 list-none border-b border-border pb-4">
+                  <h2 className="font-serif text-2xl md:text-3xl">Характеристики</h2>
+                  <span className="flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-muted-foreground transition group-open:text-foreground">
+                    <span className="group-open:hidden">Показать ({specEntries.length})</span>
+                    <span className="hidden group-open:inline">Свернуть</span>
+                    <svg className="h-4 w-4 transition-transform group-open:rotate-180" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M5 8l5 5 5-5" strokeLinecap="round" />
+                    </svg>
+                  </span>
+                </summary>
+                <dl className="mt-6 grid grid-cols-1 gap-x-10 gap-y-1 md:grid-cols-2 animate-in fade-in duration-300">
+                  {specEntries.map(([k, v]) => (
+                    <div
+                      key={k}
+                      className="flex justify-between gap-6 border-b border-border/60 py-2.5 text-sm"
+                    >
+                      <dt className="text-muted-foreground">{k}</dt>
+                      <dd className="text-right text-foreground">{String(v)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </details>
             </section>
           )}
         </div>
