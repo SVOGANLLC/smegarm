@@ -1,3 +1,5 @@
+type ToggleableField = "is_published" | "is_bestseller" | "is_new" | "is_special_offer" | "is_featured";
+
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,7 +39,7 @@ function AdminProducts() {
   });
 
   const toggleFlag = useMutation({
-    mutationFn: async ({ sku, field, value }: { sku: string; field: string; value: boolean }) => {
+    mutationFn: async ({ sku, field, value }: { sku: string; field: ToggleableField; value: boolean }) => {
       const { error } = await supabase
         .from("products")
         .update({ [field]: value })
