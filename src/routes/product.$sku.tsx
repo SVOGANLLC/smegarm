@@ -170,16 +170,16 @@ function ProductPage() {
               </div>
 
               <div className="mt-10 flex flex-wrap gap-3">
-                {(product as { price_amd?: number | null }).price_amd != null && (
+                {(product as unknown as { price_amd?: number | null }).price_amd != null && (
                   <p className="w-full font-serif text-3xl">
-                    {(product as { price_amd: number }).price_amd.toLocaleString("ru-RU")} ֏
+                    {(product as unknown as { price_amd: number }).price_amd.toLocaleString("ru-RU")} ֏
                   </p>
                 )}
                 <AddToCartButton
                   sku={product.sku}
                   name={product.name}
                   image={product.main_image}
-                  price={(product as { price_amd?: number | null }).price_amd ?? null}
+                  price={(product as unknown as { price_amd?: number | null }).price_amd ?? null}
                 />
                 <a
                   href="#dealer"
