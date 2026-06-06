@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Instagram, Facebook, Youtube } from "lucide-react";
+import { Instagram, Facebook } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 
 function SocialLink({ href, label, children }: { href: string; label: string; children: ReactNode }) {
@@ -56,14 +56,11 @@ export function Footer() {
           <div className="md:col-span-2">
             <p className="eyebrow text-background/50">{t("footer.follow")}</p>
             <div className="mt-5 flex gap-3">
-              <SocialLink href="https://instagram.com" label="Instagram">
+              <SocialLink href="https://instagram.com/smegarmenia/" label="Instagram">
                 <Instagram className="h-4 w-4" />
               </SocialLink>
-              <SocialLink href="https://facebook.com" label="Facebook">
+              <SocialLink href="https://facebook.com/SmegArmeniaOfficial" label="Facebook">
                 <Facebook className="h-4 w-4" />
-              </SocialLink>
-              <SocialLink href="https://youtube.com" label="YouTube">
-                <Youtube className="h-4 w-4" />
               </SocialLink>
             </div>
           </div>
