@@ -1,11 +1,12 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Inbox, FileText, LogOut, Home, Layers, Wrench } from "lucide-react";
+import { Package, Inbox, FileText, LogOut, Home, Layers, Wrench, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 
 const nav = [
   { to: "/admin", label: "Обзор", icon: Home, exact: true },
+  { to: "/admin/orders", label: "Заказы", icon: ShoppingCart },
   { to: "/admin/products", label: "Товары", icon: Package },
   { to: "/admin/collections", label: "Коллекции", icon: Layers },
   { to: "/admin/inquiries", label: "Заявки", icon: Inbox },
