@@ -170,9 +170,20 @@ function ProductPage() {
               </div>
 
               <div className="mt-10 flex flex-wrap gap-3">
+                {(product as { price_amd?: number | null }).price_amd != null && (
+                  <p className="w-full font-serif text-3xl">
+                    {(product as { price_amd: number }).price_amd.toLocaleString("ru-RU")} ֏
+                  </p>
+                )}
+                <AddToCartButton
+                  sku={product.sku}
+                  name={product.name}
+                  image={product.main_image}
+                  price={(product as { price_amd?: number | null }).price_amd ?? null}
+                />
                 <a
                   href="#dealer"
-                  className="rounded-full bg-foreground px-6 py-3 text-xs uppercase tracking-[0.2em] text-background hover:opacity-90"
+                  className="rounded-full border border-border px-6 py-3 text-xs uppercase tracking-[0.2em] hover:border-foreground"
                 >
                   Запросить цену
                 </a>
