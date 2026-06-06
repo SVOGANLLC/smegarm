@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { useI18n, type Lang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import smegLogo from "@/assets/smeg-logo.svg.asset.json";
+import { CartButton } from "@/components/site/CartDrawer";
 
 const langLabels: Record<Lang, string> = { ru: "RU", en: "EN", hy: "ՀՅ" };
 
@@ -95,6 +96,8 @@ export function Header() {
             </button>
           ))}
         </div>
+
+        <CartButton />
       </div>
     </motion.header>
   );

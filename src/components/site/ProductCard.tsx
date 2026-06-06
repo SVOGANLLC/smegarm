@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import type { ProductCard as ProductCardType } from "@/lib/products";
+import { AddToCartButton } from "@/components/site/AddToCartButton";
 
 function formatAmd(n: number | null) {
   if (n == null) return null;
@@ -48,6 +49,15 @@ export function ProductCard({ p }: { p: ProductCardType }) {
       <Link to="/product/$sku" params={{ sku: p.sku }} className="group block">
         <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-secondary">
           <Badges p={p} />
+          <div className="absolute right-3 bottom-3 z-10 opacity-0 transition-opacity group-hover:opacity-100">
+            <AddToCartButton
+              sku={p.sku}
+              name={p.name}
+              image={p.main_image}
+              price={p.price_amd}
+              variant="compact"
+            />
+          </div>
           {p.main_image && (
             <img
               src={p.main_image}
