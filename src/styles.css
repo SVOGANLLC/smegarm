@@ -161,6 +161,28 @@
     letter-spacing: -0.025em;
     line-height: 0.95;
   }
+  .animate-hero-rise {
+    opacity: 0;
+    transform: translateY(28px);
+    animation: heroRise 1s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  }
+  .animate-hero-zoom {
+    transform: scale(1.08);
+    animation: heroZoom 2.4s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  }
+  .animate-hero-bounce {
+    animation: heroBounce 2s ease-in-out infinite;
+  }
+  @keyframes heroRise {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes heroZoom {
+    to { transform: scale(1); }
+  }
+  @keyframes heroBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(6px); }
+  }
   .eyebrow {
     font-family: var(--font-sans);
     text-transform: uppercase;
