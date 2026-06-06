@@ -388,7 +388,12 @@ export type Database = {
     }
     Functions: {
       compute_model_group: {
-        Args: { p_colour: string; p_family: string; p_name: string }
+        Args: {
+          p_colour: string
+          p_family: string
+          p_name: string
+          p_sku: string
+        }
         Returns: string
       }
       compute_theme_key: {
