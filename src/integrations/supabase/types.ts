@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      collection_products: {
+        Row: {
+          collection_id: string
+          created_at: string
+          product_sku: string
+          sort_weight: number
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string
+          product_sku: string
+          sort_weight?: number
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string
+          product_sku?: string
+          sort_weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_products_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_products_product_sku_fkey"
+            columns: ["product_sku"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["sku"]
+          },
+        ]
+      }
+      collections: {
+        Row: {
+          cover_image: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_published: boolean
+          name: string
+          slug: string
+          sort_weight: number
+          updated_at: string
+        }
+        Insert: {
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          name: string
+          slug: string
+          sort_weight?: number
+          updated_at?: string
+        }
+        Update: {
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          name?: string
+          slug?: string
+          sort_weight?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inquiries: {
         Row: {
           admin_notes: string | null
@@ -65,6 +137,7 @@ export type Database = {
         Row: {
           aesthetic: string | null
           availability: string
+          badge_text: string | null
           brand: string | null
           category: string | null
           colour: string | null
@@ -75,19 +148,33 @@ export type Database = {
           energy_label: string | null
           family: string | null
           images: string[]
+          is_bestseller: boolean
+          is_featured: boolean
+          is_new: boolean
           is_published: boolean
+          is_special_offer: boolean
           main_image: string | null
           name: string
+          og_image: string | null
           pdf: string | null
           price_amd: number | null
+          price_old: number | null
+          promo_ends_at: string | null
+          promo_starts_at: string | null
+          seo_description: string | null
+          seo_title: string | null
           sku: string
+          slug: string | null
+          sort_weight: number
           specs: Json
           updated_at: string
           url: string | null
+          view_count: number
         }
         Insert: {
           aesthetic?: string | null
           availability?: string
+          badge_text?: string | null
           brand?: string | null
           category?: string | null
           colour?: string | null
@@ -98,19 +185,33 @@ export type Database = {
           energy_label?: string | null
           family?: string | null
           images?: string[]
+          is_bestseller?: boolean
+          is_featured?: boolean
+          is_new?: boolean
           is_published?: boolean
+          is_special_offer?: boolean
           main_image?: string | null
           name: string
+          og_image?: string | null
           pdf?: string | null
           price_amd?: number | null
+          price_old?: number | null
+          promo_ends_at?: string | null
+          promo_starts_at?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           sku: string
+          slug?: string | null
+          sort_weight?: number
           specs?: Json
           updated_at?: string
           url?: string | null
+          view_count?: number
         }
         Update: {
           aesthetic?: string | null
           availability?: string
+          badge_text?: string | null
           brand?: string | null
           category?: string | null
           colour?: string | null
@@ -121,15 +222,28 @@ export type Database = {
           energy_label?: string | null
           family?: string | null
           images?: string[]
+          is_bestseller?: boolean
+          is_featured?: boolean
+          is_new?: boolean
           is_published?: boolean
+          is_special_offer?: boolean
           main_image?: string | null
           name?: string
+          og_image?: string | null
           pdf?: string | null
           price_amd?: number | null
+          price_old?: number | null
+          promo_ends_at?: string | null
+          promo_starts_at?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           sku?: string
+          slug?: string | null
+          sort_weight?: number
           specs?: Json
           updated_at?: string
           url?: string | null
+          view_count?: number
         }
         Relationships: []
       }
