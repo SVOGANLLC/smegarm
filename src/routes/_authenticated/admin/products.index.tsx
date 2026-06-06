@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Eye, EyeOff, Pencil } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/products")({
+export const Route = createFileRoute("/_authenticated/admin/products/")({
   component: AdminProducts,
 });
 
