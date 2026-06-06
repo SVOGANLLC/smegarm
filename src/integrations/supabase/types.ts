@@ -157,6 +157,117 @@ export type Database = {
           },
         ]
       }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          image: string | null
+          name: string
+          order_id: string
+          product_sku: string | null
+          qty: number
+          subtotal_amd: number
+          unit_price_amd: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image?: string | null
+          name: string
+          order_id: string
+          product_sku?: string | null
+          qty?: number
+          subtotal_amd?: number
+          unit_price_amd?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image?: string | null
+          name?: string
+          order_id?: string
+          product_sku?: string | null
+          qty?: number
+          subtotal_amd?: number
+          unit_price_amd?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_sku_fkey"
+            columns: ["product_sku"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["sku"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          address: string | null
+          admin_notes: string | null
+          city: string | null
+          comment: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          delivery_method: string
+          id: string
+          items_count: number
+          order_no: number
+          payment_method: string
+          status: string
+          total_amd: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          admin_notes?: string | null
+          city?: string | null
+          comment?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone: string
+          delivery_method?: string
+          id?: string
+          items_count?: number
+          order_no?: number
+          payment_method?: string
+          status?: string
+          total_amd?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          admin_notes?: string | null
+          city?: string | null
+          comment?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string
+          delivery_method?: string
+          id?: string
+          items_count?: number
+          order_no?: number
+          payment_method?: string
+          status?: string
+          total_amd?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           aesthetic: string | null
