@@ -81,23 +81,24 @@ export function Header() {
           )}
         </nav>
 
-        <div className="flex items-center gap-1 rounded-full border border-border/70 bg-background/50 p-1 backdrop-blur">
-          {(Object.keys(langLabels) as Lang[]).map((l) => (
-            <button
-              key={l}
-              onClick={() => setLang(l)}
-              className={cn(
-                "rounded-full px-3 py-1 text-[11px] font-medium tracking-wider transition-colors",
-                lang === l ? "bg-foreground text-background" : "text-foreground/60 hover:text-foreground",
-              )}
-              aria-pressed={lang === l}
-            >
-              {langLabels[l]}
-            </button>
-          ))}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 rounded-full border border-border/70 bg-background/50 p-1 backdrop-blur">
+            {(Object.keys(langLabels) as Lang[]).map((l) => (
+              <button
+                key={l}
+                onClick={() => setLang(l)}
+                className={cn(
+                  "rounded-full px-3 py-1 text-[11px] font-medium tracking-wider transition-colors",
+                  lang === l ? "bg-foreground text-background" : "text-foreground/60 hover:text-foreground",
+                )}
+                aria-pressed={lang === l}
+              >
+                {langLabels[l]}
+              </button>
+            ))}
+          </div>
+          <CartButton />
         </div>
-
-        <CartButton />
       </div>
     </motion.header>
   );

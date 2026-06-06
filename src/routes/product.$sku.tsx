@@ -5,6 +5,9 @@ import { Footer } from "@/components/site/Footer";
 import { fetchProductBySku, fetchTheme } from "@/lib/products";
 import { ProductImageZoom } from "@/components/site/ProductImageZoom";
 import { ColorSwitcher } from "@/components/site/ColorSwitcher";
+import { AddToCartButton } from "@/components/site/AddToCartButton";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 
 export const Route = createFileRoute("/product/$sku")({
