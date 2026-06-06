@@ -9,6 +9,7 @@ import { Benefits } from "@/components/site/Benefits";
 import { Story } from "@/components/site/Story";
 import { Dealer } from "@/components/site/Dealer";
 import { Footer } from "@/components/site/Footer";
+import { ShowcaseStrip } from "@/components/site/ShowcaseStrip";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -39,6 +40,9 @@ function Index() {
         <Hero />
         <Featured />
         <Marquee />
+        <ShowcaseStrip flag="is_bestseller" eyebrow="Bestsellers" title="Хиты продаж" to="/catalog" ctaLabel="Все товары" bg />
+        <ShowcaseStrip flag="is_special_offer" eyebrow="Special offers" title="Спецпредложения" to="/sale" ctaLabel="Все акции" />
+        <ShowcaseStrip flag="is_new" eyebrow="New arrivals" title="Новинки" to="/catalog" ctaLabel="Каталог" bg />
         <Collections />
         <Categories />
         <Benefits />
