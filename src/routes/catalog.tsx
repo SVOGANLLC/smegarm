@@ -10,6 +10,7 @@ const searchSchema = z.object({
   q: z.string().optional(),
   page: z.number().int().min(1).default(1),
 });
+type CatalogSearch = z.infer<typeof searchSchema>;
 
 export const Route = createFileRoute("/catalog")({
   validateSearch: (s) => searchSchema.parse(s),
@@ -94,7 +95,9 @@ function CatalogPage() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       const v = (e.target as HTMLInputElement).value.trim();
-                      navigate({ search: (prev) => ({ ...prev, q: v || undefined, page: 1 }) });
+                      navigate({
+                        search: (prev: CatalogSearch) => ({ ...prev, q: v || undefined, page: 1 }),
+                      });
                     }
                   }}
                   className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
@@ -186,7 +189,9 @@ function CatalogPage() {
                       <button
                         disabled={page <= 1}
                         onClick={() =>
-                          navigate({ search: (prev) => ({ ...prev, page: page - 1 }) })
+                          navigate({
+                            search: (prev: CatalogSearch) => ({ ...prev, page: page - 1 }),
+                          })
                         }
                         className="rounded-full border border-border px-4 py-2 text-xs uppercase tracking-[0.18em] disabled:opacity-30"
                       >
@@ -198,7 +203,9 @@ function CatalogPage() {
                       <button
                         disabled={page >= totalPages}
                         onClick={() =>
-                          navigate({ search: (prev) => ({ ...prev, page: page + 1 }) })
+                          navigate({
+                            search: (prev: CatalogSearch) => ({ ...prev, page: page + 1 }),
+                          })
                         }
                         className="rounded-full border border-border px-4 py-2 text-xs uppercase tracking-[0.18em] disabled:opacity-30"
                       >
