@@ -40,10 +40,18 @@ function AdminProducts() {
 
   const toggleFlag = useMutation({
     mutationFn: async ({ sku, field, value }: { sku: string; field: ToggleableField; value: boolean }) => {
-      const { error } = await supabase
-        .from("products")
-        .update({ [field]: value })
-        .eq("sku", sku);
+      const patch: Record<ToggleableField, boolean | undefined> = {
+        is_published: undefined,
+        is_bestseller: undefined,
+        is_new: undefined,
+        is_special_offer: undefined,
+        is_featured: undefined,
+      };
+      patch[field] = value;
+      const update = Object.fromEntries(
+        Object.entries(patch).filter(([, v]) => v !== undefined),
+      ) as { [K in ToggleableField]?: boolean };
+      const { error } = await supabase.from("products").update(update).eq("sku", sku);
       if (error) throw error;
     },
     onSuccess: () => {
