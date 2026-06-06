@@ -173,6 +173,7 @@ export async function fetchProductVariants(modelGroup: string, excludeSku: strin
     .eq("model_group", modelGroup)
     .neq("sku", excludeSku)
     .not("colour", "is", null)
+    .order("sku", { ascending: true })
     .limit(40);
   if (error) throw error;
   return (data ?? []) as Variant[];
