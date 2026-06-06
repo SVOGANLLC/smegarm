@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Inbox, FileText, LogOut, Home, Layers } from "lucide-react";
+import { Package, Inbox, FileText, LogOut, Home, Layers, Wrench } from "lucide-react";
 import { toast } from "sonner";
 
 const nav = [
@@ -10,6 +10,7 @@ const nav = [
   { to: "/admin/collections", label: "Коллекции", icon: Layers },
   { to: "/admin/inquiries", label: "Заявки", icon: Inbox },
   { to: "/admin/content", label: "Контент", icon: FileText },
+  { to: "/admin/tools", label: "Инструменты", icon: Wrench },
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
