@@ -88,7 +88,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { name: "author", content: "Smeg Armenia" },
       { name: "theme-color", content: "#f7f2e9" },
-      { property: "og:title", content: "Smeg Armenia — Italian appliances since 1948" },
+      { property: "og:title", content: "Smeg Armenia — Official Italian appliances in Yerevan" },
       {
         property: "og:description",
         content:
@@ -97,6 +97,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:site_name", content: "Smeg Armenia" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Smeg Armenia — Official Italian appliances in Yerevan" },
+      { name: "description", content: "Smeg Armenia — Official Italian appliances in Yerevan" },
+      { property: "og:description", content: "Smeg Armenia — Official Italian appliances in Yerevan" },
+      { name: "twitter:description", content: "Smeg Armenia — Official Italian appliances in Yerevan" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/b18234ac-f85a-490a-ad39-7642ae6feb9b" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/b18234ac-f85a-490a-ad39-7642ae6feb9b" },
     ],
     links: [
       {
