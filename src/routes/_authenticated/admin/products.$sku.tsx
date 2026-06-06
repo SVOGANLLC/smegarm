@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Upload, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/products/$sku")({
   component: EditProduct,
@@ -166,6 +166,18 @@ function EditProduct() {
               onChange={(e) => setForm({ ...form, main_image: e.target.value })}
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
+            <ImageUploader
+              sku={sku}
+              onUploaded={(url) => setForm((f) => (f ? { ...f, main_image: url } : f))}
+              label="Загрузить главное фото"
+            />
+            {form.main_image && (
+              <img
+                src={form.main_image}
+                alt=""
+                className="mt-3 h-32 w-32 rounded-sm border border-border object-cover"
+              />
+            )}
           </Field>
           <Field label="Галерея — по одному URL на строку">
             <textarea
@@ -174,6 +186,55 @@ function EditProduct() {
               rows={6}
               className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-foreground"
             />
+            <ImageUploader
+              sku={sku}
+              multiple
+              onUploaded={(url) =>
+                setForm((f) =>
+                  f ? { ...f, images: (f.images ? f.images + "\n" : "") + url } : f,
+                )
+              }
+              label="Добавить фото в галерею"
+            />
+            {form.images.trim() && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {form.images
+                  .split("\n")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((url, i) => (
+                    <div key={i} className="group relative">
+                      <img
+                        src={url}
+                        alt=""
+                        className="h-20 w-20 rounded-sm border border-border object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm((f) =>
+                            f
+                              ? {
+                                  ...f,
+                                  images: f.images
+                                    .split("\n")
+                                    .map((s) => s.trim())
+                                    .filter(Boolean)
+                                    .filter((_, j) => j !== i)
+                                    .join("\n"),
+                                }
+                              : f,
+                          )
+                        }
+                        className="absolute -right-1 -top-1 hidden rounded-full bg-foreground p-0.5 text-background group-hover:block"
+                        title="Убрать"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+              </div>
+            )}
           </Field>
           <Field label="SEO title">
             <input
@@ -286,6 +347,69 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <label className="block">
       <span className="eyebrow mb-1.5 block text-muted-foreground">{label}</span>
       {children}
+    </label>
+  );
+}
+
+function ImageUploader({
+  sku,
+  onUploaded,
+  label,
+  multiple,
+}: {
+  sku: string;
+  onUploaded: (url: string) => void;
+  label: string;
+  multiple?: boolean;
+}) {
+  const [busy, setBusy] = useState(false);
+  const handleFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setBusy(true);
+    try {
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith("image/")) {
+          toast.error(`${file.name}: не картинка`);
+          continue;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error(`${file.name}: больше 10 МБ`);
+          continue;
+        }
+        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+        const path = `${sku}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("product-media")
+          .upload(path, file, { contentType: file.type, upsert: false });
+        if (upErr) throw upErr;
+        const { data: signed, error: sErr } = await supabase.storage
+          .from("product-media")
+          .createSignedUrl(path, 60 * 60 * 24 * 365);
+        if (sErr || !signed?.signedUrl) throw sErr ?? new Error("Не удалось получить URL");
+        onUploaded(signed.signedUrl);
+      }
+      toast.success("Загружено");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Ошибка загрузки");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-sm border border-dashed border-border px-3 py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground hover:border-foreground hover:text-foreground">
+      <Upload className="h-3 w-3" />
+      {busy ? "Загрузка…" : label}
+      <input
+        type="file"
+        accept="image/*"
+        multiple={multiple}
+        className="hidden"
+        disabled={busy}
+        onChange={(e) => {
+          handleFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
     </label>
   );
 }
