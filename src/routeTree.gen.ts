@@ -9,7 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SaleRouteImport } from './routes/sale'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as CatalogRouteImport } from './routes/catalog'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -26,9 +28,19 @@ import { Route as AuthenticatedAdminCollectionsRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminProductsIndexRouteImport } from './routes/_authenticated/admin/products.index'
 import { Route as AuthenticatedAdminProductsSkuRouteImport } from './routes/_authenticated/admin/products.$sku'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SaleRoute = SaleRouteImport.update({
   id: '/sale',
   path: '/sale',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CatalogRoute = CatalogRouteImport.update({
@@ -116,7 +128,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/api/sitemap.xml': typeof ApiSitemapDotxmlRoute
   '/collection/$slug': typeof CollectionSlugRoute
@@ -133,7 +147,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/sitemap.xml': typeof ApiSitemapDotxmlRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$sku': typeof ProductSkuRoute
@@ -150,7 +166,9 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/api/sitemap.xml': typeof ApiSitemapDotxmlRoute
   '/collection/$slug': typeof CollectionSlugRoute
@@ -169,7 +187,9 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/catalog'
+    | '/robots.txt'
     | '/sale'
+    | '/sitemap.xml'
     | '/admin'
     | '/api/sitemap.xml'
     | '/collection/$slug'
@@ -186,7 +206,9 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/catalog'
+    | '/robots.txt'
     | '/sale'
+    | '/sitemap.xml'
     | '/api/sitemap.xml'
     | '/collection/$slug'
     | '/product/$sku'
@@ -202,7 +224,9 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/catalog'
+    | '/robots.txt'
     | '/sale'
+    | '/sitemap.xml'
     | '/_authenticated/admin'
     | '/api/sitemap.xml'
     | '/collection/$slug'
@@ -221,7 +245,9 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CatalogRoute: typeof CatalogRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
   SaleRoute: typeof SaleRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiSitemapDotxmlRoute: typeof ApiSitemapDotxmlRoute
   CollectionSlugRoute: typeof CollectionSlugRoute
   ProductSkuRoute: typeof ProductSkuRoute
@@ -229,11 +255,25 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sale': {
       id: '/sale'
       path: '/sale'
       fullPath: '/sale'
       preLoaderRoute: typeof SaleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/catalog': {
@@ -399,7 +439,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CatalogRoute: CatalogRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
   SaleRoute: SaleRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiSitemapDotxmlRoute: ApiSitemapDotxmlRoute,
   CollectionSlugRoute: CollectionSlugRoute,
   ProductSkuRoute: ProductSkuRoute,
