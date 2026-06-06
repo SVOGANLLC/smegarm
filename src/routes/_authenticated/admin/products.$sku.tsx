@@ -13,9 +13,17 @@ type FormState = {
   name: string;
   description: string;
   price_amd: string;
+  price_old: string;
   discount_percent: string;
   availability: string;
   is_published: boolean;
+  is_featured: boolean;
+  is_new: boolean;
+  is_bestseller: boolean;
+  is_special_offer: boolean;
+  badge_text: string;
+  seo_title: string;
+  seo_description: string;
   main_image: string;
   images: string;
 };
@@ -41,9 +49,17 @@ function EditProduct() {
         name: q.data.name ?? "",
         description: q.data.description ?? "",
         price_amd: q.data.price_amd?.toString() ?? "",
+        price_old: q.data.price_old?.toString() ?? "",
         discount_percent: q.data.discount_percent?.toString() ?? "0",
         availability: q.data.availability ?? "on_request",
         is_published: !!q.data.is_published,
+        is_featured: !!q.data.is_featured,
+        is_new: !!q.data.is_new,
+        is_bestseller: !!q.data.is_bestseller,
+        is_special_offer: !!q.data.is_special_offer,
+        badge_text: q.data.badge_text ?? "",
+        seo_title: q.data.seo_title ?? "",
+        seo_description: q.data.seo_description ?? "",
         main_image: q.data.main_image ?? "",
         images: (q.data.images ?? []).join("\n"),
       });
@@ -53,6 +69,7 @@ function EditProduct() {
   const save = useMutation({
     mutationFn: async (f: FormState) => {
       const price = f.price_amd.trim() ? parseInt(f.price_amd, 10) : null;
+      const priceOld = f.price_old.trim() ? parseInt(f.price_old, 10) : null;
       const disc = Math.max(0, Math.min(90, parseInt(f.discount_percent, 10) || 0));
       if (price !== null && (isNaN(price) || price < 0)) throw new Error("Цена должна быть числом");
       const images = f.images
@@ -65,9 +82,17 @@ function EditProduct() {
           name: f.name.trim().slice(0, 500),
           description: f.description.slice(0, 10000),
           price_amd: price,
+          price_old: priceOld,
           discount_percent: disc,
           availability: f.availability,
           is_published: f.is_published,
+          is_featured: f.is_featured,
+          is_new: f.is_new,
+          is_bestseller: f.is_bestseller,
+          is_special_offer: f.is_special_offer,
+          badge_text: f.badge_text.trim().slice(0, 60) || null,
+          seo_title: f.seo_title.trim().slice(0, 160) || null,
+          seo_description: f.seo_description.trim().slice(0, 320) || null,
           main_image: f.main_image.trim() || null,
           images,
         })
@@ -150,6 +175,23 @@ function EditProduct() {
               className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-foreground"
             />
           </Field>
+          <Field label="SEO title">
+            <input
+              value={form.seo_title}
+              maxLength={160}
+              onChange={(e) => setForm({ ...form, seo_title: e.target.value })}
+              className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+            />
+          </Field>
+          <Field label="SEO description">
+            <textarea
+              value={form.seo_description}
+              maxLength={320}
+              rows={3}
+              onChange={(e) => setForm({ ...form, seo_description: e.target.value })}
+              className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+            />
+          </Field>
         </div>
 
         <aside className="space-y-6 rounded-sm border border-border p-6">
@@ -158,6 +200,14 @@ function EditProduct() {
               inputMode="numeric"
               value={form.price_amd}
               onChange={(e) => setForm({ ...form, price_amd: e.target.value.replace(/[^0-9]/g, "") })}
+              className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+            />
+          </Field>
+          <Field label="Старая цена, ֏ (зачёркнутая)">
+            <input
+              inputMode="numeric"
+              value={form.price_old}
+              onChange={(e) => setForm({ ...form, price_old: e.target.value.replace(/[^0-9]/g, "") })}
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
           </Field>
@@ -181,15 +231,35 @@ function EditProduct() {
               <option value="on_request">По запросу</option>
             </select>
           </Field>
-          <label className="flex items-center gap-3 text-sm">
+          <Field label="Текст бейджа (плашка)">
             <input
-              type="checkbox"
-              checked={form.is_published}
-              onChange={(e) => setForm({ ...form, is_published: e.target.checked })}
-              className="h-4 w-4"
+              value={form.badge_text}
+              maxLength={60}
+              placeholder="напр. -20%, Premium"
+              onChange={(e) => setForm({ ...form, badge_text: e.target.value })}
+              className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
-            Показывать на сайте
-          </label>
+          </Field>
+          <div className="space-y-2 rounded-sm border border-border/60 bg-secondary/30 p-3">
+            <p className="eyebrow text-muted-foreground">Витрина</p>
+            {([
+              ["is_published", "Показывать на сайте"],
+              ["is_bestseller", "Хит продаж"],
+              ["is_new", "Новинка"],
+              ["is_special_offer", "Спецпредложение"],
+              ["is_featured", "На главную (Featured)"],
+            ] as const).map(([k, label]) => (
+              <label key={k} className="flex items-center gap-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form[k] as boolean}
+                  onChange={(e) => setForm({ ...form, [k]: e.target.checked })}
+                  className="h-4 w-4"
+                />
+                {label}
+              </label>
+            ))}
+          </div>
 
           <button
             type="submit"
