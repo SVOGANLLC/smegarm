@@ -31,27 +31,14 @@ export function Hero() {
       <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/55 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-background/20" />
 
-      {/* Top meta */}
-      <div className="absolute inset-x-0 top-24 z-10 mx-auto flex max-w-[1480px] items-center justify-between px-6 md:top-28 md:px-10">
-        <div className="flex items-center gap-3">
-          <span className="h-px w-10 bg-foreground/50" />
-          <span className="eyebrow text-foreground/70">{t("hero.eyebrow")}</span>
-        </div>
-        <div className="hidden items-center gap-4 text-[10px] uppercase tracking-[0.3em] text-foreground/60 md:flex">
-          <span>Yerevan · Nar-Dos 2</span>
-          <span className="h-1 w-1 rounded-full bg-foreground/50" />
-          <span>Since 1948</span>
-        </div>
-      </div>
-
       {/* Headline block */}
-      <div className="relative z-10 mx-auto flex h-full max-w-[1480px] flex-col justify-center px-6 md:px-10">
+      <div className="relative z-10 mx-auto flex h-full max-w-[1480px] flex-col justify-center px-6 pt-28 pb-32 md:px-10 md:pt-32 md:pb-36">
         <div className="flex items-center gap-3 animate-hero-rise" style={{ animationDelay: "100ms" }}>
           <span className="inline-block h-2 w-2 rounded-full bg-[color:var(--brand)]" />
-          <span className="eyebrow text-foreground/70">FAB28 · Pastel Green</span>
+          <span className="eyebrow text-foreground/70">{t("hero.eyebrow")}</span>
         </div>
 
-        <h1 className="mt-6 max-w-[16ch] display-xl text-[clamp(3rem,8.5vw,8.5rem)] text-foreground">
+        <h1 className="mt-5 max-w-[14ch] display-xl text-[clamp(2.5rem,7.5vw,7.5rem)] text-foreground">
           {title.split("\n").map((line, i) => (
             <span
               key={i}
@@ -64,14 +51,14 @@ export function Hero() {
         </h1>
 
         <p
-          className="mt-8 max-w-md animate-hero-rise text-base leading-relaxed text-foreground/80 md:text-lg"
+          className="mt-6 max-w-md animate-hero-rise text-base leading-relaxed text-foreground/80 md:text-lg"
           style={{ animationDelay: "700ms" }}
         >
           {t("hero.subtitle")}
         </p>
 
         <div
-          className="mt-10 flex animate-hero-rise flex-wrap items-center gap-5"
+          className="mt-8 flex animate-hero-rise flex-wrap items-center gap-5"
           style={{ animationDelay: "850ms" }}
         >
           <Link
@@ -87,7 +74,7 @@ export function Hero() {
         </div>
 
         <div
-          className="mt-14 flex animate-hero-rise items-center gap-4"
+          className="mt-10 flex animate-hero-rise items-center gap-4"
           style={{ animationDelay: "1050ms" }}
         >
           <span className="eyebrow text-foreground/60">Palette</span>
