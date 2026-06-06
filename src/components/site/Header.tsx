@@ -18,11 +18,11 @@ export function Header() {
   }, []);
 
   const nav = [
-    { to: "#catalog", label: t("nav.catalog") },
-    { to: "#collections", label: t("nav.collections") },
-    { to: "#story", label: t("nav.story") },
-    { to: "#dealer", label: t("nav.dealer") },
-    { to: "#contact", label: t("nav.contact") },
+    { to: "/catalog", label: t("nav.catalog"), internal: true },
+    { to: "/#collections", label: t("nav.collections") },
+    { to: "/#story", label: t("nav.story") },
+    { to: "/#dealer", label: t("nav.dealer") },
+    { to: "/#contact", label: t("nav.contact") },
   ];
 
   return (
@@ -59,15 +59,25 @@ export function Header() {
         </Link>
 
         <nav className="hidden items-center gap-9 lg:flex">
-          {nav.map((n) => (
-            <a
-              key={n.to}
-              href={n.to}
-              className="smeg-underline text-[13px] uppercase tracking-[0.18em] text-foreground/80 hover:text-foreground"
-            >
-              {n.label}
-            </a>
-          ))}
+          {nav.map((n) =>
+            n.internal ? (
+              <Link
+                key={n.to}
+                to={n.to}
+                className="smeg-underline text-[13px] uppercase tracking-[0.18em] text-foreground/80 hover:text-foreground"
+              >
+                {n.label}
+              </Link>
+            ) : (
+              <a
+                key={n.to}
+                href={n.to}
+                className="smeg-underline text-[13px] uppercase tracking-[0.18em] text-foreground/80 hover:text-foreground"
+              >
+                {n.label}
+              </a>
+            ),
+          )}
         </nav>
 
         <div className="flex items-center gap-1 rounded-full border border-border/70 bg-background/50 p-1 backdrop-blur">
