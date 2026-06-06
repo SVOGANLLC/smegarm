@@ -14,7 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      products: {
+        Row: {
+          aesthetic: string | null
+          brand: string | null
+          category: string | null
+          colour: string | null
+          created_at: string
+          description: string | null
+          ean: string | null
+          energy_label: string | null
+          family: string | null
+          images: string[]
+          main_image: string | null
+          name: string
+          pdf: string | null
+          sku: string
+          specs: Json
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          aesthetic?: string | null
+          brand?: string | null
+          category?: string | null
+          colour?: string | null
+          created_at?: string
+          description?: string | null
+          ean?: string | null
+          energy_label?: string | null
+          family?: string | null
+          images?: string[]
+          main_image?: string | null
+          name: string
+          pdf?: string | null
+          sku: string
+          specs?: Json
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          aesthetic?: string | null
+          brand?: string | null
+          category?: string | null
+          colour?: string | null
+          created_at?: string
+          description?: string | null
+          ean?: string | null
+          energy_label?: string | null
+          family?: string | null
+          images?: string[]
+          main_image?: string | null
+          name?: string
+          pdf?: string | null
+          sku?: string
+          specs?: Json
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
