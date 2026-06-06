@@ -9,11 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SaleRouteImport } from './routes/sale'
 import { Route as CatalogRouteImport } from './routes/catalog'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductSkuRouteImport } from './routes/product.$sku'
+import { Route as CollectionSlugRouteImport } from './routes/collection.$slug'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin/products'
@@ -22,6 +24,11 @@ import { Route as AuthenticatedAdminContentRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminProductsIndexRouteImport } from './routes/_authenticated/admin/products.index'
 import { Route as AuthenticatedAdminProductsSkuRouteImport } from './routes/_authenticated/admin/products.$sku'
 
+const SaleRoute = SaleRouteImport.update({
+  id: '/sale',
+  path: '/sale',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CatalogRoute = CatalogRouteImport.update({
   id: '/catalog',
   path: '/catalog',
@@ -44,6 +51,11 @@ const IndexRoute = IndexRouteImport.update({
 const ProductSkuRoute = ProductSkuRouteImport.update({
   id: '/product/$sku',
   path: '/product/$sku',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CollectionSlugRoute = CollectionSlugRouteImport.update({
+  id: '/collection/$slug',
+  path: '/collection/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
@@ -91,7 +103,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
+  '/sale': typeof SaleRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/collection/$slug': typeof CollectionSlugRoute
   '/product/$sku': typeof ProductSkuRoute
   '/admin/content': typeof AuthenticatedAdminContentRoute
   '/admin/inquiries': typeof AuthenticatedAdminInquiriesRoute
@@ -104,6 +118,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
+  '/sale': typeof SaleRoute
+  '/collection/$slug': typeof CollectionSlugRoute
   '/product/$sku': typeof ProductSkuRoute
   '/admin/content': typeof AuthenticatedAdminContentRoute
   '/admin/inquiries': typeof AuthenticatedAdminInquiriesRoute
@@ -117,7 +133,9 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
+  '/sale': typeof SaleRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/collection/$slug': typeof CollectionSlugRoute
   '/product/$sku': typeof ProductSkuRoute
   '/_authenticated/admin/content': typeof AuthenticatedAdminContentRoute
   '/_authenticated/admin/inquiries': typeof AuthenticatedAdminInquiriesRoute
@@ -132,7 +150,9 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/catalog'
+    | '/sale'
     | '/admin'
+    | '/collection/$slug'
     | '/product/$sku'
     | '/admin/content'
     | '/admin/inquiries'
@@ -145,6 +165,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/catalog'
+    | '/sale'
+    | '/collection/$slug'
     | '/product/$sku'
     | '/admin/content'
     | '/admin/inquiries'
@@ -157,7 +179,9 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/catalog'
+    | '/sale'
     | '/_authenticated/admin'
+    | '/collection/$slug'
     | '/product/$sku'
     | '/_authenticated/admin/content'
     | '/_authenticated/admin/inquiries'
@@ -172,11 +196,20 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CatalogRoute: typeof CatalogRoute
+  SaleRoute: typeof SaleRoute
+  CollectionSlugRoute: typeof CollectionSlugRoute
   ProductSkuRoute: typeof ProductSkuRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sale': {
+      id: '/sale'
+      path: '/sale'
+      fullPath: '/sale'
+      preLoaderRoute: typeof SaleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/catalog': {
       id: '/catalog'
       path: '/catalog'
@@ -210,6 +243,13 @@ declare module '@tanstack/react-router' {
       path: '/product/$sku'
       fullPath: '/product/$sku'
       preLoaderRoute: typeof ProductSkuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/collection/$slug': {
+      id: '/collection/$slug'
+      path: '/collection/$slug'
+      fullPath: '/collection/$slug'
+      preLoaderRoute: typeof CollectionSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -317,8 +357,20 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CatalogRoute: CatalogRoute,
+  SaleRoute: SaleRoute,
+  CollectionSlugRoute: CollectionSlugRoute,
   ProductSkuRoute: ProductSkuRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
