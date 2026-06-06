@@ -10,12 +10,29 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as CatalogRouteImport } from './routes/catalog'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductSkuRouteImport } from './routes/product.$sku'
+import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin/products'
+import { Route as AuthenticatedAdminInquiriesRouteImport } from './routes/_authenticated/admin/inquiries'
+import { Route as AuthenticatedAdminContentRouteImport } from './routes/_authenticated/admin/content'
+import { Route as AuthenticatedAdminProductsSkuRouteImport } from './routes/_authenticated/admin/products.$sku'
 
 const CatalogRoute = CatalogRouteImport.update({
   id: '/catalog',
   path: '/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -28,33 +45,121 @@ const ProductSkuRoute = ProductSkuRouteImport.update({
   path: '/product/$sku',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const AuthenticatedAdminProductsRoute =
+  AuthenticatedAdminProductsRouteImport.update({
+    id: '/products',
+    path: '/products',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminInquiriesRoute =
+  AuthenticatedAdminInquiriesRouteImport.update({
+    id: '/inquiries',
+    path: '/inquiries',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminContentRoute =
+  AuthenticatedAdminContentRouteImport.update({
+    id: '/content',
+    path: '/content',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminProductsSkuRoute =
+  AuthenticatedAdminProductsSkuRouteImport.update({
+    id: '/$sku',
+    path: '/$sku',
+    getParentRoute: () => AuthenticatedAdminProductsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
+  '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/product/$sku': typeof ProductSkuRoute
+  '/admin/content': typeof AuthenticatedAdminContentRoute
+  '/admin/inquiries': typeof AuthenticatedAdminInquiriesRoute
+  '/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
+  '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
   '/product/$sku': typeof ProductSkuRoute
+  '/admin/content': typeof AuthenticatedAdminContentRoute
+  '/admin/inquiries': typeof AuthenticatedAdminInquiriesRoute
+  '/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
+  '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/product/$sku': typeof ProductSkuRoute
+  '/_authenticated/admin/content': typeof AuthenticatedAdminContentRoute
+  '/_authenticated/admin/inquiries': typeof AuthenticatedAdminInquiriesRoute
+  '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/catalog' | '/product/$sku'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/catalog'
+    | '/admin'
+    | '/product/$sku'
+    | '/admin/content'
+    | '/admin/inquiries'
+    | '/admin/products'
+    | '/admin/'
+    | '/admin/products/$sku'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/catalog' | '/product/$sku'
-  id: '__root__' | '/' | '/catalog' | '/product/$sku'
+  to:
+    | '/'
+    | '/auth'
+    | '/catalog'
+    | '/product/$sku'
+    | '/admin/content'
+    | '/admin/inquiries'
+    | '/admin/products'
+    | '/admin'
+    | '/admin/products/$sku'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/catalog'
+    | '/_authenticated/admin'
+    | '/product/$sku'
+    | '/_authenticated/admin/content'
+    | '/_authenticated/admin/inquiries'
+    | '/_authenticated/admin/products'
+    | '/_authenticated/admin/'
+    | '/_authenticated/admin/products/$sku'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
   CatalogRoute: typeof CatalogRoute
   ProductSkuRoute: typeof ProductSkuRoute
 }
@@ -66,6 +171,20 @@ declare module '@tanstack/react-router' {
       path: '/catalog'
       fullPath: '/catalog'
       preLoaderRoute: typeof CatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -82,11 +201,101 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductSkuRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/products': {
+      id: '/_authenticated/admin/products'
+      path: '/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AuthenticatedAdminProductsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/inquiries': {
+      id: '/_authenticated/admin/inquiries'
+      path: '/inquiries'
+      fullPath: '/admin/inquiries'
+      preLoaderRoute: typeof AuthenticatedAdminInquiriesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/content': {
+      id: '/_authenticated/admin/content'
+      path: '/content'
+      fullPath: '/admin/content'
+      preLoaderRoute: typeof AuthenticatedAdminContentRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/products/$sku': {
+      id: '/_authenticated/admin/products/$sku'
+      path: '/$sku'
+      fullPath: '/admin/products/$sku'
+      preLoaderRoute: typeof AuthenticatedAdminProductsSkuRouteImport
+      parentRoute: typeof AuthenticatedAdminProductsRoute
+    }
   }
 }
 
+interface AuthenticatedAdminProductsRouteChildren {
+  AuthenticatedAdminProductsSkuRoute: typeof AuthenticatedAdminProductsSkuRoute
+}
+
+const AuthenticatedAdminProductsRouteChildren: AuthenticatedAdminProductsRouteChildren =
+  {
+    AuthenticatedAdminProductsSkuRoute: AuthenticatedAdminProductsSkuRoute,
+  }
+
+const AuthenticatedAdminProductsRouteWithChildren =
+  AuthenticatedAdminProductsRoute._addFileChildren(
+    AuthenticatedAdminProductsRouteChildren,
+  )
+
+interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminContentRoute: typeof AuthenticatedAdminContentRoute
+  AuthenticatedAdminInquiriesRoute: typeof AuthenticatedAdminInquiriesRoute
+  AuthenticatedAdminProductsRoute: typeof AuthenticatedAdminProductsRouteWithChildren
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
+  {
+    AuthenticatedAdminContentRoute: AuthenticatedAdminContentRoute,
+    AuthenticatedAdminInquiriesRoute: AuthenticatedAdminInquiriesRoute,
+    AuthenticatedAdminProductsRoute:
+      AuthenticatedAdminProductsRouteWithChildren,
+    AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  }
+
+const AuthenticatedAdminRouteRouteWithChildren =
+  AuthenticatedAdminRouteRoute._addFileChildren(
+    AuthenticatedAdminRouteRouteChildren,
+  )
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
   CatalogRoute: CatalogRoute,
   ProductSkuRoute: ProductSkuRoute,
 }
