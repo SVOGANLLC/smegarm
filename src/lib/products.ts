@@ -18,6 +18,19 @@ export type Product = {
   url: string | null;
 };
 
+export type ProductCard = Product & {
+  price_amd: number | null;
+  price_old: number | null;
+  discount_percent: number;
+  availability: string;
+  is_published: boolean;
+  is_featured: boolean;
+  is_new: boolean;
+  is_bestseller: boolean;
+  is_special_offer: boolean;
+  badge_text: string | null;
+};
+
 export function slugify(s: string): string {
   return s
     .toLowerCase()
@@ -87,4 +100,66 @@ export async function fetchFeatured(skus: string[]): Promise<Product[]> {
     .in("sku", skus);
   if (error) throw error;
   return (data ?? []) as Product[];
+}
+
+const CARD_COLS =
+  "sku,name,category,colour,main_image,price_amd,price_old,discount_percent,availability,is_published,is_featured,is_new,is_bestseller,is_special_offer,badge_text";
+
+export async function fetchProductsByFlag(
+  flag: "is_featured" | "is_new" | "is_bestseller" | "is_special_offer",
+  limit = 8,
+) {
+  const { data, error } = await supabase
+    .from("products")
+    .select(CARD_COLS)
+    .eq(flag, true)
+    .eq("is_published", true)
+    .order("sort_weight", { ascending: false })
+    .order("name", { ascending: true })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []) as unknown as ProductCard[];
+}
+
+export type Collection = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  cover_image: string | null;
+  is_published: boolean;
+  sort_weight: number;
+};
+
+export async function fetchCollections(): Promise<Collection[]> {
+  const { data, error } = await supabase
+    .from("collections")
+    .select("id,slug,name,description,cover_image,is_published,sort_weight")
+    .eq("is_published", true)
+    .order("sort_weight", { ascending: false })
+    .order("name");
+  if (error) throw error;
+  return (data ?? []) as Collection[];
+}
+
+export async function fetchCollectionWithProducts(slug: string) {
+  const { data: col, error: e1 } = await supabase
+    .from("collections")
+    .select("id,slug,name,description,cover_image,is_published,sort_weight")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (e1) throw e1;
+  if (!col) return null;
+  const { data: links, error: e2 } = await supabase
+    .from("collection_products")
+    .select("product_sku,sort_weight,products!inner(" + CARD_COLS + ")")
+    .eq("collection_id", col.id)
+    .order("sort_weight", { ascending: false });
+  if (e2) throw e2;
+  const products = (links ?? [])
+    .map((l: { products: ProductCard | ProductCard[] | null }) =>
+      Array.isArray(l.products) ? l.products[0] : l.products,
+    )
+    .filter((p): p is ProductCard => Boolean(p) && p.is_published);
+  return { collection: col as Collection, products };
 }
