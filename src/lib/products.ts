@@ -156,10 +156,8 @@ export async function fetchCollectionWithProducts(slug: string) {
     .eq("collection_id", col.id)
     .order("sort_weight", { ascending: false });
   if (e2) throw e2;
-  const products = (links ?? [])
-    .map((l: { products: ProductCard | ProductCard[] | null }) =>
-      Array.isArray(l.products) ? l.products[0] : l.products,
-    )
-    .filter((p): p is ProductCard => Boolean(p) && p.is_published);
+  const products = ((links ?? []) as unknown as Array<{ products: ProductCard | ProductCard[] | null }>)
+    .map((l) => (Array.isArray(l.products) ? l.products[0] : l.products))
+    .filter((p): p is ProductCard => !!p && p.is_published);
   return { collection: col as Collection, products };
 }
