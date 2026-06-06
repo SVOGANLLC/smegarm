@@ -16,6 +16,8 @@ export type Product = {
   pdf: string | null;
   energy_label: string | null;
   url: string | null;
+  model_group?: string | null;
+  theme_key?: string | null;
 };
 
 export type ProductCard = Product & {
@@ -130,6 +132,114 @@ export type Collection = {
   is_published: boolean;
   sort_weight: number;
 };
+
+export type ColorSwatch = { colour: string; hex: string; sort_order: number };
+
+export type Theme = {
+  key: string;
+  name: string;
+  background_image: string | null;
+  background_color: string | null;
+  accent_color: string | null;
+  card_bg: string | null;
+  description: string | null;
+};
+
+export type Variant = { sku: string; colour: string | null; main_image: string | null };
+
+export async function fetchColorSwatches(): Promise<ColorSwatch[]> {
+  const { data, error } = await supabase
+    .from("color_swatches")
+    .select("colour,hex,sort_order")
+    .order("sort_order");
+  if (error) throw error;
+  return (data ?? []) as ColorSwatch[];
+}
+
+export async function fetchTheme(key: string): Promise<Theme | null> {
+  const { data, error } = await supabase
+    .from("themes")
+    .select("key,name,background_image,background_color,accent_color,card_bg,description")
+    .eq("key", key)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as Theme | null) ?? null;
+}
+
+export async function fetchProductVariants(modelGroup: string, excludeSku: string): Promise<Variant[]> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("sku,colour,main_image")
+    .eq("model_group", modelGroup)
+    .neq("sku", excludeSku)
+    .not("colour", "is", null)
+    .limit(40);
+  if (error) throw error;
+  return (data ?? []) as Variant[];
+}
+
+export type FacetCounts = {
+  families: Array<{ value: string; count: number }>;
+  aesthetics: Array<{ value: string; count: number }>;
+  colours: Array<{ value: string; count: number }>;
+};
+
+export async function fetchFacets(): Promise<FacetCounts> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("family,aesthetic,colour")
+    .limit(5000);
+  if (error) throw error;
+  const tally = (key: "family" | "aesthetic" | "colour") => {
+    const m = new Map<string, number>();
+    for (const r of (data ?? []) as Array<Record<string, string | null>>) {
+      const v = (r[key] ?? "").trim();
+      if (!v) continue;
+      m.set(v, (m.get(v) ?? 0) + 1);
+    }
+    return Array.from(m.entries())
+      .map(([value, count]) => ({ value, count }))
+      .sort((a, b) => b.count - a.count);
+  };
+  return { families: tally("family"), aesthetics: tally("aesthetic"), colours: tally("colour") };
+}
+
+export type CatalogFilters = {
+  category?: string;
+  search?: string;
+  families?: string[];
+  aesthetics?: string[];
+  colours?: string[];
+  flag?: "is_featured" | "is_new" | "is_bestseller" | "is_special_offer" | "sale";
+  sort?: "name" | "price-asc" | "price-desc";
+  limit?: number;
+  offset?: number;
+};
+
+export async function fetchCatalog(f: CatalogFilters): Promise<{ items: Product[]; total: number }> {
+  let q = supabase
+    .from("products")
+    .select(
+      "sku,name,category,brand,aesthetic,colour,family,ean,description,specs,main_image,images,pdf,energy_label,url,price_amd,price_old",
+      { count: "exact" },
+    );
+  if (f.category) q = q.eq("category", f.category);
+  if (f.search) q = q.or(`name.ilike.%${f.search}%,sku.ilike.%${f.search}%`);
+  if (f.families?.length) q = q.in("family", f.families);
+  if (f.aesthetics?.length) q = q.in("aesthetic", f.aesthetics);
+  if (f.colours?.length) q = q.in("colour", f.colours);
+  if (f.flag === "sale") q = q.not("price_old", "is", null);
+  else if (f.flag) q = q.eq(f.flag, true);
+  if (f.sort === "price-asc") q = q.order("price_amd", { ascending: true, nullsFirst: false });
+  else if (f.sort === "price-desc") q = q.order("price_amd", { ascending: false, nullsFirst: false });
+  else q = q.order("name", { ascending: true });
+  const limit = f.limit ?? 36;
+  const offset = f.offset ?? 0;
+  q = q.range(offset, offset + limit - 1);
+  const { data, error, count } = await q;
+  if (error) throw error;
+  return { items: (data ?? []) as Product[], total: count ?? 0 };
+}
 
 export async function fetchCollections(): Promise<Collection[]> {
   const { data, error } = await supabase

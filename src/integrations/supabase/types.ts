@@ -86,6 +86,30 @@ export type Database = {
         }
         Relationships: []
       }
+      color_swatches: {
+        Row: {
+          colour: string
+          created_at: string
+          hex: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          colour: string
+          created_at?: string
+          hex: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          colour?: string
+          created_at?: string
+          hex?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inquiries: {
         Row: {
           admin_notes: string | null
@@ -154,6 +178,7 @@ export type Database = {
           is_published: boolean
           is_special_offer: boolean
           main_image: string | null
+          model_group: string | null
           name: string
           og_image: string | null
           pdf: string | null
@@ -167,6 +192,7 @@ export type Database = {
           slug: string | null
           sort_weight: number
           specs: Json
+          theme_key: string | null
           updated_at: string
           url: string | null
           view_count: number
@@ -191,6 +217,7 @@ export type Database = {
           is_published?: boolean
           is_special_offer?: boolean
           main_image?: string | null
+          model_group?: string | null
           name: string
           og_image?: string | null
           pdf?: string | null
@@ -204,6 +231,7 @@ export type Database = {
           slug?: string | null
           sort_weight?: number
           specs?: Json
+          theme_key?: string | null
           updated_at?: string
           url?: string | null
           view_count?: number
@@ -228,6 +256,7 @@ export type Database = {
           is_published?: boolean
           is_special_offer?: boolean
           main_image?: string | null
+          model_group?: string | null
           name?: string
           og_image?: string | null
           pdf?: string | null
@@ -241,6 +270,7 @@ export type Database = {
           slug?: string | null
           sort_weight?: number
           specs?: Json
+          theme_key?: string | null
           updated_at?: string
           url?: string | null
           view_count?: number
@@ -295,6 +325,42 @@ export type Database = {
         }
         Relationships: []
       }
+      themes: {
+        Row: {
+          accent_color: string | null
+          background_color: string | null
+          background_image: string | null
+          card_bg: string | null
+          created_at: string
+          description: string | null
+          key: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string | null
+          background_color?: string | null
+          background_image?: string | null
+          card_bg?: string | null
+          created_at?: string
+          description?: string | null
+          key: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string | null
+          background_color?: string | null
+          background_image?: string | null
+          card_bg?: string | null
+          created_at?: string
+          description?: string | null
+          key?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -321,6 +387,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      compute_model_group: {
+        Args: { p_colour: string; p_family: string; p_name: string }
+        Returns: string
+      }
+      compute_theme_key: {
+        Args: { p_aesthetic: string; p_name: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

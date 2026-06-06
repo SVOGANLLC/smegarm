@@ -2,7 +2,9 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
-import { fetchProductBySku } from "@/lib/products";
+import { fetchProductBySku, fetchTheme } from "@/lib/products";
+import { ProductImageZoom } from "@/components/site/ProductImageZoom";
+import { ColorSwitcher } from "@/components/site/ColorSwitcher";
 import { useState } from "react";
 
 export const Route = createFileRoute("/product/$sku")({
@@ -66,16 +68,35 @@ function ProductPage() {
     queryKey: ["product", sku],
     queryFn: () => fetchProductBySku(sku),
   });
+  const { data: theme } = useSuspenseQuery({
+    queryKey: ["theme", product?.theme_key ?? null],
+    queryFn: () => (product?.theme_key ? fetchTheme(product.theme_key) : Promise.resolve(null)),
+  });
   const gallery = product?.images?.length ? product.images : product?.main_image ? [product.main_image] : [];
   const [active, setActive] = useState(0);
   if (!product) return null;
   const specEntries = Object.entries(product.specs ?? {});
 
+  const themeStyle: React.CSSProperties = theme
+    ? {
+        backgroundColor: theme.background_color ?? undefined,
+        backgroundImage: theme.background_image ? `url(${theme.background_image})` : undefined,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+      }
+    : {};
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground transition-colors duration-700" style={themeStyle}>
       <Header />
       <main className="pt-32 pb-24">
-        <div className="mx-auto max-w-[1400px] px-6 md:px-10">
+        <div className={`mx-auto max-w-[1400px] px-6 md:px-10 ${theme ? "rounded-lg bg-background/95 backdrop-blur-sm p-6 md:p-12 shadow-2xl my-6" : ""}`}>
+          {theme && (
+            <p className="eyebrow mb-6 inline-block rounded-full border border-border px-3 py-1.5 text-foreground">
+              ✦ {theme.name}
+            </p>
+          )}
           <nav className="mb-8 flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
             <Link to="/catalog" className="hover:text-foreground">
               Каталог
@@ -90,19 +111,13 @@ function ProductPage() {
 
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
             <div>
-              <div className="relative aspect-square overflow-hidden rounded-sm bg-secondary">
-                {gallery[active] ? (
-                  <img
-                    src={gallery[active]}
-                    alt={product.name}
-                    className="h-full w-full object-contain p-10"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
-                    нет фото
-                  </div>
-                )}
-              </div>
+              {gallery[active] ? (
+                <ProductImageZoom src={gallery[active]} alt={product.name} />
+              ) : (
+                <div className="flex aspect-square w-full items-center justify-center rounded-sm bg-secondary text-sm text-muted-foreground">
+                  нет фото
+                </div>
+              )}
               {gallery.length > 1 && (
                 <div className="mt-4 grid grid-cols-6 gap-2">
                   {gallery.slice(0, 12).map((src, i) => (
@@ -126,6 +141,12 @@ function ProductPage() {
                 {product.name}
               </h1>
               <p className="mt-3 text-sm text-muted-foreground">Артикул: {product.sku}</p>
+
+              <ColorSwitcher
+                modelGroup={product.model_group ?? null}
+                currentSku={product.sku}
+                currentColour={product.colour}
+              />
 
               {product.description && (
                 <p
