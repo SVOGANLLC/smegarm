@@ -245,7 +245,7 @@ function ImportSection() {
         for (const k of Object.keys(d.changes)) {
           patch[k] = normalizeValue(k, src[k]);
         }
-        const { error } = await supabase.from("products").update(patch).eq("sku", d.sku);
+        const { error } = await supabase.from("products").update(patch as never).eq("sku", d.sku);
         if (error) throw new Error(`${d.sku}: ${error.message}`);
         ok++;
       }
@@ -412,7 +412,7 @@ function BulkPriceSection() {
         const np = newPrice(it.price_amd);
         const patch: Record<string, unknown> = { price_amd: np.price };
         if (mode === "set_discount") patch.price_old = np.old;
-        const { error } = await supabase.from("products").update(patch).eq("sku", it.sku);
+        const { error } = await supabase.from("products").update(patch as never).eq("sku", it.sku);
         if (error) throw error;
         ok++;
       }
