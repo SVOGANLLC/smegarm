@@ -14,21 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      inquiries: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          email: string | null
+          id: string
+          message: string | null
+          name: string
+          phone: string | null
+          product_sku: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string | null
+          name: string
+          phone?: string | null
+          product_sku?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string | null
+          name?: string
+          phone?: string | null
+          product_sku?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiries_product_sku_fkey"
+            columns: ["product_sku"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["sku"]
+          },
+        ]
+      }
       products: {
         Row: {
           aesthetic: string | null
+          availability: string
           brand: string | null
           category: string | null
           colour: string | null
           created_at: string
           description: string | null
+          discount_percent: number
           ean: string | null
           energy_label: string | null
           family: string | null
           images: string[]
+          is_published: boolean
           main_image: string | null
           name: string
           pdf: string | null
+          price_amd: number | null
           sku: string
           specs: Json
           updated_at: string
@@ -36,18 +87,22 @@ export type Database = {
         }
         Insert: {
           aesthetic?: string | null
+          availability?: string
           brand?: string | null
           category?: string | null
           colour?: string | null
           created_at?: string
           description?: string | null
+          discount_percent?: number
           ean?: string | null
           energy_label?: string | null
           family?: string | null
           images?: string[]
+          is_published?: boolean
           main_image?: string | null
           name: string
           pdf?: string | null
+          price_amd?: number | null
           sku: string
           specs?: Json
           updated_at?: string
@@ -55,22 +110,95 @@ export type Database = {
         }
         Update: {
           aesthetic?: string | null
+          availability?: string
           brand?: string | null
           category?: string | null
           colour?: string | null
           created_at?: string
           description?: string | null
+          discount_percent?: number
           ean?: string | null
           energy_label?: string | null
           family?: string | null
           images?: string[]
+          is_published?: boolean
           main_image?: string | null
           name?: string
           pdf?: string | null
+          price_amd?: number | null
           sku?: string
           specs?: Json
           updated_at?: string
           url?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      site_content: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -79,10 +207,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -209,6 +343,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
