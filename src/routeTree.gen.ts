@@ -16,6 +16,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductSkuRouteImport } from './routes/product.$sku'
 import { Route as CollectionSlugRouteImport } from './routes/collection.$slug'
+import { Route as ApiSitemapDotxmlRouteImport } from './routes/api/sitemap[.]xml'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin/products'
@@ -57,6 +58,11 @@ const ProductSkuRoute = ProductSkuRouteImport.update({
 const CollectionSlugRoute = CollectionSlugRouteImport.update({
   id: '/collection/$slug',
   path: '/collection/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSitemapDotxmlRoute = ApiSitemapDotxmlRouteImport.update({
+  id: '/api/sitemap.xml',
+  path: '/api/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/catalog': typeof CatalogRoute
   '/sale': typeof SaleRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/api/sitemap.xml': typeof ApiSitemapDotxmlRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$sku': typeof ProductSkuRoute
   '/admin/collections': typeof AuthenticatedAdminCollectionsRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
   '/sale': typeof SaleRoute
+  '/api/sitemap.xml': typeof ApiSitemapDotxmlRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$sku': typeof ProductSkuRoute
   '/admin/collections': typeof AuthenticatedAdminCollectionsRoute
@@ -144,6 +152,7 @@ export interface FileRoutesById {
   '/catalog': typeof CatalogRoute
   '/sale': typeof SaleRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/api/sitemap.xml': typeof ApiSitemapDotxmlRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$sku': typeof ProductSkuRoute
   '/_authenticated/admin/collections': typeof AuthenticatedAdminCollectionsRoute
@@ -162,6 +171,7 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/sale'
     | '/admin'
+    | '/api/sitemap.xml'
     | '/collection/$slug'
     | '/product/$sku'
     | '/admin/collections'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/catalog'
     | '/sale'
+    | '/api/sitemap.xml'
     | '/collection/$slug'
     | '/product/$sku'
     | '/admin/collections'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/sale'
     | '/_authenticated/admin'
+    | '/api/sitemap.xml'
     | '/collection/$slug'
     | '/product/$sku'
     | '/_authenticated/admin/collections'
@@ -210,6 +222,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CatalogRoute: typeof CatalogRoute
   SaleRoute: typeof SaleRoute
+  ApiSitemapDotxmlRoute: typeof ApiSitemapDotxmlRoute
   CollectionSlugRoute: typeof CollectionSlugRoute
   ProductSkuRoute: typeof ProductSkuRoute
 }
@@ -263,6 +276,13 @@ declare module '@tanstack/react-router' {
       path: '/collection/$slug'
       fullPath: '/collection/$slug'
       preLoaderRoute: typeof CollectionSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/sitemap.xml': {
+      id: '/api/sitemap.xml'
+      path: '/api/sitemap.xml'
+      fullPath: '/api/sitemap.xml'
+      preLoaderRoute: typeof ApiSitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -380,6 +400,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CatalogRoute: CatalogRoute,
   SaleRoute: SaleRoute,
+  ApiSitemapDotxmlRoute: ApiSitemapDotxmlRoute,
   CollectionSlugRoute: CollectionSlugRoute,
   ProductSkuRoute: ProductSkuRoute,
 }
