@@ -151,6 +151,7 @@ function ProductPage() {
                 modelGroup={product.model_group ?? null}
                 currentSku={product.sku}
                 currentColour={product.colour}
+                currentImage={product.main_image}
               />
 
               {product.description && (

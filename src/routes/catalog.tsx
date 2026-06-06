@@ -11,7 +11,7 @@ import {
 } from "@/lib/products";
 import { z } from "zod";
 import { useState } from "react";
-import { SlidersHorizontal, X } from "lucide-react";
+import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 
 const searchSchema = z.object({
   category: z.string().optional(),
@@ -127,6 +127,30 @@ function CatalogPage() {
         />
       </div>
 
+      {activeCount > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {q && (
+            <FilterPill onClear={() => navigate({ search: (prev: CatalogSearch) => ({ ...prev, q: undefined, page: 1 }) })}>
+              «{q}»
+            </FilterPill>
+          )}
+          {flag && (
+            <FilterPill onClear={() => navigate({ search: (prev: CatalogSearch) => ({ ...prev, flag: undefined, page: 1 }) })}>
+              {FLAG_LABELS[flag]}
+            </FilterPill>
+          )}
+          {aesthetics.map((v) => (
+            <FilterPill key={v} onClear={() => toggleIn("aesthetic", v)}>{v}</FilterPill>
+          ))}
+          {families.map((v) => (
+            <FilterPill key={v} onClear={() => toggleIn("family", v)}>{v}</FilterPill>
+          ))}
+          {colours.map((v) => (
+            <FilterPill key={v} onClear={() => toggleIn("colour", v)}>{v}</FilterPill>
+          ))}
+        </div>
+      )}
+
       <FacetGroup label="Маркетинг">
         {(
           [
@@ -150,7 +174,7 @@ function CatalogPage() {
         ))}
       </FacetGroup>
 
-      <FacetGroup label="Категории">
+      <FacetGroup label="Категории" defaultOpen>
         <button
           onClick={() => navigate({ search: (prev: CatalogSearch) => ({ ...prev, category: undefined, page: 1 }) })}
           className={`block w-full text-left text-sm ${!category ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
@@ -173,7 +197,10 @@ function CatalogPage() {
 
       <FacetGroup label="Цвет">
         <div className="flex flex-wrap gap-2">
-          {facetsQuery.data?.colours.slice(0, 30).map((c) => {
+          {facetsQuery.data?.colours
+            .filter((c) => c.value !== "Decorated / Special")
+            .slice(0, 30)
+            .map((c) => {
             const hex = swatchesQuery.data?.find((s) => s.colour === c.value)?.hex ?? "#d4d4d4";
             const active = colours.includes(c.value);
             return (
@@ -190,33 +217,19 @@ function CatalogPage() {
       </FacetGroup>
 
       <FacetGroup label="Эстетика">
-        {facetsQuery.data?.aesthetics.map((a) => (
-          <label key={a.value} className="flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={aesthetics.includes(a.value)}
-              onChange={() => toggleIn("aesthetic", a.value)}
-              className="h-3.5 w-3.5 accent-foreground"
-            />
-            <span className="flex-1">{a.value}</span>
-            <span className="text-[11px] text-muted-foreground">{a.count}</span>
-          </label>
-        ))}
+        <ScrollableFacet
+          items={facetsQuery.data?.aesthetics ?? []}
+          selected={aesthetics}
+          onToggle={(v) => toggleIn("aesthetic", v)}
+        />
       </FacetGroup>
 
       <FacetGroup label="Тип техники">
-        {facetsQuery.data?.families.slice(0, 20).map((f) => (
-          <label key={f.value} className="flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={families.includes(f.value)}
-              onChange={() => toggleIn("family", f.value)}
-              className="h-3.5 w-3.5 accent-foreground"
-            />
-            <span className="flex-1">{f.value}</span>
-            <span className="text-[11px] text-muted-foreground">{f.count}</span>
-          </label>
-        ))}
+        <ScrollableFacet
+          items={facetsQuery.data?.families ?? []}
+          selected={families}
+          onToggle={(v) => toggleIn("family", v)}
+        />
       </FacetGroup>
 
       {activeCount > 0 && (
@@ -274,7 +287,7 @@ function CatalogPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[260px_1fr]">
-            <aside className="hidden lg:block">{filters}</aside>
+            <aside className="hidden lg:block lg:sticky lg:top-28 lg:self-start lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:pr-2">{filters}</aside>
 
             <section>
               {productsQuery.isLoading ? (
@@ -383,11 +396,86 @@ function CatalogPage() {
   );
 }
 
-function FacetGroup({ label, children }: { label: string; children: React.ReactNode }) {
+const FLAG_LABELS: Record<string, string> = {
+  is_bestseller: "Хит продаж",
+  is_new: "Новинки",
+  is_special_offer: "Спецпредложения",
+  sale: "Со скидкой",
+  is_featured: "Избранное",
+};
+
+function FacetGroup({
+  label,
+  children,
+  defaultOpen = true,
+}: {
+  label: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <div>
-      <p className="eyebrow mb-3 text-muted-foreground">{label}</p>
-      <div className="space-y-1.5">{children}</div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="mb-3 flex w-full items-center justify-between text-left"
+      >
+        <span className="eyebrow text-muted-foreground">{label}</span>
+        <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${open ? "" : "-rotate-90"}`} />
+      </button>
+      {open && <div className="space-y-1.5">{children}</div>}
+    </div>
+  );
+}
+
+function FilterPill({ children, onClear }: { children: React.ReactNode; onClear: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClear}
+      className="inline-flex items-center gap-1.5 rounded-full bg-foreground/5 px-3 py-1 text-[11px] text-foreground hover:bg-foreground/10"
+    >
+      <span>{children}</span>
+      <X className="h-3 w-3" />
+    </button>
+  );
+}
+
+function ScrollableFacet({
+  items,
+  selected,
+  onToggle,
+}: {
+  items: Array<{ value: string; count: number }>;
+  selected: string[];
+  onToggle: (v: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? items : items.slice(0, 8);
+  return (
+    <div className="space-y-1.5">
+      {shown.map((item) => (
+        <label key={item.value} className="flex cursor-pointer items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={selected.includes(item.value)}
+            onChange={() => onToggle(item.value)}
+            className="h-3.5 w-3.5 accent-foreground"
+          />
+          <span className="flex-1">{item.value}</span>
+          <span className="text-[11px] text-muted-foreground">{item.count}</span>
+        </label>
+      ))}
+      {items.length > 8 && (
+        <button
+          type="button"
+          onClick={() => setExpanded((e) => !e)}
+          className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground"
+        >
+          {expanded ? "Свернуть" : `Ещё ${items.length - 8}`}
+        </button>
+      )}
     </div>
   );
 }
