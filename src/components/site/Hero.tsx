@@ -25,20 +25,21 @@ export function Hero() {
         width={1920}
         height={1280}
         fetchPriority="high"
-        className="absolute inset-0 h-full w-full animate-hero-zoom object-cover"
+        className="absolute inset-0 h-full w-full animate-hero-zoom object-cover object-[70%_center] md:object-center"
       />
-      {/* Soft gradients for legibility */}
-      <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/55 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-background/20" />
+      {/* Soft gradients for legibility — heavier on mobile to keep text readable */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/40 to-background/85 md:hidden" />
+      <div className="absolute inset-0 hidden bg-gradient-to-r from-background/95 via-background/55 to-transparent md:block" />
+      <div className="absolute inset-0 hidden bg-gradient-to-t from-background/40 via-transparent to-background/20 md:block" />
 
       {/* Headline block */}
-      <div className="relative z-10 mx-auto flex h-full max-w-[1480px] flex-col justify-center px-6 pt-28 pb-32 md:px-10 md:pt-32 md:pb-36">
+      <div className="relative z-10 mx-auto flex h-full max-w-[1480px] flex-col justify-center px-5 pt-24 pb-24 md:px-10 md:pt-32 md:pb-36">
         <div className="flex items-center gap-3 animate-hero-rise" style={{ animationDelay: "100ms" }}>
           <span className="inline-block h-2 w-2 rounded-full bg-[color:var(--brand)]" />
           <span className="eyebrow text-foreground/70">{t("hero.eyebrow")}</span>
         </div>
 
-        <h1 className="mt-5 max-w-[14ch] display-xl text-[clamp(2.5rem,7.5vw,7.5rem)] text-foreground">
+        <h1 className="mt-4 max-w-[14ch] display-xl text-[clamp(2.25rem,7.5vw,7.5rem)] text-foreground">
           {title.split("\n").map((line, i) => (
             <span
               key={i}
@@ -58,12 +59,12 @@ export function Hero() {
         </p>
 
         <div
-          className="mt-8 flex animate-hero-rise flex-wrap items-center gap-5"
+          className="mt-8 flex animate-hero-rise flex-wrap items-center gap-4 md:gap-5"
           style={{ animationDelay: "850ms" }}
         >
           <Link
             to="/catalog"
-            className="group inline-flex items-center gap-3 rounded-full bg-foreground px-8 py-4 text-xs uppercase tracking-[0.22em] text-background transition-transform hover:-translate-y-0.5"
+            className="group inline-flex items-center gap-3 rounded-full bg-foreground px-6 py-3.5 text-[11px] uppercase tracking-[0.22em] text-background transition-transform hover:-translate-y-0.5 md:px-8 md:py-4 md:text-xs"
           >
             {t("hero.cta")}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

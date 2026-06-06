@@ -248,17 +248,16 @@ function CatalogPage() {
       <Header />
       <main className="pt-32 pb-20">
         <div className="mx-auto max-w-[1400px] px-6 md:px-10">
-          <div className="mb-10 flex items-end justify-between gap-6">
-            <div>
-              <p className="eyebrow text-muted-foreground">Каталог</p>
-              <h1 className="mt-3 font-serif text-4xl md:text-6xl">
-                {categoryName ?? "Вся техника Smeg"}
-              </h1>
-              <p className="mt-3 text-sm text-muted-foreground">
-                {total > 0 ? `${total} моделей` : productsQuery.isLoading ? "Загрузка…" : "Нет результатов"}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
+          <div className="mb-8 md:mb-10">
+            <p className="eyebrow text-muted-foreground">Каталог</p>
+            <h1 className="mt-3 font-serif text-3xl sm:text-4xl md:text-6xl">
+              {categoryName ?? "Вся техника Smeg"}
+            </h1>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {total > 0 ? `${total} моделей` : productsQuery.isLoading ? "Загрузка…" : "Нет результатов"}
+            </p>
+
+            <div className="mt-5 flex items-center gap-3">
               <select
                 value={sort ?? "name"}
                 onChange={(e) =>
@@ -270,7 +269,7 @@ function CatalogPage() {
                     }),
                   })
                 }
-                className="rounded-sm border border-border bg-background px-3 py-2 text-xs uppercase tracking-[0.14em]"
+                className="flex-1 rounded-sm border border-border bg-background px-3 py-2 text-xs uppercase tracking-[0.14em] md:flex-none"
               >
                 <option value="name">По названию</option>
                 <option value="price-asc">Цена ↑</option>
@@ -278,7 +277,7 @@ function CatalogPage() {
               </select>
               <button
                 onClick={() => setMobileOpen(true)}
-                className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs uppercase tracking-[0.14em] lg:hidden"
+                className="flex flex-1 items-center justify-center gap-2 rounded-full border border-border px-4 py-2 text-xs uppercase tracking-[0.14em] md:flex-none lg:hidden"
               >
                 <SlidersHorizontal className="h-3.5 w-3.5" /> Фильтры
                 {activeCount > 0 && <span className="rounded-full bg-foreground px-1.5 text-[10px] text-background">{activeCount}</span>}
@@ -298,7 +297,7 @@ function CatalogPage() {
                 </div>
               ) : productsQuery.data?.items.length ? (
                 <>
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-x-6 sm:gap-y-10 md:grid-cols-3 lg:grid-cols-4">
                     {productsQuery.data.items.map((p) => (
                       <Link
                         key={p.sku}
