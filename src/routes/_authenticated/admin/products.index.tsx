@@ -3,7 +3,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Eye, EyeOff, Pencil } from "lucide-react";
+import { Eye, EyeOff, Pencil, Sparkles, Flame, Tag } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/products/")({
   component: AdminProducts,
@@ -21,9 +21,12 @@ function AdminProducts() {
     queryFn: async () => {
       let qb = supabase
         .from("products")
-        .select("sku,name,category,main_image,price_amd,discount_percent,availability,is_published", {
+        .select(
+          "sku,name,category,main_image,price_amd,discount_percent,availability,is_published,is_bestseller,is_new,is_special_offer",
+          {
           count: "exact",
-        })
+          },
+        )
         .order("name", { ascending: true })
         .range((page - 1) * PAGE, page * PAGE - 1);
       if (q.trim()) qb = qb.or(`sku.ilike.%${q}%,name.ilike.%${q}%`);
@@ -33,15 +36,17 @@ function AdminProducts() {
     },
   });
 
-  const togglePub = useMutation({
-    mutationFn: async ({ sku, value }: { sku: string; value: boolean }) => {
-      const { error } = await supabase.from("products").update({ is_published: value }).eq("sku", sku);
+  const toggleFlag = useMutation({
+    mutationFn: async ({ sku, field, value }: { sku: string; field: string; value: boolean }) => {
+      const { error } = await supabase
+        .from("products")
+        .update({ [field]: value })
+        .eq("sku", sku);
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-products"] });
       qc.invalidateQueries({ queryKey: ["admin-stats"] });
-      toast.success("Сохранено");
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Ошибка"),
   });
@@ -77,6 +82,7 @@ function AdminProducts() {
               <th className="p-3">Категория</th>
               <th className="p-3">Цена, ֏</th>
               <th className="p-3">Наличие</th>
+              <th className="p-3 text-center">Метки</th>
               <th className="p-3 text-center">Виден</th>
               <th className="p-3"></th>
             </tr>
@@ -105,9 +111,34 @@ function AdminProducts() {
                 <td className="p-3 text-xs">
                   <AvailBadge value={p.availability} />
                 </td>
+                <td className="p-3">
+                  <div className="flex items-center justify-center gap-1.5">
+                    <FlagToggle
+                      active={p.is_bestseller}
+                      onClick={() => toggleFlag.mutate({ sku: p.sku, field: "is_bestseller", value: !p.is_bestseller })}
+                      title="Хит продаж"
+                    >
+                      <Flame className="h-3.5 w-3.5" />
+                    </FlagToggle>
+                    <FlagToggle
+                      active={p.is_new}
+                      onClick={() => toggleFlag.mutate({ sku: p.sku, field: "is_new", value: !p.is_new })}
+                      title="Новинка"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                    </FlagToggle>
+                    <FlagToggle
+                      active={p.is_special_offer}
+                      onClick={() => toggleFlag.mutate({ sku: p.sku, field: "is_special_offer", value: !p.is_special_offer })}
+                      title="Спецпредложение"
+                    >
+                      <Tag className="h-3.5 w-3.5" />
+                    </FlagToggle>
+                  </div>
+                </td>
                 <td className="p-3 text-center">
                   <button
-                    onClick={() => togglePub.mutate({ sku: p.sku, value: !p.is_published })}
+                    onClick={() => toggleFlag.mutate({ sku: p.sku, field: "is_published", value: !p.is_published })}
                     className="inline-flex"
                     aria-label="toggle"
                   >
@@ -168,4 +199,31 @@ function AvailBadge({ value }: { value: string }) {
   };
   const v = map[value] ?? map.on_request;
   return <span className={`rounded-full px-2 py-1 ${v.cls}`}>{v.label}</span>;
+}
+
+function FlagToggle({
+  active,
+  onClick,
+  title,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={onClick}
+      className={`flex h-6 w-6 items-center justify-center rounded-full border transition ${
+        active
+          ? "border-foreground bg-foreground text-background"
+          : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+      }`}
+    >
+      {children}
+    </button>
+  );
 }
