@@ -1,0 +1,1 @@
+UPDATE public.themes SET background_image='/__l5e/assets-v1/cbbb9c2e-0c8f-4a22-80e1-8424c6f30fe4/porsche.jpg', background_color='#1a1a1a', accent_color='#d5001c' WHERE key='porsche';
