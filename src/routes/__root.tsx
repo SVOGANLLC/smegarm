@@ -78,14 +78,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Smeg Armenia — Official Italian appliances in Yerevan" },
+      {
+        name: "description",
+        content:
+          "Official Smeg representative in Armenia. Iconic Italian refrigerators, ovens, coffee machines and small appliances. Showroom at Nar-Dos 2, Yerevan.",
+      },
+      { name: "author", content: "Smeg Armenia" },
+      { name: "theme-color", content: "#f7f2e9" },
+      { property: "og:title", content: "Smeg Armenia — Italian appliances since 1948" },
+      {
+        property: "og:description",
+        content:
+          "Discover the official Smeg collection in Armenia. Visit our Yerevan showroom at Nar-Dos 2.",
+      },
+      { property: "og:site_name", content: "Smeg Armenia" },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       {
