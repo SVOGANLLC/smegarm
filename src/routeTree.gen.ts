@@ -18,7 +18,6 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductSkuRouteImport } from './routes/product.$sku'
 import { Route as CollectionSlugRouteImport } from './routes/collection.$slug'
-import { Route as ApiSitemapDotxmlRouteImport } from './routes/api/sitemap[.]xml'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin/products'
@@ -70,11 +69,6 @@ const ProductSkuRoute = ProductSkuRouteImport.update({
 const CollectionSlugRoute = CollectionSlugRouteImport.update({
   id: '/collection/$slug',
   path: '/collection/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiSitemapDotxmlRoute = ApiSitemapDotxmlRouteImport.update({
-  id: '/api/sitemap.xml',
-  path: '/api/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
@@ -132,7 +126,6 @@ export interface FileRoutesByFullPath {
   '/sale': typeof SaleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
-  '/api/sitemap.xml': typeof ApiSitemapDotxmlRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$sku': typeof ProductSkuRoute
   '/admin/collections': typeof AuthenticatedAdminCollectionsRoute
@@ -150,7 +143,6 @@ export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/api/sitemap.xml': typeof ApiSitemapDotxmlRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$sku': typeof ProductSkuRoute
   '/admin/collections': typeof AuthenticatedAdminCollectionsRoute
@@ -170,7 +162,6 @@ export interface FileRoutesById {
   '/sale': typeof SaleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
-  '/api/sitemap.xml': typeof ApiSitemapDotxmlRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$sku': typeof ProductSkuRoute
   '/_authenticated/admin/collections': typeof AuthenticatedAdminCollectionsRoute
@@ -191,7 +182,6 @@ export interface FileRouteTypes {
     | '/sale'
     | '/sitemap.xml'
     | '/admin'
-    | '/api/sitemap.xml'
     | '/collection/$slug'
     | '/product/$sku'
     | '/admin/collections'
@@ -209,7 +199,6 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sale'
     | '/sitemap.xml'
-    | '/api/sitemap.xml'
     | '/collection/$slug'
     | '/product/$sku'
     | '/admin/collections'
@@ -228,7 +217,6 @@ export interface FileRouteTypes {
     | '/sale'
     | '/sitemap.xml'
     | '/_authenticated/admin'
-    | '/api/sitemap.xml'
     | '/collection/$slug'
     | '/product/$sku'
     | '/_authenticated/admin/collections'
@@ -248,7 +236,6 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SaleRoute: typeof SaleRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  ApiSitemapDotxmlRoute: typeof ApiSitemapDotxmlRoute
   CollectionSlugRoute: typeof CollectionSlugRoute
   ProductSkuRoute: typeof ProductSkuRoute
 }
@@ -316,13 +303,6 @@ declare module '@tanstack/react-router' {
       path: '/collection/$slug'
       fullPath: '/collection/$slug'
       preLoaderRoute: typeof CollectionSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/sitemap.xml': {
-      id: '/api/sitemap.xml'
-      path: '/api/sitemap.xml'
-      fullPath: '/api/sitemap.xml'
-      preLoaderRoute: typeof ApiSitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -442,10 +422,19 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SaleRoute: SaleRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  ApiSitemapDotxmlRoute: ApiSitemapDotxmlRoute,
   CollectionSlugRoute: CollectionSlugRoute,
   ProductSkuRoute: ProductSkuRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
