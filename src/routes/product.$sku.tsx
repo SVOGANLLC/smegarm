@@ -93,10 +93,10 @@ function ProductPage() {
       <Header />
       <main className="pt-32 pb-24">
         <div className="mx-auto max-w-[1400px] px-6 md:px-10">
-          {theme && (
+          {theme && product.theme_key && (
             <Link
               to="/catalog"
-              search={{ q: theme.name, page: 1 }}
+              search={{ theme: product.theme_key, page: 1 }}
               className="eyebrow mb-6 inline-block rounded-full bg-background/85 backdrop-blur-sm px-4 py-1.5 text-foreground shadow-sm transition hover:bg-background"
               style={theme.accent_color ? { color: theme.accent_color } : undefined}
             >

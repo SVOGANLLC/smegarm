@@ -19,6 +19,7 @@ const searchSchema = z.object({
   colour: z.string().optional(), // csv
   family: z.string().optional(),
   aesthetic: z.string().optional(),
+  theme: z.string().optional(),
   flag: z.enum(["is_featured", "is_new", "is_bestseller", "is_special_offer", "sale"]).optional(),
   sort: z.enum(["name", "price-asc", "price-desc"]).optional(),
   page: z.number().int().min(1).default(1),
@@ -58,7 +59,7 @@ const PAGE_SIZE = 36;
 
 function CatalogPage() {
   const search = Route.useSearch();
-  const { category, q, page, flag, sort } = search;
+  const { category, q, page, flag, sort, theme } = search;
   const colours = split(search.colour);
   const families = split(search.family);
   const aesthetics = split(search.aesthetic);
@@ -78,7 +79,7 @@ function CatalogPage() {
     : undefined;
 
   const productsQuery = useQuery({
-    queryKey: ["catalog", categoryName ?? null, q ?? "", colours, families, aesthetics, flag ?? "", sort ?? "", page],
+    queryKey: ["catalog", categoryName ?? null, q ?? "", colours, families, aesthetics, theme ?? "", flag ?? "", sort ?? "", page],
     queryFn: () =>
       fetchCatalog({
         category: categoryName,
@@ -86,6 +87,7 @@ function CatalogPage() {
         colours: colours.length ? colours : undefined,
         families: families.length ? families : undefined,
         aesthetics: aesthetics.length ? aesthetics : undefined,
+        theme: theme || undefined,
         flag,
         sort,
         limit: PAGE_SIZE,
@@ -107,7 +109,7 @@ function CatalogPage() {
     navigate({ search: { page: 1 } as CatalogSearch });
 
   const activeCount =
-    colours.length + families.length + aesthetics.length + (flag ? 1 : 0) + (q ? 1 : 0);
+    colours.length + families.length + aesthetics.length + (flag ? 1 : 0) + (q ? 1 : 0) + (theme ? 1 : 0);
 
   const filters = (
     <div className="space-y-7">
@@ -132,6 +134,11 @@ function CatalogPage() {
           {q && (
             <FilterPill onClear={() => navigate({ search: (prev: CatalogSearch) => ({ ...prev, q: undefined, page: 1 }) })}>
               «{q}»
+            </FilterPill>
+          )}
+          {theme && (
+            <FilterPill onClear={() => navigate({ search: (prev: CatalogSearch) => ({ ...prev, theme: undefined, page: 1 }) })}>
+              ✦ {THEME_LABELS[theme] ?? theme}
             </FilterPill>
           )}
           {flag && (
@@ -401,6 +408,15 @@ const FLAG_LABELS: Record<string, string> = {
   is_special_offer: "Спецпредложения",
   sale: "Со скидкой",
   is_featured: "Избранное",
+};
+
+const THEME_LABELS: Record<string, string> = {
+  dg_sicily: "Sicily Is My Love",
+  dg_blu_mediterraneo: "Blu Mediterraneo",
+  dg_divina_cucina: "Divina Cucina",
+  porsche_green: "Porsche Shade Green",
+  porsche_white: "Porsche Shade White",
+  porsche_917: "Porsche 917",
 };
 
 function FacetGroup({
