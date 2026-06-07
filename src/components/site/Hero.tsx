@@ -96,10 +96,6 @@ export function Hero() {
           className="mt-10 flex animate-hero-rise flex-col gap-3 sm:flex-row sm:items-center sm:gap-5"
           style={{ animationDelay: "1050ms" }}
         >
-          <div className="flex items-center gap-3">
-            <span className="eyebrow text-foreground/60">Color</span>
-            <span className="font-serif text-sm italic text-foreground/85">{active.name}</span>
-          </div>
           <div
             role="radiogroup"
             aria-label="Choose appliance color"
