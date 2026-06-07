@@ -87,7 +87,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Official Smeg representative in Armenia. Iconic Italian refrigerators, ovens, coffee machines and small appliances. Showroom at Nar-Dos 2, Yerevan.",
       },
       { name: "author", content: "Smeg Armenia" },
-      { name: "theme-color", content: "#f7f2e9" },
+      { name: "theme-color", content: "#0F0F10" },
       { property: "og:title", content: "Smeg Armenia — Official Italian appliances in Yerevan" },
       {
         property: "og:description",
@@ -108,6 +108,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap",
       },
     ],
   }),
