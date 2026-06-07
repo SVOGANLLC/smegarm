@@ -26,6 +26,7 @@ import { Route as AuthenticatedAdminToolsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminTeamRouteImport } from './routes/_authenticated/admin/team'
 import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin/products'
 import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenticated/admin/orders'
+import { Route as AuthenticatedAdminNotificationsRouteImport } from './routes/_authenticated/admin/notifications'
 import { Route as AuthenticatedAdminInquiriesRouteImport } from './routes/_authenticated/admin/inquiries'
 import { Route as AuthenticatedAdminContentRouteImport } from './routes/_authenticated/admin/content'
 import { Route as AuthenticatedAdminCollectionsRouteImport } from './routes/_authenticated/admin/collections'
@@ -119,6 +120,12 @@ const AuthenticatedAdminOrdersRoute =
     path: '/orders',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminNotificationsRoute =
+  AuthenticatedAdminNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminInquiriesRoute =
   AuthenticatedAdminInquiriesRouteImport.update({
     id: '/inquiries',
@@ -171,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/admin/collections': typeof AuthenticatedAdminCollectionsRoute
   '/admin/content': typeof AuthenticatedAdminContentRoute
   '/admin/inquiries': typeof AuthenticatedAdminInquiriesRoute
+  '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
   '/admin/team': typeof AuthenticatedAdminTeamRoute
@@ -194,6 +202,7 @@ export interface FileRoutesByTo {
   '/admin/collections': typeof AuthenticatedAdminCollectionsRoute
   '/admin/content': typeof AuthenticatedAdminContentRoute
   '/admin/inquiries': typeof AuthenticatedAdminInquiriesRoute
+  '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/admin/tools': typeof AuthenticatedAdminToolsRoute
@@ -219,6 +228,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/collections': typeof AuthenticatedAdminCollectionsRoute
   '/_authenticated/admin/content': typeof AuthenticatedAdminContentRoute
   '/_authenticated/admin/inquiries': typeof AuthenticatedAdminInquiriesRoute
+  '/_authenticated/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
   '/_authenticated/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
   '/_authenticated/admin/team': typeof AuthenticatedAdminTeamRoute
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/admin/collections'
     | '/admin/content'
     | '/admin/inquiries'
+    | '/admin/notifications'
     | '/admin/orders'
     | '/admin/products'
     | '/admin/team'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | '/admin/collections'
     | '/admin/content'
     | '/admin/inquiries'
+    | '/admin/notifications'
     | '/admin/orders'
     | '/admin/team'
     | '/admin/tools'
@@ -292,6 +304,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/collections'
     | '/_authenticated/admin/content'
     | '/_authenticated/admin/inquiries'
+    | '/_authenticated/admin/notifications'
     | '/_authenticated/admin/orders'
     | '/_authenticated/admin/products'
     | '/_authenticated/admin/team'
@@ -438,6 +451,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminOrdersRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/notifications': {
+      id: '/_authenticated/admin/notifications'
+      path: '/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AuthenticatedAdminNotificationsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/inquiries': {
       id: '/_authenticated/admin/inquiries'
       path: '/inquiries'
@@ -503,6 +523,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminCollectionsRoute: typeof AuthenticatedAdminCollectionsRoute
   AuthenticatedAdminContentRoute: typeof AuthenticatedAdminContentRoute
   AuthenticatedAdminInquiriesRoute: typeof AuthenticatedAdminInquiriesRoute
+  AuthenticatedAdminNotificationsRoute: typeof AuthenticatedAdminNotificationsRoute
   AuthenticatedAdminOrdersRoute: typeof AuthenticatedAdminOrdersRoute
   AuthenticatedAdminProductsRoute: typeof AuthenticatedAdminProductsRouteWithChildren
   AuthenticatedAdminTeamRoute: typeof AuthenticatedAdminTeamRoute
@@ -515,6 +536,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminCollectionsRoute: AuthenticatedAdminCollectionsRoute,
     AuthenticatedAdminContentRoute: AuthenticatedAdminContentRoute,
     AuthenticatedAdminInquiriesRoute: AuthenticatedAdminInquiriesRoute,
+    AuthenticatedAdminNotificationsRoute: AuthenticatedAdminNotificationsRoute,
     AuthenticatedAdminOrdersRoute: AuthenticatedAdminOrdersRoute,
     AuthenticatedAdminProductsRoute:
       AuthenticatedAdminProductsRouteWithChildren,

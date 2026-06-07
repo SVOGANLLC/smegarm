@@ -97,5 +97,21 @@ export const createOrder = createServerFn({ method: "POST" })
       throw new Error(iErr.message);
     }
 
+    // Fire-and-forget Telegram notification to team
+    try {
+      const { broadcastToTeam } = await import("./telegram.functions");
+      const lines = [
+        `🆕 <b>Новый заказ №${order.order_no}</b>`,
+        `Клиент: ${data.customer_name}`,
+        `Телефон: ${data.customer_phone}`,
+        `Сумма: ${total.toLocaleString("ru-RU")} ֏ · позиций: ${itemsCount}`,
+        `Доставка: ${data.delivery_method} · Оплата: ${data.payment_method}`,
+        ...(data.comment ? [`Комментарий: ${data.comment}`] : []),
+      ];
+      await broadcastToTeam(lines.join("\n"));
+    } catch (e) {
+      console.error("telegram notify failed", e);
+    }
+
     return { id: order.id, order_no: order.order_no, total_amd: total };
   });
