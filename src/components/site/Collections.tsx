@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n";
-import { SectionHeader, Reveal } from "./Section";
+import { Reveal } from "./Section";
 import { fetchCollections, type Collection } from "@/lib/products";
 
 function CollectionRow({ c, i }: { c: Collection; i: number }) {
