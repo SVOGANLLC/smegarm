@@ -36,7 +36,7 @@ export function ColorSwitcher({
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
-  });
+  }).sort((a, b) => (a.colour ?? "").localeCompare(b.colour ?? ""));
 
   if (!distinct.length) return null;
 
