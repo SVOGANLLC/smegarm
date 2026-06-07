@@ -147,6 +147,32 @@ export type Theme = {
 
 export type Variant = { sku: string; colour: string | null; main_image: string | null };
 
+export type SearchSuggestion = {
+  sku: string;
+  name: string;
+  category: string | null;
+  colour: string | null;
+  main_image: string | null;
+  price_amd: number | null;
+  is_published: boolean;
+  rank: number;
+};
+
+export async function searchProductsRpc(
+  query: string,
+  opts: { onlyPublished?: boolean; limit?: number } = {},
+): Promise<SearchSuggestion[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+  const { data, error } = await supabase.rpc("search_products", {
+    q: trimmed,
+    only_published: opts.onlyPublished ?? true,
+    max_rows: opts.limit ?? 8,
+  });
+  if (error) throw error;
+  return (data ?? []) as SearchSuggestion[];
+}
+
 export async function fetchColorSwatches(): Promise<ColorSwatch[]> {
   const { data, error } = await supabase
     .from("color_swatches")
@@ -226,7 +252,18 @@ export async function fetchCatalog(f: CatalogFilters): Promise<{ items: Product[
       { count: "exact" },
     );
   if (f.category) q = q.eq("category", f.category);
-  if (f.search) q = q.or(`name.ilike.%${f.search}%,sku.ilike.%${f.search}%`);
+  if (f.search) {
+    // Use the search RPC for matching SKUs, then constrain by them; keeps other filters working.
+    const { data: rows, error: e } = await supabase.rpc("search_products", {
+      q: f.search,
+      only_published: true,
+      max_rows: 500,
+    });
+    if (e) throw e;
+    const skus = (rows ?? []).map((r: { sku: string }) => r.sku);
+    if (!skus.length) return { items: [], total: 0 };
+    q = q.in("sku", skus);
+  }
   if (f.families?.length) q = q.in("family", f.families);
   if (f.aesthetics?.length) q = q.in("aesthetic", f.aesthetics);
   if (f.colours?.length) q = q.in("colour", f.colours);
