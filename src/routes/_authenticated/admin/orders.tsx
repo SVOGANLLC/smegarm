@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ChevronDown, Loader2, Phone, MessageCircle, LayoutGrid, List, History, Save } from "lucide-react";
+import { ChevronDown, Loader2, Phone, MessageCircle, LayoutGrid, List, History, Save, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 
 export const Route = createFileRoute("/_authenticated/admin/orders")({
   component: AdminOrders,
@@ -85,6 +86,59 @@ function AdminOrders() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Ошибка"),
   });
 
+  const exportXlsx = useMutation({
+    mutationFn: async () => {
+      const list = orders.data ?? [];
+      if (!list.length) throw new Error("Нет заказов для экспорта");
+      const ids = list.map((o) => o.id);
+      const { data: itemsAll, error } = await supabase
+        .from("order_items")
+        .select("order_id, product_sku, name, qty, unit_price_amd, subtotal_amd")
+        .in("order_id", ids);
+      if (error) throw error;
+      const byOrder = new Map<string, Item[]>();
+      (itemsAll ?? []).forEach((it: any) => {
+        const arr = byOrder.get(it.order_id) ?? [];
+        arr.push(it);
+        byOrder.set(it.order_id, arr);
+      });
+      const rows = list.map((o) => {
+        const its = byOrder.get(o.id) ?? [];
+        const positions = its.map((it: any) => `${it.product_sku ?? ""} ${it.name} ×${it.qty} = ${it.subtotal_amd} ֏`).join("\n");
+        return {
+          "№": o.order_no,
+          "Дата": new Date(o.created_at).toLocaleString("ru-RU"),
+          "Статус": STATUS.find((s) => s.value === o.status)?.label ?? o.status,
+          "Клиент": o.customer_name,
+          "Телефон": o.customer_phone,
+          "Email": o.customer_email ?? "",
+          "Город": o.city ?? "",
+          "Адрес": o.address ?? "",
+          "Доставка": deliveryLabel(o.delivery_method),
+          "Оплата": paymentLabel(o.payment_method),
+          "Позиции": positions,
+          "Кол-во": its.reduce((s: number, it: any) => s + (it.qty ?? 0), 0),
+          "Сумма, ֏": o.total_amd,
+          "Комментарий клиента": o.comment ?? "",
+          "Внутренние заметки": o.internal_notes ?? "",
+          "Язык": o.lang ?? "",
+        };
+      });
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws["!cols"] = [
+        { wch: 6 }, { wch: 18 }, { wch: 14 }, { wch: 22 }, { wch: 16 }, { wch: 22 },
+        { wch: 14 }, { wch: 28 }, { wch: 18 }, { wch: 18 }, { wch: 40 }, { wch: 8 },
+        { wch: 12 }, { wch: 28 }, { wch: 28 }, { wch: 6 },
+      ];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Orders");
+      const date = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `smeg-orders-${date}.xlsx`);
+    },
+    onSuccess: () => toast.success("Экспорт готов"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Ошибка экспорта"),
+  });
+
   return (
     <div className="space-y-6">
       <header>
@@ -133,6 +187,14 @@ function AdminOrders() {
             <LayoutGrid className="h-3.5 w-3.5" /> Доска
           </button>
         </div>
+        <button
+          onClick={() => exportXlsx.mutate()}
+          disabled={exportXlsx.isPending || !orders.data?.length}
+          className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-background px-3 py-1.5 text-xs hover:bg-secondary disabled:opacity-40"
+        >
+          {exportXlsx.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+          Excel
+        </button>
       </div>
 
       {orders.isLoading && (
