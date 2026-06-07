@@ -57,14 +57,14 @@ export function Hero() {
           <span className="eyebrow text-foreground/70">{t("hero.eyebrow")}</span>
         </div>
 
-        <h1 className="mt-4 max-w-[16ch] font-sans font-light text-[clamp(1.75rem,5vw,4.5rem)] tracking-tight text-foreground">
+        <h1 className="mt-4 max-w-[18ch] font-sans font-black uppercase text-[clamp(1.5rem,4.5vw,3.5rem)] leading-[1.05] tracking-tight text-foreground">
           {title.split("\n").map((line, i) => (
             <span
               key={i}
               className="block animate-hero-rise"
               style={{ animationDelay: `${250 + i * 120}ms` }}
             >
-              {i === 1 ? <em className="italic">{line}</em> : line}
+              {line}
             </span>
           ))}
         </h1>
