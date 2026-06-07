@@ -7,6 +7,7 @@ import { ProductImageZoom } from "@/components/site/ProductImageZoom";
 import { ColorSwitcher } from "@/components/site/ColorSwitcher";
 import { AddToCartButton } from "@/components/site/AddToCartButton";
 import { useState } from "react";
+import { useI18n, pickLocalized, pickLocalizedSpecs } from "@/lib/i18n";
 
 export const Route = createFileRoute("/product/$sku")({
   loader: async ({ params, context }) => {
@@ -65,6 +66,7 @@ export const Route = createFileRoute("/product/$sku")({
 
 function ProductPage() {
   const { sku } = Route.useParams();
+  const { lang } = useI18n();
   const { data: product } = useSuspenseQuery({
     queryKey: ["product", sku],
     queryFn: () => fetchProductBySku(sku),
@@ -76,7 +78,12 @@ function ProductPage() {
   const gallery = product?.images?.length ? product.images : product?.main_image ? [product.main_image] : [];
   const [active, setActive] = useState(0);
   if (!product) return null;
-  const specEntries = Object.entries(product.specs ?? {});
+  const name = pickLocalized(product as unknown as Record<string, unknown>, "name", lang);
+  const description = pickLocalized(product as unknown as Record<string, unknown>, "description", lang);
+  const category = pickLocalized(product as unknown as Record<string, unknown>, "category", lang);
+  const colour = pickLocalized(product as unknown as Record<string, unknown>, "colour", lang);
+  const themeName = pickLocalized(theme as unknown as Record<string, unknown> | null, "name", lang);
+  const specEntries = Object.entries(pickLocalizedSpecs(product as unknown as Record<string, unknown>, lang));
 
   const themeStyle: React.CSSProperties = theme
     ? {
@@ -100,7 +107,7 @@ function ProductPage() {
               className="eyebrow mb-6 inline-block rounded-full bg-background/85 backdrop-blur-sm px-4 py-1.5 text-foreground shadow-sm transition hover:bg-background"
               style={theme.accent_color ? { color: theme.accent_color } : undefined}
             >
-              ✦ {theme.name} →
+              ✦ {themeName || theme.name} →
             </Link>
           )}
           <nav
@@ -117,7 +124,7 @@ function ProductPage() {
                   search={{ category: slugify(product.category), page: 1 }}
                   className="hover:text-foreground"
                 >
-                  {product.category}
+                  {category || product.category}
                 </Link>
               </>
             )}
@@ -126,7 +133,7 @@ function ProductPage() {
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
             <div>
               {gallery[active] ? (
-                <ProductImageZoom src={gallery[active]} alt={product.name} />
+                <ProductImageZoom src={gallery[active]} alt={name || product.name} />
               ) : (
                 <div className="flex aspect-square w-full items-center justify-center rounded-sm bg-secondary text-sm text-muted-foreground">
                   нет фото
@@ -156,11 +163,11 @@ function ProductPage() {
                   search={{ category: slugify(product.category), page: 1 }}
                   className="eyebrow text-muted-foreground transition hover:text-foreground"
                 >
-                  {product.category}
+                  {category || product.category}
                 </Link>
               )}
               <h1 className="mt-3 font-serif text-3xl md:text-5xl leading-tight">
-                {product.name}
+                {name || product.name}
               </h1>
               <p className="mt-3 text-sm text-muted-foreground">Артикул: {product.sku}</p>
 
@@ -171,10 +178,10 @@ function ProductPage() {
                 currentImage={product.main_image}
               />
 
-              {product.description && (
+              {description && (
                 <p
                   className="mt-6 text-base leading-relaxed text-foreground/80"
-                  dangerouslySetInnerHTML={{ __html: product.description }}
+                  dangerouslySetInnerHTML={{ __html: description }}
                 />
               )}
 
@@ -190,12 +197,12 @@ function ProductPage() {
                 {product.colour && product.colour !== "Decorated / Special" && (
                   <InfoLink
                     label="Цвет"
-                    value={product.colour}
+                    value={colour || product.colour}
                     to="/catalog"
                     search={{ colour: product.colour, page: 1 }}
                   />
                 )}
-                {product.colour === "Decorated / Special" && <Info label="Цвет" value={product.colour} />}
+                {product.colour === "Decorated / Special" && <Info label="Цвет" value={colour || product.colour} />}
                 {product.family && (
                   <InfoLink
                     label="Семейство"
@@ -216,7 +223,7 @@ function ProductPage() {
                 <AvailabilityBadge product={product} />
                 <AddToCartButton
                   sku={product.sku}
-                  name={product.name}
+                  name={name || product.name}
                   image={product.main_image}
                   price={(product as unknown as { price_amd?: number | null }).price_amd ?? null}
                 />
