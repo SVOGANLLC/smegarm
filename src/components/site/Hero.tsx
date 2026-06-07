@@ -109,8 +109,6 @@ export function Hero() {
                   type="button"
                   role="radio"
                   aria-checked={isActive}
-                  aria-label={c.name}
-                  title={c.name}
                   onClick={() => setActiveId(c.id)}
                   className={`relative h-6 w-6 rounded-full transition-transform duration-300 hover:scale-110 ${
                     isActive ? "scale-110" : ""
