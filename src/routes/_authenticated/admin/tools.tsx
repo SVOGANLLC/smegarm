@@ -4,7 +4,9 @@ import { useState, useRef } from "react";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Download, Upload, Percent, Loader2 } from "lucide-react";
+import { Download, Upload, Percent, Loader2, Languages } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { countUntranslated, translateBatch } from "@/lib/translate.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/tools")({
   component: AdminTools,
@@ -74,6 +76,7 @@ function AdminTools() {
       <ExportSection />
       <ImportSection />
       <BulkPriceSection />
+      <BulkTranslateSection />
     </div>
   );
 }
