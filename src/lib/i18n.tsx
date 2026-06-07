@@ -140,3 +140,33 @@ export function useI18n() {
   if (!v) throw new Error("useI18n must be used inside I18nProvider");
   return v;
 }
+
+/**
+ * Pick a localized field with fallback to the base field (RU).
+ * Example: pickLocalized(product, "name", "en")
+ *   → product.name_en (if present) else product.name
+ */
+export function pickLocalized(
+  obj: Record<string, unknown> | null | undefined,
+  base: string,
+  lang: Lang,
+): string {
+  if (!obj) return "";
+  const key = lang === "ru" ? base : `${base}_${lang}`;
+  const raw = obj[key];
+  if (typeof raw === "string" && raw.trim()) return raw;
+  const fallback = obj[base];
+  return typeof fallback === "string" ? fallback : "";
+}
+
+/** Specs JSON localized with fallback. */
+export function pickLocalizedSpecs(
+  obj: Record<string, unknown> | null | undefined,
+  lang: Lang,
+): Record<string, string> {
+  if (!obj) return {};
+  const key = lang === "ru" ? "specs" : `specs_${lang}`;
+  const raw = (obj[key] as Record<string, string> | null | undefined) ?? null;
+  if (raw && Object.keys(raw).length) return raw;
+  return (obj.specs as Record<string, string> | null | undefined) ?? {};
+}
