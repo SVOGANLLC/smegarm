@@ -7,6 +7,7 @@ import { useCart } from "@/lib/cart";
 import { createOrder } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({ meta: [{ title: "Оформление заказа — Smeg Armenia" }] }),
@@ -18,6 +19,7 @@ function CheckoutPage() {
   const navigate = useNavigate();
   const submit = useServerFn(createOrder);
   const [busy, setBusy] = useState(false);
+  const { lang } = useI18n();
 
   const [form, setForm] = useState({
     customer_name: "",
@@ -42,6 +44,7 @@ function CheckoutPage() {
       const res = await submit({
         data: {
           ...form,
+          lang,
           items: items.map((i) => ({ sku: i.sku, qty: i.qty })),
         },
       });
