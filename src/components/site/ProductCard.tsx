@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import type { ProductCard as ProductCardType } from "@/lib/products";
+import { slugify } from "@/lib/products";
 import { AddToCartButton } from "@/components/site/AddToCartButton";
 
 function formatAmd(n: number | null) {
@@ -70,7 +71,28 @@ export function ProductCard({ p }: { p: ProductCardType }) {
         <div className="mt-4 space-y-1.5">
           <h3 className="font-serif text-base text-foreground line-clamp-2">{p.name}</h3>
           <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            {[p.category, p.colour].filter(Boolean).join(" · ")}
+            {p.category && (
+              <Link
+                to="/catalog"
+                search={{ category: slugify(p.category), page: 1 }}
+                onClick={(e) => e.stopPropagation()}
+                className="hover:text-foreground"
+              >
+                {p.category}
+              </Link>
+            )}
+            {p.category && p.colour ? " · " : ""}
+            {p.colour && p.colour !== "Decorated / Special" && (
+              <Link
+                to="/catalog"
+                search={{ colour: p.colour, page: 1 }}
+                onClick={(e) => e.stopPropagation()}
+                className="hover:text-foreground"
+              >
+                {p.colour}
+              </Link>
+            )}
+            {p.colour === "Decorated / Special" && <span>{p.colour}</span>}
           </p>
           <PriceBlock p={p} />
         </div>
