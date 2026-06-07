@@ -297,6 +297,7 @@ export type Database = {
           price_old: number | null
           promo_ends_at: string | null
           promo_starts_at: string | null
+          search_tsv: unknown
           seo_description: string | null
           seo_title: string | null
           sku: string
@@ -336,6 +337,7 @@ export type Database = {
           price_old?: number | null
           promo_ends_at?: string | null
           promo_starts_at?: string | null
+          search_tsv?: unknown
           seo_description?: string | null
           seo_title?: string | null
           sku: string
@@ -375,6 +377,7 @@ export type Database = {
           price_old?: number | null
           promo_ends_at?: string | null
           promo_starts_at?: string | null
+          search_tsv?: unknown
           seo_description?: string | null
           seo_title?: string | null
           sku?: string
@@ -517,6 +520,19 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      search_products: {
+        Args: { max_rows?: number; only_published?: boolean; q: string }
+        Returns: {
+          category: string
+          colour: string
+          is_published: boolean
+          main_image: string
+          name: string
+          price_amd: number
+          rank: number
+          sku: string
+        }[]
       }
     }
     Enums: {

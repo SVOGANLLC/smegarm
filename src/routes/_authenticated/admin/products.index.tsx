@@ -21,6 +21,18 @@ function AdminProducts() {
   const list = useQuery({
     queryKey: ["admin-products", q, page],
     queryFn: async () => {
+      const term = q.trim();
+      let skuFilter: string[] | null = null;
+      if (term) {
+        const { data: hits, error: e1 } = await supabase.rpc("search_products", {
+          q: term,
+          only_published: false,
+          max_rows: 500,
+        });
+        if (e1) throw e1;
+        skuFilter = (hits ?? []).map((r: { sku: string }) => r.sku);
+        if (skuFilter.length === 0) return { items: [], total: 0 };
+      }
       let qb = supabase
         .from("products")
         .select(
@@ -31,7 +43,7 @@ function AdminProducts() {
         )
         .order("name", { ascending: true })
         .range((page - 1) * PAGE, page * PAGE - 1);
-      if (q.trim()) qb = qb.or(`sku.ilike.%${q}%,name.ilike.%${q}%`);
+      if (skuFilter) qb = qb.in("sku", skuFilter);
       const { data, count, error } = await qb;
       if (error) throw error;
       return { items: data ?? [], total: count ?? 0 };

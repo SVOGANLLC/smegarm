@@ -6,6 +6,7 @@ import { useI18n, type Lang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import smegLogo from "@/assets/smeg-logo.svg.asset.json";
 import { CartButton } from "@/components/site/CartDrawer";
+import { HeaderSearch } from "@/components/site/HeaderSearch";
 
 const langLabels: Record<Lang, string> = { ru: "RU", en: "EN", hy: "ՀՅ" };
 
@@ -105,6 +106,7 @@ export function Header() {
               </button>
             ))}
           </div>
+          <HeaderSearch />
           <CartButton />
           <button
             type="button"
