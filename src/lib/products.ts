@@ -22,6 +22,16 @@ export type Product = {
   stock_qty?: number | null;
   stock_reserved?: number | null;
   lead_time_days?: number | null;
+  name_en?: string | null;
+  name_hy?: string | null;
+  description_en?: string | null;
+  description_hy?: string | null;
+  specs_en?: Record<string, string> | null;
+  specs_hy?: Record<string, string> | null;
+  category_en?: string | null;
+  category_hy?: string | null;
+  colour_en?: string | null;
+  colour_hy?: string | null;
 };
 
 export type ProductCard = Product & {
@@ -135,6 +145,10 @@ export type Collection = {
   cover_image: string | null;
   is_published: boolean;
   sort_weight: number;
+  name_en?: string | null;
+  name_hy?: string | null;
+  description_en?: string | null;
+  description_hy?: string | null;
 };
 
 export type ColorSwatch = { colour: string; hex: string; sort_order: number };
@@ -147,6 +161,10 @@ export type Theme = {
   accent_color: string | null;
   card_bg: string | null;
   description: string | null;
+  name_en?: string | null;
+  name_hy?: string | null;
+  description_en?: string | null;
+  description_hy?: string | null;
 };
 
 export type Variant = { sku: string; colour: string | null; main_image: string | null };
@@ -189,7 +207,7 @@ export async function fetchColorSwatches(): Promise<ColorSwatch[]> {
 export async function fetchTheme(key: string): Promise<Theme | null> {
   const { data, error } = await supabase
     .from("themes")
-    .select("key,name,background_image,background_color,accent_color,card_bg,description")
+    .select("key,name,name_en,name_hy,background_image,background_color,accent_color,card_bg,description,description_en,description_hy")
     .eq("key", key)
     .maybeSingle();
   if (error) throw error;
@@ -252,7 +270,7 @@ export async function fetchCatalog(f: CatalogFilters): Promise<{ items: Product[
   let q = supabase
     .from("products")
     .select(
-      "sku,name,category,brand,aesthetic,colour,family,ean,description,specs,main_image,images,pdf,energy_label,url,price_amd,price_old,availability,stock_qty,stock_reserved,lead_time_days",
+      "sku,name,name_en,name_hy,category,category_en,category_hy,brand,aesthetic,colour,colour_en,colour_hy,family,ean,description,description_en,description_hy,specs,specs_en,specs_hy,main_image,images,pdf,energy_label,url,price_amd,price_old,availability,stock_qty,stock_reserved,lead_time_days",
       { count: "exact" },
     );
   if (f.category) q = q.eq("category", f.category);
@@ -288,7 +306,7 @@ export async function fetchCatalog(f: CatalogFilters): Promise<{ items: Product[
 export async function fetchCollections(): Promise<Collection[]> {
   const { data, error } = await supabase
     .from("collections")
-    .select("id,slug,name,description,cover_image,is_published,sort_weight")
+    .select("id,slug,name,name_en,name_hy,description,description_en,description_hy,cover_image,is_published,sort_weight")
     .eq("is_published", true)
     .order("sort_weight", { ascending: false })
     .order("name");
@@ -299,7 +317,7 @@ export async function fetchCollections(): Promise<Collection[]> {
 export async function fetchCollectionWithProducts(slug: string) {
   const { data: col, error: e1 } = await supabase
     .from("collections")
-    .select("id,slug,name,description,cover_image,is_published,sort_weight")
+    .select("id,slug,name,name_en,name_hy,description,description_en,description_hy,cover_image,is_published,sort_weight")
     .eq("slug", slug)
     .maybeSingle();
   if (e1) throw e1;

@@ -4,7 +4,9 @@ import { useState, useRef } from "react";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Download, Upload, Percent, Loader2 } from "lucide-react";
+import { Download, Upload, Percent, Loader2, Languages } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { countUntranslated, translateBatch } from "@/lib/translate.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/tools")({
   component: AdminTools,
@@ -74,6 +76,7 @@ function AdminTools() {
       <ExportSection />
       <ImportSection />
       <BulkPriceSection />
+      <BulkTranslateSection />
     </div>
   );
 }
@@ -546,5 +549,111 @@ function BulkPriceSection() {
         </div>
       )}
     </Card>
+  );
+}
+
+function BulkTranslateSection() {
+  const countFn = useServerFn(countUntranslated);
+  const batchFn = useServerFn(translateBatch);
+  const [stats, setStats] = useState<{ total: number; needs_en: number; needs_hy: number } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [log, setLog] = useState<string[]>([]);
+  const [stopFlag, setStopFlag] = useState(false);
+
+  async function refresh() {
+    try {
+      const s = await countFn({});
+      setStats(s);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Ошибка");
+    }
+  }
+
+  async function run() {
+    setBusy(true);
+    setStopFlag(false);
+    setLog([]);
+    try {
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        if (stopFlag) break;
+        const r = await batchFn({ data: { limit: 5 } });
+        if (r.processed === 0) {
+          setLog((l) => [...l, "✓ Готово — нечего переводить"]);
+          break;
+        }
+        for (const it of r.results) {
+          setLog((l) => [...l, it.ok ? `✓ ${it.sku}` : `✗ ${it.sku}: ${it.error}`]);
+        }
+        await refresh();
+      }
+      toast.success("Перевод завершён");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Ошибка");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card title="AI-перевод каталога (RU → EN + HY)" icon={Languages}>
+      <p className="text-sm text-muted-foreground">
+        Перевод названий, описаний, категорий, цветов и характеристик через Lovable AI. Бренды
+        (Smeg, Dolce&nbsp;&amp;&nbsp;Gabbana, Blu&nbsp;Mediterraneo, Porsche, Coca-Cola и т.д.) и
+        модельные коды не переводятся.
+      </p>
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={refresh}
+          className="rounded-sm border border-border px-4 py-2 text-xs uppercase tracking-[0.14em] hover:border-foreground"
+        >
+          Обновить статистику
+        </button>
+        {!busy ? (
+          <button
+            type="button"
+            onClick={run}
+            className="inline-flex items-center gap-2 rounded-sm bg-foreground px-4 py-2 text-xs uppercase tracking-[0.14em] text-background"
+          >
+            ✦ Перевести всё, что не переведено
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setStopFlag(true)}
+            className="inline-flex items-center gap-2 rounded-sm border border-border px-4 py-2 text-xs uppercase tracking-[0.14em]"
+          >
+            <Loader2 className="h-3 w-3 animate-spin" /> Остановить
+          </button>
+        )}
+      </div>
+      {stats && (
+        <div className="grid grid-cols-3 gap-3 text-sm">
+          <Stat label="Всего товаров" value={stats.total} />
+          <Stat label="Без English" value={stats.needs_en} warn={stats.needs_en > 0} />
+          <Stat label="Без Հայերեն" value={stats.needs_hy} warn={stats.needs_hy > 0} />
+        </div>
+      )}
+      {log.length > 0 && (
+        <div className="max-h-60 overflow-auto rounded-sm border border-border bg-secondary/30 p-3 font-mono text-xs">
+          {log.slice(-200).map((l, i) => (
+            <div key={i}>{l}</div>
+          ))}
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">
+        Совет: запустите фоном — переводы идут пачками по 5 SKU, каждая ~10–20 секунд.
+      </p>
+    </Card>
+  );
+}
+
+function Stat({ label, value, warn }: { label: string; value: number; warn?: boolean }) {
+  return (
+    <div className="rounded-sm border border-border p-3">
+      <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className={`mt-1 font-serif text-2xl ${warn ? "text-amber-600" : "text-foreground"}`}>{value}</p>
+    </div>
   );
 }

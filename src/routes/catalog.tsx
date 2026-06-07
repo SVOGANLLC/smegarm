@@ -12,6 +12,7 @@ import {
 import { z } from "zod";
 import { useState } from "react";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
+import { useI18n, pickLocalized } from "@/lib/i18n";
 
 const searchSchema = z.object({
   category: z.string().optional(),
@@ -65,6 +66,7 @@ function CatalogPage() {
   const aesthetics = split(search.aesthetic);
   const navigate = useNavigate({ from: Route.fullPath });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { lang } = useI18n();
 
   const catsQuery = useQuery({
     queryKey: ["catalog-categories"],
@@ -316,7 +318,7 @@ function CatalogPage() {
                           {p.main_image ? (
                             <img
                               src={p.main_image}
-                              alt={p.name}
+                              alt={pickLocalized(p as unknown as Record<string, unknown>, "name", lang) || p.name}
                               loading="lazy"
                               className="h-full w-full object-contain p-4 transition-transform duration-700 group-hover:scale-105"
                             />
@@ -331,7 +333,7 @@ function CatalogPage() {
                             {p.sku}
                           </p>
                           <h3 className="mt-1 line-clamp-2 font-serif text-base leading-snug text-foreground group-hover:text-accent">
-                            {p.name}
+                            {pickLocalized(p as unknown as Record<string, unknown>, "name", lang) || p.name}
                           </h3>
                         </div>
                       </Link>
