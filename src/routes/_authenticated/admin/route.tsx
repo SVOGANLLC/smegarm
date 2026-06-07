@@ -10,9 +10,10 @@ export const Route = createFileRoute("/_authenticated/admin")({
       .from("user_roles")
       .select("role")
       .eq("user_id", userData.user.id)
-      .eq("role", "admin")
+      .in("role", ["admin", "manager"])
       .maybeSingle();
     if (!roleRow) throw redirect({ to: "/" });
+    return { role: roleRow.role as "admin" | "manager" };
   },
   component: () => (
     <AdminShell>
