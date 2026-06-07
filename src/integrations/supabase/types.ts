@@ -55,9 +55,13 @@ export type Database = {
           cover_image: string | null
           created_at: string
           description: string | null
+          description_en: string | null
+          description_hy: string | null
           id: string
           is_published: boolean
           name: string
+          name_en: string | null
+          name_hy: string | null
           slug: string
           sort_weight: number
           updated_at: string
@@ -66,9 +70,13 @@ export type Database = {
           cover_image?: string | null
           created_at?: string
           description?: string | null
+          description_en?: string | null
+          description_hy?: string | null
           id?: string
           is_published?: boolean
           name: string
+          name_en?: string | null
+          name_hy?: string | null
           slug: string
           sort_weight?: number
           updated_at?: string
@@ -77,9 +85,13 @@ export type Database = {
           cover_image?: string | null
           created_at?: string
           description?: string | null
+          description_en?: string | null
+          description_hy?: string | null
           id?: string
           is_published?: boolean
           name?: string
+          name_en?: string | null
+          name_hy?: string | null
           slug?: string
           sort_weight?: number
           updated_at?: string
@@ -91,6 +103,8 @@ export type Database = {
           colour: string
           created_at: string
           hex: string
+          name_en: string | null
+          name_hy: string | null
           sort_order: number
           updated_at: string
         }
@@ -98,6 +112,8 @@ export type Database = {
           colour: string
           created_at?: string
           hex: string
+          name_en?: string | null
+          name_hy?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -105,6 +121,8 @@ export type Database = {
           colour?: string
           created_at?: string
           hex?: string
+          name_en?: string | null
+          name_hy?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -275,9 +293,15 @@ export type Database = {
           badge_text: string | null
           brand: string | null
           category: string | null
+          category_en: string | null
+          category_hy: string | null
           colour: string | null
+          colour_en: string | null
+          colour_hy: string | null
           created_at: string
           description: string | null
+          description_en: string | null
+          description_hy: string | null
           discount_percent: number
           ean: string | null
           energy_label: string | null
@@ -292,6 +316,8 @@ export type Database = {
           main_image: string | null
           model_group: string | null
           name: string
+          name_en: string | null
+          name_hy: string | null
           og_image: string | null
           pdf: string | null
           price_amd: number | null
@@ -305,9 +331,12 @@ export type Database = {
           slug: string | null
           sort_weight: number
           specs: Json
+          specs_en: Json | null
+          specs_hy: Json | null
           stock_qty: number
           stock_reserved: number
           theme_key: string | null
+          translated_at: string | null
           updated_at: string
           url: string | null
           view_count: number
@@ -318,9 +347,15 @@ export type Database = {
           badge_text?: string | null
           brand?: string | null
           category?: string | null
+          category_en?: string | null
+          category_hy?: string | null
           colour?: string | null
+          colour_en?: string | null
+          colour_hy?: string | null
           created_at?: string
           description?: string | null
+          description_en?: string | null
+          description_hy?: string | null
           discount_percent?: number
           ean?: string | null
           energy_label?: string | null
@@ -335,6 +370,8 @@ export type Database = {
           main_image?: string | null
           model_group?: string | null
           name: string
+          name_en?: string | null
+          name_hy?: string | null
           og_image?: string | null
           pdf?: string | null
           price_amd?: number | null
@@ -348,9 +385,12 @@ export type Database = {
           slug?: string | null
           sort_weight?: number
           specs?: Json
+          specs_en?: Json | null
+          specs_hy?: Json | null
           stock_qty?: number
           stock_reserved?: number
           theme_key?: string | null
+          translated_at?: string | null
           updated_at?: string
           url?: string | null
           view_count?: number
@@ -361,9 +401,15 @@ export type Database = {
           badge_text?: string | null
           brand?: string | null
           category?: string | null
+          category_en?: string | null
+          category_hy?: string | null
           colour?: string | null
+          colour_en?: string | null
+          colour_hy?: string | null
           created_at?: string
           description?: string | null
+          description_en?: string | null
+          description_hy?: string | null
           discount_percent?: number
           ean?: string | null
           energy_label?: string | null
@@ -378,6 +424,8 @@ export type Database = {
           main_image?: string | null
           model_group?: string | null
           name?: string
+          name_en?: string | null
+          name_hy?: string | null
           og_image?: string | null
           pdf?: string | null
           price_amd?: number | null
@@ -391,9 +439,12 @@ export type Database = {
           slug?: string | null
           sort_weight?: number
           specs?: Json
+          specs_en?: Json | null
+          specs_hy?: Json | null
           stock_qty?: number
           stock_reserved?: number
           theme_key?: string | null
+          translated_at?: string | null
           updated_at?: string
           url?: string | null
           view_count?: number
@@ -456,8 +507,12 @@ export type Database = {
           card_bg: string | null
           created_at: string
           description: string | null
+          description_en: string | null
+          description_hy: string | null
           key: string
           name: string
+          name_en: string | null
+          name_hy: string | null
           updated_at: string
         }
         Insert: {
@@ -467,8 +522,12 @@ export type Database = {
           card_bg?: string | null
           created_at?: string
           description?: string | null
+          description_en?: string | null
+          description_hy?: string | null
           key: string
           name: string
+          name_en?: string | null
+          name_hy?: string | null
           updated_at?: string
         }
         Update: {
@@ -478,8 +537,12 @@ export type Database = {
           card_bg?: string | null
           created_at?: string
           description?: string | null
+          description_en?: string | null
+          description_hy?: string | null
           key?: string
           name?: string
+          name_en?: string | null
+          name_hy?: string | null
           updated_at?: string
         }
         Relationships: []
