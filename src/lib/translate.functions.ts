@@ -74,7 +74,7 @@ async function callGateway(
   }
 }
 
-async function assertAdmin(supabase: ReturnType<typeof import("@/integrations/supabase/auth-middleware")["requireSupabaseAuth"]> extends never ? never : import("@supabase/supabase-js").SupabaseClient, userId: string) {
+async function assertAdmin(supabase: import("@supabase/supabase-js").SupabaseClient, userId: string) {
   const { data, error } = await supabase
     .from("user_roles")
     .select("role")
@@ -138,7 +138,7 @@ export const translateProduct = createServerFn({ method: "POST" })
 
     const { error: uErr } = await supabaseAdmin
       .from("products")
-      .update(patch)
+      .update(patch as never)
       .eq("sku", data.sku);
     if (uErr) throw new Error(uErr.message);
     return { ok: true, sku: data.sku };
@@ -208,7 +208,7 @@ export const translateBatch = createServerFn({ method: "POST" })
             patch[`specs_${lang}`] = translated;
           }
         }
-        const { error: uErr } = await supabaseAdmin.from("products").update(patch).eq("sku", p.sku);
+        const { error: uErr } = await supabaseAdmin.from("products").update(patch as never).eq("sku", p.sku);
         if (uErr) throw uErr;
         results.push({ sku: p.sku as string, ok: true });
       } catch (e) {
