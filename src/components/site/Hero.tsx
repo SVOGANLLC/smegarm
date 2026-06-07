@@ -1,32 +1,50 @@
 import { ArrowRight, ArrowDown } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import heroImg from "@/assets/hero-fridge-v2.jpg";
+import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
+import heroPastelBlue from "@/assets/hero/hero-pastel-blue.jpg";
+import heroBlack from "@/assets/hero/hero-black.jpg";
+import heroCream from "@/assets/hero/hero-cream.jpg";
+import heroPastelGreen from "@/assets/hero/hero-pastel-green.jpg";
+import heroPink from "@/assets/hero/hero-pink.jpg";
+import heroRed from "@/assets/hero/hero-red.jpg";
+import heroWhite from "@/assets/hero/hero-white.jpg";
 
-const PALETTE = [
-  { name: "Rosso", hex: "#c8102e" },
-  { name: "Pastel Green", hex: "#b8d8b8" },
-  { name: "Pastel Blue", hex: "#a8c5d6" },
-  { name: "Cream", hex: "#f3ead5" },
-  { name: "Black", hex: "#1a1a1a" },
-  { name: "Pink", hex: "#e8b8c4" },
+type PaletteItem = { id: string; name: string; hex: string; src: string; ring?: string };
+
+const PALETTE: PaletteItem[] = [
+  { id: "pastel-blue", name: "Pastel Blue", hex: "#a8c5d6", src: heroPastelBlue },
+  { id: "pastel-green", name: "Pastel Green", hex: "#b8d8b8", src: heroPastelGreen },
+  { id: "cream", name: "Cream", hex: "#f3ead5", src: heroCream },
+  { id: "pink", name: "Pink", hex: "#e8b8c4", src: heroPink },
+  { id: "red", name: "Red", hex: "#c8102e", src: heroRed },
+  { id: "white", name: "White", hex: "#ffffff", src: heroWhite, ring: "rgba(0,0,0,0.25)" },
+  { id: "black", name: "Black", hex: "#1a1a1a", src: heroBlack },
 ];
 
 export function Hero() {
   const { t } = useI18n();
   const title = t("hero.title");
+  const [activeId, setActiveId] = useState<string>(PALETTE[0].id);
+  const active = PALETTE.find((p) => p.id === activeId) ?? PALETTE[0];
 
   return (
     <section className="relative h-[100svh] min-h-[680px] w-full overflow-hidden bg-background">
-      {/* Full-bleed photo */}
-      <img
-        src={heroImg}
-        alt="Smeg FAB28 retro refrigerator in a sunlit Italian kitchen"
-        width={1920}
-        height={1280}
-        fetchPriority="high"
-        className="absolute inset-0 h-full w-full animate-hero-zoom object-cover object-[70%_center] md:object-center"
-      />
+      {/* Full-bleed photo stack — crossfade between colors */}
+      {PALETTE.map((p, i) => (
+        <img
+          key={p.id}
+          src={p.src}
+          alt={`Smeg FAB retro refrigerator in ${p.name}`}
+          width={1920}
+          height={822}
+          fetchPriority={i === 0 ? "high" : "low"}
+          loading={i === 0 ? "eager" : "lazy"}
+          className={`absolute inset-0 h-full w-full object-cover object-[62%_center] transition-opacity duration-700 ease-out md:object-center ${
+            p.id === activeId ? "opacity-100 animate-hero-zoom" : "opacity-0"
+          }`}
+        />
+      ))}
       {/* Soft gradients for legibility — heavier on mobile to keep text readable */}
       <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/40 to-background/85 md:hidden" />
       <div className="absolute inset-0 hidden bg-gradient-to-r from-background/95 via-background/55 to-transparent md:block" />
@@ -75,19 +93,42 @@ export function Hero() {
         </div>
 
         <div
-          className="mt-10 flex animate-hero-rise items-center gap-4"
+          className="mt-10 flex animate-hero-rise flex-col gap-3 sm:flex-row sm:items-center sm:gap-5"
           style={{ animationDelay: "1050ms" }}
         >
-          <span className="eyebrow text-foreground/60">Palette</span>
-          <div className="flex items-center gap-2.5">
-            {PALETTE.map((c) => (
-              <span
-                key={c.hex}
-                title={c.name}
-                className="h-3.5 w-3.5 rounded-full ring-1 ring-foreground/20 transition-transform hover:scale-125"
-                style={{ backgroundColor: c.hex }}
-              />
-            ))}
+          <div className="flex items-center gap-3">
+            <span className="eyebrow text-foreground/60">Color</span>
+            <span className="font-serif text-sm italic text-foreground/85">{active.name}</span>
+          </div>
+          <div
+            role="radiogroup"
+            aria-label="Choose appliance color"
+            className="flex items-center gap-2.5"
+          >
+            {PALETTE.map((c) => {
+              const isActive = c.id === activeId;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={isActive}
+                  aria-label={c.name}
+                  title={c.name}
+                  onClick={() => setActiveId(c.id)}
+                  onMouseEnter={() => setActiveId(c.id)}
+                  className={`relative h-6 w-6 rounded-full transition-transform duration-300 hover:scale-110 ${
+                    isActive ? "scale-110" : ""
+                  }`}
+                  style={{
+                    backgroundColor: c.hex,
+                    boxShadow: isActive
+                      ? `0 0 0 2px var(--background), 0 0 0 3px ${c.ring ?? c.hex}`
+                      : `inset 0 0 0 1px ${c.ring ?? "rgba(0,0,0,0.15)"}`,
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
       </div>
