@@ -12,7 +12,7 @@ const dicts: Record<Lang, Dict> = {
     "nav.dealer": "Дилер в Армении",
     "nav.contact": "Контакты",
     "hero.eyebrow": "Официальный представитель SMEG в Армении",
-    "hero.title": "Технологии,\nрождённые\nкрасотой.",
+    "hero.title": "ВЫБЕРИ ЦВЕТ\nСВОЕГО НАСТРОЕНИЯ",
     "hero.subtitle":
       "Итальянская техника, превращающая каждое движение на кухне в ритуал.",
     "hero.cta": "Открыть каталог",
@@ -49,7 +49,7 @@ const dicts: Record<Lang, Dict> = {
     "nav.dealer": "Armenia Dealer",
     "nav.contact": "Contact",
     "hero.eyebrow": "Official Smeg dealer in Armenia",
-    "hero.title": "Technology,\nborn of\nbeauty.",
+    "hero.title": "CHOOSE THE COLOR\nOF YOUR MOOD",
     "hero.subtitle":
       "Italian appliances that turn every kitchen gesture into a ritual.",
     "hero.cta": "Explore the catalog",
@@ -86,7 +86,7 @@ const dicts: Record<Lang, Dict> = {
     "nav.dealer": "Հայաստան",
     "nav.contact": "Կապ",
     "hero.eyebrow": "Smeg-ի պաշտոնական ներկայացուցիչը Հայաստանում",
-    "hero.title": "Տեխնոլոգիա՝\nծնված\nգեղեցկությունից։",
+    "hero.title": "ԸՆՐԻՐ ՔՈ\nՏՐԱՄԱԴՐՈՒԹՅԱՆ ԳՈՒՅՆԸ",
     "hero.subtitle":
       "Իտալական տեխնիկա, որը խոհանոցի յուրաքանչյուր շարժում վերածում է ծեսի։",
     "hero.cta": "Տեսնել կատալոգը",
