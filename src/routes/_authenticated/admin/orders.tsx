@@ -152,7 +152,7 @@ function AdminOrders() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Поиск: имя, телефон, №"
-          className="rounded-sm border border-border bg-background px-3 py-1.5 text-sm"
+          className="w-full rounded-sm border border-border bg-background px-3 py-1.5 text-sm sm:w-auto"
         />
         <button
           onClick={() => setFilter("")}
@@ -173,7 +173,7 @@ function AdminOrders() {
             {s.label}
           </button>
         ))}
-        <div className="ml-auto inline-flex rounded-sm border border-border p-0.5">
+        <div className="inline-flex rounded-sm border border-border p-0.5 sm:ml-auto">
           <button
             onClick={() => setView("list")}
             className={`flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-xs ${view === "list" ? "bg-foreground text-background" : "text-foreground/70"}`}
@@ -234,11 +234,11 @@ function KanbanView({
   onStatusChange: (id: string, status: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-6">
+    <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 md:grid md:grid-cols-3 md:overflow-visible xl:grid-cols-6">
       {STATUS.map((col) => {
         const items = orders.filter((o) => o.status === col.value);
         return (
-          <div key={col.value} className="rounded-sm border border-border bg-secondary/20">
+          <div key={col.value} className="w-[80vw] min-w-[260px] flex-shrink-0 snap-start rounded-sm border border-border bg-secondary/20 sm:w-72 md:w-auto">
             <div className="flex items-center justify-between border-b border-border px-3 py-2">
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] ${col.cls}`}>{col.label}</span>
               <span className="text-xs text-muted-foreground">{items.length}</span>
@@ -322,24 +322,28 @@ function OrderRow({ order, onStatusChange }: { order: Order; onStatusChange: (s:
     <div className="rounded-sm border border-border">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between gap-4 p-4 text-left hover:bg-secondary/30"
+        className="flex w-full items-start justify-between gap-3 p-4 text-left hover:bg-secondary/30"
       >
-        <div className="flex flex-1 flex-wrap items-center gap-4">
-          <span className="font-mono text-sm">#{order.order_no}</span>
-          <span className={`rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] ${status.cls}`}>
-            {status.label}
-          </span>
-          <span className="text-sm">{order.customer_name}</span>
-          <span className="text-xs text-muted-foreground">{order.customer_phone}</span>
-          <span className="ml-auto text-xs text-muted-foreground">
+        <div className="flex min-w-0 flex-1 flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-mono text-sm">#{order.order_no}</span>
+            <span className={`rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] ${status.cls}`}>
+              {status.label}
+            </span>
+          </div>
+          <div className="min-w-0">
+            <div className="truncate text-sm">{order.customer_name}</div>
+            <div className="text-xs text-muted-foreground">{order.customer_phone}</div>
+          </div>
+          <span className="text-xs text-muted-foreground md:ml-auto">
             {new Date(order.created_at).toLocaleString("ru-RU")}
           </span>
           <span className="font-medium">{order.total_amd.toLocaleString("ru-RU")} ֏</span>
         </div>
-        <ChevronDown className={`h-4 w-4 transition ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`mt-1 h-4 w-4 flex-shrink-0 transition ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="border-t border-border bg-secondary/20 p-5 space-y-4 text-sm">
+        <div className="border-t border-border bg-secondary/20 p-4 sm:p-5 space-y-4 text-sm">
           <div className="grid gap-4 md:grid-cols-3">
             <Info label="Контакт">
               <p>{order.customer_name}</p>
