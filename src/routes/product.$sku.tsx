@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
-import { fetchProductBySku, fetchTheme } from "@/lib/products";
+import { fetchProductBySku, fetchTheme, slugify } from "@/lib/products";
 import { ProductImageZoom } from "@/components/site/ProductImageZoom";
 import { ColorSwitcher } from "@/components/site/ColorSwitcher";
 import { AddToCartButton } from "@/components/site/AddToCartButton";
@@ -94,12 +94,14 @@ function ProductPage() {
       <main className="pt-32 pb-24">
         <div className="mx-auto max-w-[1400px] px-6 md:px-10">
           {theme && (
-            <p
-              className="eyebrow mb-6 inline-block rounded-full bg-background/85 backdrop-blur-sm px-4 py-1.5 text-foreground shadow-sm"
+            <Link
+              to="/catalog"
+              search={{ q: theme.name, page: 1 }}
+              className="eyebrow mb-6 inline-block rounded-full bg-background/85 backdrop-blur-sm px-4 py-1.5 text-foreground shadow-sm transition hover:bg-background"
               style={theme.accent_color ? { color: theme.accent_color } : undefined}
             >
-              ✦ {theme.name}
-            </p>
+              ✦ {theme.name} →
+            </Link>
           )}
           <nav
             className={`mb-8 flex items-center gap-2 text-xs uppercase tracking-[0.18em] ${theme ? "text-foreground/80 [text-shadow:0_1px_2px_rgba(255,255,255,0.6)]" : "text-muted-foreground"}`}
@@ -110,7 +112,13 @@ function ProductPage() {
             {product.category && (
               <>
                 <span>/</span>
-                <span>{product.category}</span>
+                <Link
+                  to="/catalog"
+                  search={{ category: slugify(product.category), page: 1 }}
+                  className="hover:text-foreground"
+                >
+                  {product.category}
+                </Link>
               </>
             )}
           </nav>
@@ -142,7 +150,15 @@ function ProductPage() {
             </div>
 
             <div className={theme ? "rounded-lg bg-background/92 backdrop-blur-sm p-6 md:p-8 shadow-xl" : ""}>
-              <p className="eyebrow text-muted-foreground">{product.category}</p>
+              {product.category && (
+                <Link
+                  to="/catalog"
+                  search={{ category: slugify(product.category), page: 1 }}
+                  className="eyebrow text-muted-foreground transition hover:text-foreground"
+                >
+                  {product.category}
+                </Link>
+              )}
               <h1 className="mt-3 font-serif text-3xl md:text-5xl leading-tight">
                 {product.name}
               </h1>
@@ -163,9 +179,31 @@ function ProductPage() {
               )}
 
               <div className="mt-8 grid grid-cols-2 gap-4 text-sm">
-                {product.aesthetic && <Info label="Стиль" value={product.aesthetic} />}
-                {product.colour && <Info label="Цвет" value={product.colour} />}
-                {product.family && <Info label="Семейство" value={product.family} />}
+                {product.aesthetic && (
+                  <InfoLink
+                    label="Стиль"
+                    value={product.aesthetic}
+                    to="/catalog"
+                    search={{ aesthetic: product.aesthetic, page: 1 }}
+                  />
+                )}
+                {product.colour && product.colour !== "Decorated / Special" && (
+                  <InfoLink
+                    label="Цвет"
+                    value={product.colour}
+                    to="/catalog"
+                    search={{ colour: product.colour, page: 1 }}
+                  />
+                )}
+                {product.colour === "Decorated / Special" && <Info label="Цвет" value={product.colour} />}
+                {product.family && (
+                  <InfoLink
+                    label="Семейство"
+                    value={product.family}
+                    to="/catalog"
+                    search={{ family: product.family, page: 1 }}
+                  />
+                )}
                 {product.ean && <Info label="EAN" value={product.ean} />}
               </div>
 
@@ -250,6 +288,33 @@ function Info({ label, value }: { label: string; value: string }) {
     <div>
       <dt className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{label}</dt>
       <dd className="mt-1 text-foreground">{value}</dd>
+    </div>
+  );
+}
+
+function InfoLink({
+  label,
+  value,
+  to,
+  search,
+}: {
+  label: string;
+  value: string;
+  to: string;
+  search: Record<string, unknown>;
+}) {
+  return (
+    <div>
+      <dt className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{label}</dt>
+      <dd className="mt-1">
+        <Link
+          to={to}
+          search={search as never}
+          className="text-foreground underline-offset-4 hover:underline"
+        >
+          {value}
+        </Link>
+      </dd>
     </div>
   );
 }
