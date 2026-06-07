@@ -49,7 +49,7 @@ const dicts: Record<Lang, Dict> = {
     "nav.dealer": "Armenia Dealer",
     "nav.contact": "Contact",
     "hero.eyebrow": "Official Smeg dealer in Armenia",
-    "hero.title": "Technology,\nborn of\nbeauty.",
+    "hero.title": "CHOOSE THE COLOR\nOF YOUR MOOD",
     "hero.subtitle":
       "Italian appliances that turn every kitchen gesture into a ritual.",
     "hero.cta": "Explore the catalog",
