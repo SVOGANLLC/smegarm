@@ -134,6 +134,8 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          internal_notes: string | null
+          lang: string
           message: string | null
           name: string
           phone: string | null
@@ -146,6 +148,8 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          internal_notes?: string | null
+          lang?: string
           message?: string | null
           name: string
           phone?: string | null
@@ -158,6 +162,8 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          internal_notes?: string | null
+          lang?: string
           message?: string | null
           name?: string
           phone?: string | null
@@ -238,10 +244,13 @@ export type Database = {
           customer_phone: string
           delivery_method: string
           id: string
+          internal_notes: string | null
           items_count: number
+          lang: string
           order_no: number
           payment_method: string
           status: string
+          status_history: Json
           total_amd: number
           updated_at: string
           user_id: string | null
@@ -257,10 +266,13 @@ export type Database = {
           customer_phone: string
           delivery_method?: string
           id?: string
+          internal_notes?: string | null
           items_count?: number
+          lang?: string
           order_no?: number
           payment_method?: string
           status?: string
+          status_history?: Json
           total_amd?: number
           updated_at?: string
           user_id?: string | null
@@ -276,10 +288,13 @@ export type Database = {
           customer_phone?: string
           delivery_method?: string
           id?: string
+          internal_notes?: string | null
           items_count?: number
+          lang?: string
           order_no?: number
           payment_method?: string
           status?: string
+          status_history?: Json
           total_amd?: number
           updated_at?: string
           user_id?: string | null
@@ -573,6 +588,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_orders: { Args: { _user_id: string }; Returns: boolean }
       compute_model_group: {
         Args: {
           p_colour: string
@@ -608,7 +624,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -736,7 +752,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "manager"],
     },
   },
 } as const
