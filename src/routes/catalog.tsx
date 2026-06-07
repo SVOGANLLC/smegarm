@@ -471,6 +471,7 @@ function ScrollableFacet({
   onToggle: (v: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const { t } = useI18n();
   const shown = expanded ? items : items.slice(0, 8);
   return (
     <div className="space-y-1.5">
@@ -492,7 +493,7 @@ function ScrollableFacet({
           onClick={() => setExpanded((e) => !e)}
           className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground"
         >
-          {expanded ? "Свернуть" : `Ещё ${items.length - 8}`}
+          {expanded ? t("product.specs.hide") : `+ ${items.length - 8}`}
         </button>
       )}
     </div>
