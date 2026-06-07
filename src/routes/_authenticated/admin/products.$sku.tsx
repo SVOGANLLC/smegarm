@@ -15,7 +15,8 @@ type FormState = {
   price_amd: string;
   price_old: string;
   discount_percent: string;
-  availability: string;
+  stock_qty: string;
+  lead_time_days: string;
   is_published: boolean;
   is_featured: boolean;
   is_new: boolean;
@@ -51,7 +52,8 @@ function EditProduct() {
         price_amd: q.data.price_amd?.toString() ?? "",
         price_old: q.data.price_old?.toString() ?? "",
         discount_percent: q.data.discount_percent?.toString() ?? "0",
-        availability: q.data.availability ?? "on_request",
+        stock_qty: q.data.stock_qty?.toString() ?? "0",
+        lead_time_days: q.data.lead_time_days?.toString() ?? "",
         is_published: !!q.data.is_published,
         is_featured: !!q.data.is_featured,
         is_new: !!q.data.is_new,
@@ -76,6 +78,9 @@ function EditProduct() {
         .split("\n")
         .map((s) => s.trim())
         .filter(Boolean);
+      const stockQty = Math.max(0, parseInt(f.stock_qty, 10) || 0);
+      const leadRaw = f.lead_time_days.trim();
+      const leadDays = leadRaw === "" ? null : Math.max(0, Math.min(365, parseInt(leadRaw, 10) || 0));
       const { error } = await supabase
         .from("products")
         .update({
@@ -84,7 +89,8 @@ function EditProduct() {
           price_amd: price,
           price_old: priceOld,
           discount_percent: disc,
-          availability: f.availability,
+          stock_qty: stockQty,
+          lead_time_days: leadDays,
           is_published: f.is_published,
           is_featured: f.is_featured,
           is_new: f.is_new,
