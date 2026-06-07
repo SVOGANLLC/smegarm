@@ -40,33 +40,39 @@ export const Route = createFileRoute("/product/$sku")({
         ]
       : [{ title: "Smeg Armenia" }],
   }),
-  errorComponent: ({ error }) => (
-    <div className="min-h-screen flex items-center justify-center p-8 text-center">
-      <div>
-        <h1 className="font-serif text-2xl">Не удалось загрузить товар</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
-        <Link to="/catalog" className="mt-4 inline-block underline">
-          К каталогу
-        </Link>
-      </div>
-    </div>
-  ),
-  notFoundComponent: () => (
-    <div className="min-h-screen flex items-center justify-center p-8 text-center">
-      <div>
-        <h1 className="font-serif text-2xl">Товар не найден</h1>
-        <Link to="/catalog" className="mt-4 inline-block underline">
-          К каталогу
-        </Link>
-      </div>
-    </div>
-  ),
+  errorComponent: ({ error }) => <ProductErrorView message={error.message} />,
+  notFoundComponent: () => <ProductNotFoundView />,
   component: ProductPage,
 });
 
+function ProductErrorView({ message }: { message: string }) {
+  const { t } = useI18n();
+  return (
+    <div className="min-h-screen flex items-center justify-center p-8 text-center">
+      <div>
+        <h1 className="font-serif text-2xl">{t("product.loadError")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{message}</p>
+        <Link to="/catalog" className="mt-4 inline-block underline">{t("product.toCatalog")}</Link>
+      </div>
+    </div>
+  );
+}
+
+function ProductNotFoundView() {
+  const { t } = useI18n();
+  return (
+    <div className="min-h-screen flex items-center justify-center p-8 text-center">
+      <div>
+        <h1 className="font-serif text-2xl">{t("product.notFound")}</h1>
+        <Link to="/catalog" className="mt-4 inline-block underline">{t("product.toCatalog")}</Link>
+      </div>
+    </div>
+  );
+}
+
 function ProductPage() {
   const { sku } = Route.useParams();
-  const { lang } = useI18n();
+  const { lang, t } = useI18n();
   const { data: product } = useSuspenseQuery({
     queryKey: ["product", sku],
     queryFn: () => fetchProductBySku(sku),
@@ -114,7 +120,7 @@ function ProductPage() {
             className={`mb-8 flex items-center gap-2 text-xs uppercase tracking-[0.18em] ${theme ? "text-foreground/80 [text-shadow:0_1px_2px_rgba(255,255,255,0.6)]" : "text-muted-foreground"}`}
           >
             <Link to="/catalog" className="hover:text-foreground">
-              Каталог
+              {t("catalog.title")}
             </Link>
             {product.category && (
               <>
@@ -136,7 +142,7 @@ function ProductPage() {
                 <ProductImageZoom src={gallery[active]} alt={name || product.name} />
               ) : (
                 <div className="flex aspect-square w-full items-center justify-center rounded-sm bg-secondary text-sm text-muted-foreground">
-                  нет фото
+                  {t("product.noPhoto")}
                 </div>
               )}
               {gallery.length > 1 && (
@@ -169,7 +175,7 @@ function ProductPage() {
               <h1 className="mt-3 font-serif text-3xl md:text-5xl leading-tight">
                 {name || product.name}
               </h1>
-              <p className="mt-3 text-sm text-muted-foreground">Артикул: {product.sku}</p>
+              <p className="mt-3 text-sm text-muted-foreground">{t("product.sku")}: {product.sku}</p>
 
               <ColorSwitcher
                 modelGroup={product.model_group ?? null}
@@ -188,7 +194,7 @@ function ProductPage() {
               <div className="mt-8 grid grid-cols-2 gap-4 text-sm">
                 {product.aesthetic && (
                   <InfoLink
-                    label="Стиль"
+                    label={t("product.style")}
                     value={product.aesthetic}
                     to="/catalog"
                     search={{ aesthetic: product.aesthetic, page: 1 }}
@@ -196,22 +202,22 @@ function ProductPage() {
                 )}
                 {product.colour && product.colour !== "Decorated / Special" && (
                   <InfoLink
-                    label="Цвет"
+                    label={t("product.colour")}
                     value={colour || product.colour}
                     to="/catalog"
                     search={{ colour: product.colour, page: 1 }}
                   />
                 )}
-                {product.colour === "Decorated / Special" && <Info label="Цвет" value={colour || product.colour} />}
+                {product.colour === "Decorated / Special" && <Info label={t("product.colour")} value={colour || product.colour} />}
                 {product.family && (
                   <InfoLink
-                    label="Семейство"
+                    label={t("product.family")}
                     value={product.family}
                     to="/catalog"
                     search={{ family: product.family, page: 1 }}
                   />
                 )}
-                {product.ean && <Info label="EAN" value={product.ean} />}
+                {product.ean && <Info label={t("product.ean")} value={product.ean} />}
               </div>
 
               <div className="mt-10 flex flex-wrap gap-3">
@@ -231,7 +237,7 @@ function ProductPage() {
                   href="#dealer"
                   className="rounded-full border border-border px-6 py-3 text-xs uppercase tracking-[0.2em] hover:border-foreground"
                 >
-                  Запросить цену
+                  {t("product.requestPrice")}
                 </a>
                 {product.pdf && (
                   <a
@@ -240,7 +246,7 @@ function ProductPage() {
                     rel="noreferrer"
                     className="rounded-full border border-border px-6 py-3 text-xs uppercase tracking-[0.2em] hover:border-foreground"
                   >
-                    PDF спецификация
+                    {t("product.pdf")}
                   </a>
                 )}
                 {product.energy_label && (
@@ -250,7 +256,7 @@ function ProductPage() {
                     rel="noreferrer"
                     className="rounded-full border border-border px-6 py-3 text-xs uppercase tracking-[0.2em] hover:border-foreground"
                   >
-                    Энергоэтикетка
+                    {t("product.energy")}
                   </a>
                 )}
               </div>
@@ -261,10 +267,10 @@ function ProductPage() {
             <section className={`mt-16 ${theme ? "rounded-lg bg-background/92 backdrop-blur-sm p-6 md:p-8 shadow-xl" : ""}`}>
               <details className="group">
                 <summary className="flex cursor-pointer items-center justify-between gap-6 list-none border-b border-border pb-4">
-                  <h2 className="font-serif text-2xl md:text-3xl">Характеристики</h2>
+                  <h2 className="font-serif text-2xl md:text-3xl">{t("product.specs")}</h2>
                   <span className="flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-muted-foreground transition group-open:text-foreground">
-                    <span className="group-open:hidden">Показать ({specEntries.length})</span>
-                    <span className="hidden group-open:inline">Свернуть</span>
+                    <span className="group-open:hidden">{t("product.specs.show")} ({specEntries.length})</span>
+                    <span className="hidden group-open:inline">{t("product.specs.hide")}</span>
                     <svg className="h-4 w-4 transition-transform group-open:rotate-180" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <path d="M5 8l5 5 5-5" strokeLinecap="round" />
                     </svg>
@@ -332,13 +338,14 @@ function AvailabilityBadge({
 }: {
   product: { availability?: string | null; stock_qty?: number | null; stock_reserved?: number | null; lead_time_days?: number | null };
 }) {
+  const { t } = useI18n();
   const avail = product.availability ?? "on_request";
   const qty = Math.max(0, (product.stock_qty ?? 0) - (product.stock_reserved ?? 0));
   if (avail === "in_stock") {
     return (
       <span className="inline-flex w-full items-center gap-2 text-sm text-emerald-700">
         <span className="h-2 w-2 rounded-full bg-emerald-600" />
-        В наличии{qty > 0 ? ` · ${qty} шт.` : ""}
+        {t("avail.inStock")}{qty > 0 ? ` · ${qty} ${t("avail.unit")}` : ""}
       </span>
     );
   }
@@ -346,14 +353,14 @@ function AvailabilityBadge({
     return (
       <span className="inline-flex w-full items-center gap-2 text-sm text-amber-700">
         <span className="h-2 w-2 rounded-full bg-amber-500" />
-        Под заказ{product.lead_time_days ? ` · доставка на склад ~${product.lead_time_days} дн.` : ""}
+        {t("avail.preOrder")}{product.lead_time_days ? ` · ${t("avail.delivery")} ~${product.lead_time_days} ${t("avail.days")}` : ""}
       </span>
     );
   }
   return (
     <span className="inline-flex w-full items-center gap-2 text-sm text-muted-foreground">
       <span className="h-2 w-2 rounded-full bg-muted-foreground/60" />
-      По запросу
+      {t("avail.onRequest")}
     </span>
   );
 }
