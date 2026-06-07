@@ -378,7 +378,8 @@ function OrderRow({ order, onStatusChange }: { order: Order; onStatusChange: (s:
             {items.isLoading ? (
               <Loader2 className="mt-2 inline h-4 w-4 animate-spin" />
             ) : (
-              <table className="mt-2 w-full">
+              <div className="mt-2 overflow-x-auto">
+              <table className="w-full min-w-[480px]">
                 <tbody>
                   {items.data?.map((it) => (
                     <tr key={it.id} className="border-t border-border">
@@ -397,6 +398,7 @@ function OrderRow({ order, onStatusChange }: { order: Order; onStatusChange: (s:
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
 
