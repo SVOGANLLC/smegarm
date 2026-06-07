@@ -286,18 +286,40 @@ function EditProduct() {
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
           </Field>
-          <Field label="Наличие">
-            <select
-              value={form.availability}
-              onChange={(e) => setForm({ ...form, availability: e.target.value })}
-              className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
-            >
-              <option value="in_stock">В наличии</option>
-              <option value="pre_order">Под заказ</option>
-              <option value="out_of_stock">Нет</option>
-              <option value="on_request">По запросу</option>
-            </select>
-          </Field>
+          <div className="space-y-3 rounded-sm border border-border/60 bg-secondary/30 p-3">
+            <p className="eyebrow text-muted-foreground">Склад в Армении</p>
+            <Field label="Остаток, шт.">
+              <input
+                inputMode="numeric"
+                value={form.stock_qty}
+                onChange={(e) => setForm({ ...form, stock_qty: e.target.value.replace(/[^0-9]/g, "") })}
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+              />
+            </Field>
+            <p className="text-xs text-muted-foreground">
+              В резерве: {q.data.stock_reserved ?? 0} шт. · Доступно:{" "}
+              {Math.max(0, (Number(form.stock_qty) || 0) - (q.data.stock_reserved ?? 0))} шт.
+            </p>
+            <Field label="Срок доставки на склад, дней (если нет в наличии)">
+              <input
+                inputMode="numeric"
+                placeholder="напр. 14"
+                value={form.lead_time_days}
+                onChange={(e) => setForm({ ...form, lead_time_days: e.target.value.replace(/[^0-9]/g, "") })}
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+              />
+            </Field>
+            <p className="text-xs text-muted-foreground">
+              Статус наличия пересчитывается автоматически:{" "}
+              <span className="font-medium text-foreground">
+                {(Number(form.stock_qty) || 0) - (q.data.stock_reserved ?? 0) > 0
+                  ? "В наличии"
+                  : form.lead_time_days.trim()
+                  ? `Под заказ (~${form.lead_time_days} дн.)`
+                  : "По запросу"}
+              </span>
+            </p>
+          </div>
           <Field label="Текст бейджа (плашка)">
             <input
               value={form.badge_text}
