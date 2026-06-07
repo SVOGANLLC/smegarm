@@ -410,6 +410,15 @@ const FLAG_LABELS: Record<string, string> = {
   is_featured: "Избранное",
 };
 
+const THEME_LABELS: Record<string, string> = {
+  dg_sicily: "Sicily Is My Love",
+  dg_blu_mediterraneo: "Blu Mediterraneo",
+  dg_divina_cucina: "Divina Cucina",
+  porsche_green: "Porsche Shade Green",
+  porsche_white: "Porsche Shade White",
+  porsche_917: "Porsche 917",
+};
+
 function FacetGroup({
   label,
   children,
