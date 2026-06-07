@@ -45,8 +45,8 @@ function TeamPage() {
         </p>
       )}
 
-      <div className="overflow-hidden rounded-sm border border-border">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-sm border border-border">
+        <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-secondary/40 text-left text-xs uppercase tracking-[0.15em] text-muted-foreground">
             <tr>
               <th className="px-4 py-3">E-mail</th>
