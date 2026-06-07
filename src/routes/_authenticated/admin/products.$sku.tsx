@@ -377,6 +377,103 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+function I18nContent({
+  sku,
+  form,
+  setForm,
+}: {
+  sku: string;
+  form: FormState;
+  setForm: (f: FormState) => void;
+}) {
+  const [tab, setTab] = useState<"ru" | "en" | "hy">("ru");
+  const translate = useServerFn(translateProduct);
+  const [busy, setBusy] = useState(false);
+
+  const fields: Record<"ru" | "en" | "hy", { nameKey: keyof FormState; descKey: keyof FormState; label: string }> = {
+    ru: { nameKey: "name", descKey: "description", label: "Русский" },
+    en: { nameKey: "name_en", descKey: "description_en", label: "English" },
+    hy: { nameKey: "name_hy", descKey: "description_hy", label: "Հայերեն" },
+  };
+
+  async function runAI() {
+    setBusy(true);
+    try {
+      await translate({ data: { sku, overwrite: true } });
+      toast.success("Перевод готов. Обновите страницу, чтобы увидеть.");
+      // Reload form values from server
+      const { data } = await supabase.from("products").select("name_en,description_en,name_hy,description_hy").eq("sku", sku).maybeSingle();
+      if (data) {
+        setForm({
+          ...form,
+          name_en: data.name_en ?? form.name_en,
+          description_en: data.description_en ?? form.description_en,
+          name_hy: data.name_hy ?? form.name_hy,
+          description_hy: data.description_hy ?? form.description_hy,
+        });
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Ошибка перевода");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const f = fields[tab];
+
+  return (
+    <div className="rounded-sm border border-border p-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex gap-1 rounded-sm bg-secondary p-1 text-xs">
+          {(Object.keys(fields) as Array<"ru" | "en" | "hy">).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setTab(k)}
+              className={`rounded-sm px-3 py-1.5 uppercase tracking-[0.14em] transition ${
+                tab === k ? "bg-background text-foreground shadow" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {fields[k].label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={runAI}
+          disabled={busy}
+          className="rounded-sm border border-border px-3 py-1.5 text-xs uppercase tracking-[0.14em] hover:border-foreground disabled:opacity-50"
+        >
+          {busy ? "AI…" : "✦ Перевести через AI (EN+HY)"}
+        </button>
+      </div>
+      <Field label={`Название (${f.label})`}>
+        <input
+          value={form[f.nameKey] as string}
+          maxLength={500}
+          onChange={(e) => setForm({ ...form, [f.nameKey]: e.target.value })}
+          className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+        />
+      </Field>
+      <div className="mt-4" />
+      <Field label={`Описание (${f.label}, HTML)`}>
+        <textarea
+          value={form[f.descKey] as string}
+          onChange={(e) => setForm({ ...form, [f.descKey]: e.target.value })}
+          rows={6}
+          maxLength={10000}
+          className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+        />
+      </Field>
+      {tab !== "ru" && !(form[f.nameKey] as string) && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Поля пустые — на сайте будет показано русское значение.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function ImageUploader({
   sku,
   onUploaded,
