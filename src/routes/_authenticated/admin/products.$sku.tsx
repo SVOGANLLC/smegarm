@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { translateProduct } from "@/lib/translate.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/products/$sku")({
   component: EditProduct,
@@ -12,6 +14,10 @@ export const Route = createFileRoute("/_authenticated/admin/products/$sku")({
 type FormState = {
   name: string;
   description: string;
+  name_en: string;
+  description_en: string;
+  name_hy: string;
+  description_hy: string;
   price_amd: string;
   price_old: string;
   discount_percent: string;
@@ -49,6 +55,10 @@ function EditProduct() {
       setForm({
         name: q.data.name ?? "",
         description: q.data.description ?? "",
+        name_en: q.data.name_en ?? "",
+        description_en: q.data.description_en ?? "",
+        name_hy: q.data.name_hy ?? "",
+        description_hy: q.data.description_hy ?? "",
         price_amd: q.data.price_amd?.toString() ?? "",
         price_old: q.data.price_old?.toString() ?? "",
         discount_percent: q.data.discount_percent?.toString() ?? "0",
@@ -86,6 +96,10 @@ function EditProduct() {
         .update({
           name: f.name.trim().slice(0, 500),
           description: f.description.slice(0, 10000),
+          name_en: f.name_en.trim().slice(0, 500) || null,
+          description_en: f.description_en.slice(0, 10000) || null,
+          name_hy: f.name_hy.trim().slice(0, 500) || null,
+          description_hy: f.description_hy.slice(0, 10000) || null,
           price_amd: price,
           price_old: priceOld,
           discount_percent: disc,
