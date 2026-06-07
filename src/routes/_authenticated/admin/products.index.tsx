@@ -227,6 +227,22 @@ function AvailBadge({ value }: { value: string }) {
   return <span className={`rounded-full px-2 py-1 ${v.cls}`}>{v.label}</span>;
 }
 
+function StockCell({ qty, reserved, lead }: { qty: number; reserved: number; lead: number | null }) {
+  const avail = Math.max(0, qty - reserved);
+  return (
+    <div className="space-y-0.5">
+      <div>
+        <span className="font-medium text-foreground">{avail}</span>
+        <span className="text-muted-foreground"> / {qty}</span>
+        {reserved > 0 && <span className="text-amber-700"> (рез. {reserved})</span>}
+      </div>
+      {lead != null && lead > 0 && (
+        <div className="text-[10px] text-muted-foreground">~{lead} дн.</div>
+      )}
+    </div>
+  );
+}
+
 function FlagToggle({
   active,
   onClick,
