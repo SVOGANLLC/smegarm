@@ -95,8 +95,8 @@ function AdminProducts() {
         />
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-sm border border-border">
-        <table className="w-full text-sm">
+      <div className="mt-8 overflow-x-auto rounded-sm border border-border">
+        <table className="w-full min-w-[860px] text-sm">
           <thead className="bg-secondary/50 text-left text-xs uppercase tracking-[0.15em] text-muted-foreground">
             <tr>
               <th className="w-16 p-3"></th>
