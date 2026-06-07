@@ -36,7 +36,7 @@ function AdminProducts() {
       let qb = supabase
         .from("products")
         .select(
-          "sku,name,category,main_image,price_amd,discount_percent,availability,is_published,is_bestseller,is_new,is_special_offer",
+          "sku,name,category,main_image,price_amd,discount_percent,availability,stock_qty,stock_reserved,lead_time_days,is_published,is_bestseller,is_new,is_special_offer",
           {
           count: "exact",
           },
@@ -103,6 +103,7 @@ function AdminProducts() {
               <th className="p-3">Артикул / название</th>
               <th className="p-3">Категория</th>
               <th className="p-3">Цена, ֏</th>
+              <th className="p-3">Остаток</th>
               <th className="p-3">Наличие</th>
               <th className="p-3 text-center">Метки</th>
               <th className="p-3 text-center">Виден</th>
@@ -129,6 +130,9 @@ function AdminProducts() {
                       -{p.discount_percent}%
                     </span>
                   )}
+                </td>
+                <td className="p-3 text-xs">
+                  <StockCell qty={p.stock_qty ?? 0} reserved={p.stock_reserved ?? 0} lead={p.lead_time_days ?? null} />
                 </td>
                 <td className="p-3 text-xs">
                   <AvailBadge value={p.availability} />
