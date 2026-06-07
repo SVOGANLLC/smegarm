@@ -163,23 +163,7 @@ function EditProduct() {
         className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]"
       >
         <div className="space-y-6">
-          <Field label="Название">
-            <input
-              value={form.name}
-              maxLength={500}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
-            />
-          </Field>
-          <Field label="Описание (HTML)">
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              rows={6}
-              maxLength={10000}
-              className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
-            />
-          </Field>
+          <I18nContent sku={sku} form={form} setForm={setForm} />
           <Field label="Главное фото (URL)">
             <input
               value={form.main_image}
