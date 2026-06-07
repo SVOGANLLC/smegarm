@@ -15,6 +15,7 @@ const OrderInput = z.object({
   delivery_method: z.enum(["pickup", "courier_yerevan", "courier_armenia"]),
   payment_method: z.enum(["cash", "card_transfer", "idram"]),
   comment: z.string().max(2000).optional().or(z.literal("")),
+  lang: z.enum(["ru", "en", "hy"]).default("ru"),
   items: z.array(ItemSchema).min(1).max(50),
 });
 
@@ -80,6 +81,7 @@ export const createOrder = createServerFn({ method: "POST" })
         delivery_method: data.delivery_method,
         payment_method: data.payment_method,
         comment: data.comment || null,
+        lang: data.lang,
         total_amd: total,
         items_count: itemsCount,
       })
