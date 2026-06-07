@@ -30,6 +30,7 @@ import { Route as AuthenticatedAdminInquiriesRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminContentRouteImport } from './routes/_authenticated/admin/content'
 import { Route as AuthenticatedAdminCollectionsRouteImport } from './routes/_authenticated/admin/collections'
 import { Route as AuthenticatedAdminProductsIndexRouteImport } from './routes/_authenticated/admin/products.index'
+import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as AuthenticatedAdminProductsSkuRouteImport } from './routes/_authenticated/admin/products.$sku'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -142,6 +143,12 @@ const AuthenticatedAdminProductsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAdminProductsRoute,
   } as any)
+const ApiPublicTelegramWebhookRoute =
+  ApiPublicTelegramWebhookRouteImport.update({
+    id: '/api/public/telegram/webhook',
+    path: '/api/public/telegram/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminProductsSkuRoute =
   AuthenticatedAdminProductsSkuRouteImport.update({
     id: '/$sku',
@@ -170,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/admin/tools': typeof AuthenticatedAdminToolsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -191,6 +199,7 @@ export interface FileRoutesByTo {
   '/admin/tools': typeof AuthenticatedAdminToolsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/admin/products': typeof AuthenticatedAdminProductsIndexRoute
 }
 export interface FileRoutesById {
@@ -216,6 +225,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/tools': typeof AuthenticatedAdminToolsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/_authenticated/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
 }
 export interface FileRouteTypes {
@@ -241,6 +251,7 @@ export interface FileRouteTypes {
     | '/admin/tools'
     | '/admin/'
     | '/admin/products/$sku'
+    | '/api/public/telegram/webhook'
     | '/admin/products/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -262,6 +273,7 @@ export interface FileRouteTypes {
     | '/admin/tools'
     | '/admin'
     | '/admin/products/$sku'
+    | '/api/public/telegram/webhook'
     | '/admin/products'
   id:
     | '__root__'
@@ -286,6 +298,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/tools'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/products/$sku'
+    | '/api/public/telegram/webhook'
     | '/_authenticated/admin/products/'
   fileRoutesById: FileRoutesById
 }
@@ -301,6 +314,7 @@ export interface RootRouteChildren {
   CollectionSlugRoute: typeof CollectionSlugRoute
   OrderIdRoute: typeof OrderIdRoute
   ProductSkuRoute: typeof ProductSkuRoute
+  ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -452,6 +466,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminProductsIndexRouteImport
       parentRoute: typeof AuthenticatedAdminProductsRoute
     }
+    '/api/public/telegram/webhook': {
+      id: '/api/public/telegram/webhook'
+      path: '/api/public/telegram/webhook'
+      fullPath: '/api/public/telegram/webhook'
+      preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/products/$sku': {
       id: '/_authenticated/admin/products/$sku'
       path: '/$sku'
@@ -530,7 +551,18 @@ const rootRouteChildren: RootRouteChildren = {
   CollectionSlugRoute: CollectionSlugRoute,
   OrderIdRoute: OrderIdRoute,
   ProductSkuRoute: ProductSkuRoute,
+  ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
