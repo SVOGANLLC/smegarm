@@ -213,6 +213,7 @@ function ProductPage() {
                     {(product as unknown as { price_amd: number }).price_amd.toLocaleString("ru-RU")} ֏
                   </p>
                 )}
+                <AvailabilityBadge product={product} />
                 <AddToCartButton
                   sku={product.sku}
                   name={product.name}
