@@ -1,22 +1,27 @@
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate, useRouteContext } from "@tanstack/react-router";
 import { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Inbox, FileText, LogOut, Home, Layers, Wrench, ShoppingCart } from "lucide-react";
+import { Package, Inbox, FileText, LogOut, Home, Layers, Wrench, ShoppingCart, Users } from "lucide-react";
 import { toast } from "sonner";
 
-const nav = [
+type NavItem = { to: string; label: string; icon: typeof Home; exact?: boolean; adminOnly?: boolean };
+const nav: NavItem[] = [
   { to: "/admin", label: "Обзор", icon: Home, exact: true },
   { to: "/admin/orders", label: "Заказы", icon: ShoppingCart },
-  { to: "/admin/products", label: "Товары", icon: Package },
-  { to: "/admin/collections", label: "Коллекции", icon: Layers },
   { to: "/admin/inquiries", label: "Заявки", icon: Inbox },
-  { to: "/admin/content", label: "Контент", icon: FileText },
-  { to: "/admin/tools", label: "Инструменты", icon: Wrench },
+  { to: "/admin/products", label: "Товары", icon: Package, adminOnly: true },
+  { to: "/admin/collections", label: "Коллекции", icon: Layers, adminOnly: true },
+  { to: "/admin/content", label: "Контент", icon: FileText, adminOnly: true },
+  { to: "/admin/team", label: "Команда", icon: Users, adminOnly: true },
+  { to: "/admin/tools", label: "Инструменты", icon: Wrench, adminOnly: true },
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
+  const ctx = useRouteContext({ from: "/_authenticated/admin" }) as { role?: "admin" | "manager" };
+  const role = ctx.role ?? "admin";
+  const items = nav.filter((n) => !n.adminOnly || role === "admin");
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -32,7 +37,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             Smeg <span className="text-muted-foreground">Admin</span>
           </Link>
           <nav className="mt-10 space-y-1">
-            {nav.map((n) => {
+            {items.map((n) => {
               const active = n.exact ? pathname === n.to : pathname.startsWith(n.to);
               return (
                 <Link
