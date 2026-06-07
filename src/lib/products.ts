@@ -18,6 +18,10 @@ export type Product = {
   url: string | null;
   model_group?: string | null;
   theme_key?: string | null;
+  availability?: string | null;
+  stock_qty?: number | null;
+  stock_reserved?: number | null;
+  lead_time_days?: number | null;
 };
 
 export type ProductCard = Product & {
@@ -248,7 +252,7 @@ export async function fetchCatalog(f: CatalogFilters): Promise<{ items: Product[
   let q = supabase
     .from("products")
     .select(
-      "sku,name,category,brand,aesthetic,colour,family,ean,description,specs,main_image,images,pdf,energy_label,url,price_amd,price_old",
+      "sku,name,category,brand,aesthetic,colour,family,ean,description,specs,main_image,images,pdf,energy_label,url,price_amd,price_old,availability,stock_qty,stock_reserved,lead_time_days",
       { count: "exact" },
     );
   if (f.category) q = q.eq("category", f.category);

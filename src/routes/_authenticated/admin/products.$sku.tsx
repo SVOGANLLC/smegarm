@@ -15,7 +15,8 @@ type FormState = {
   price_amd: string;
   price_old: string;
   discount_percent: string;
-  availability: string;
+  stock_qty: string;
+  lead_time_days: string;
   is_published: boolean;
   is_featured: boolean;
   is_new: boolean;
@@ -51,7 +52,8 @@ function EditProduct() {
         price_amd: q.data.price_amd?.toString() ?? "",
         price_old: q.data.price_old?.toString() ?? "",
         discount_percent: q.data.discount_percent?.toString() ?? "0",
-        availability: q.data.availability ?? "on_request",
+        stock_qty: q.data.stock_qty?.toString() ?? "0",
+        lead_time_days: q.data.lead_time_days?.toString() ?? "",
         is_published: !!q.data.is_published,
         is_featured: !!q.data.is_featured,
         is_new: !!q.data.is_new,
@@ -76,6 +78,9 @@ function EditProduct() {
         .split("\n")
         .map((s) => s.trim())
         .filter(Boolean);
+      const stockQty = Math.max(0, parseInt(f.stock_qty, 10) || 0);
+      const leadRaw = f.lead_time_days.trim();
+      const leadDays = leadRaw === "" ? null : Math.max(0, Math.min(365, parseInt(leadRaw, 10) || 0));
       const { error } = await supabase
         .from("products")
         .update({
@@ -84,7 +89,8 @@ function EditProduct() {
           price_amd: price,
           price_old: priceOld,
           discount_percent: disc,
-          availability: f.availability,
+          stock_qty: stockQty,
+          lead_time_days: leadDays,
           is_published: f.is_published,
           is_featured: f.is_featured,
           is_new: f.is_new,
@@ -280,18 +286,40 @@ function EditProduct() {
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
           </Field>
-          <Field label="Наличие">
-            <select
-              value={form.availability}
-              onChange={(e) => setForm({ ...form, availability: e.target.value })}
-              className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
-            >
-              <option value="in_stock">В наличии</option>
-              <option value="pre_order">Под заказ</option>
-              <option value="out_of_stock">Нет</option>
-              <option value="on_request">По запросу</option>
-            </select>
-          </Field>
+          <div className="space-y-3 rounded-sm border border-border/60 bg-secondary/30 p-3">
+            <p className="eyebrow text-muted-foreground">Склад в Армении</p>
+            <Field label="Остаток, шт.">
+              <input
+                inputMode="numeric"
+                value={form.stock_qty}
+                onChange={(e) => setForm({ ...form, stock_qty: e.target.value.replace(/[^0-9]/g, "") })}
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+              />
+            </Field>
+            <p className="text-xs text-muted-foreground">
+              В резерве: {q.data.stock_reserved ?? 0} шт. · Доступно:{" "}
+              {Math.max(0, (Number(form.stock_qty) || 0) - (q.data.stock_reserved ?? 0))} шт.
+            </p>
+            <Field label="Срок доставки на склад, дней (если нет в наличии)">
+              <input
+                inputMode="numeric"
+                placeholder="напр. 14"
+                value={form.lead_time_days}
+                onChange={(e) => setForm({ ...form, lead_time_days: e.target.value.replace(/[^0-9]/g, "") })}
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+              />
+            </Field>
+            <p className="text-xs text-muted-foreground">
+              Статус наличия пересчитывается автоматически:{" "}
+              <span className="font-medium text-foreground">
+                {(Number(form.stock_qty) || 0) - (q.data.stock_reserved ?? 0) > 0
+                  ? "В наличии"
+                  : form.lead_time_days.trim()
+                  ? `Под заказ (~${form.lead_time_days} дн.)`
+                  : "По запросу"}
+              </span>
+            </p>
+          </div>
           <Field label="Текст бейджа (плашка)">
             <input
               value={form.badge_text}

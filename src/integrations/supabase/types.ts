@@ -288,6 +288,7 @@ export type Database = {
           is_new: boolean
           is_published: boolean
           is_special_offer: boolean
+          lead_time_days: number | null
           main_image: string | null
           model_group: string | null
           name: string
@@ -304,6 +305,8 @@ export type Database = {
           slug: string | null
           sort_weight: number
           specs: Json
+          stock_qty: number
+          stock_reserved: number
           theme_key: string | null
           updated_at: string
           url: string | null
@@ -328,6 +331,7 @@ export type Database = {
           is_new?: boolean
           is_published?: boolean
           is_special_offer?: boolean
+          lead_time_days?: number | null
           main_image?: string | null
           model_group?: string | null
           name: string
@@ -344,6 +348,8 @@ export type Database = {
           slug?: string | null
           sort_weight?: number
           specs?: Json
+          stock_qty?: number
+          stock_reserved?: number
           theme_key?: string | null
           updated_at?: string
           url?: string | null
@@ -368,6 +374,7 @@ export type Database = {
           is_new?: boolean
           is_published?: boolean
           is_special_offer?: boolean
+          lead_time_days?: number | null
           main_image?: string | null
           model_group?: string | null
           name?: string
@@ -384,6 +391,8 @@ export type Database = {
           slug?: string | null
           sort_weight?: number
           specs?: Json
+          stock_qty?: number
+          stock_reserved?: number
           theme_key?: string | null
           updated_at?: string
           url?: string | null

@@ -213,6 +213,7 @@ function ProductPage() {
                     {(product as unknown as { price_amd: number }).price_amd.toLocaleString("ru-RU")} ֏
                   </p>
                 )}
+                <AvailabilityBadge product={product} />
                 <AddToCartButton
                   sku={product.sku}
                   name={product.name}
@@ -316,5 +317,36 @@ function InfoLink({
         </Link>
       </dd>
     </div>
+  );
+}
+
+function AvailabilityBadge({
+  product,
+}: {
+  product: { availability?: string | null; stock_qty?: number | null; stock_reserved?: number | null; lead_time_days?: number | null };
+}) {
+  const avail = product.availability ?? "on_request";
+  const qty = Math.max(0, (product.stock_qty ?? 0) - (product.stock_reserved ?? 0));
+  if (avail === "in_stock") {
+    return (
+      <span className="inline-flex w-full items-center gap-2 text-sm text-emerald-700">
+        <span className="h-2 w-2 rounded-full bg-emerald-600" />
+        В наличии{qty > 0 ? ` · ${qty} шт.` : ""}
+      </span>
+    );
+  }
+  if (avail === "pre_order") {
+    return (
+      <span className="inline-flex w-full items-center gap-2 text-sm text-amber-700">
+        <span className="h-2 w-2 rounded-full bg-amber-500" />
+        Под заказ{product.lead_time_days ? ` · доставка на склад ~${product.lead_time_days} дн.` : ""}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex w-full items-center gap-2 text-sm text-muted-foreground">
+      <span className="h-2 w-2 rounded-full bg-muted-foreground/60" />
+      По запросу
+    </span>
   );
 }
