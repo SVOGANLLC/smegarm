@@ -211,6 +211,7 @@ export type CatalogFilters = {
   families?: string[];
   aesthetics?: string[];
   colours?: string[];
+  theme?: string;
   flag?: "is_featured" | "is_new" | "is_bestseller" | "is_special_offer" | "sale";
   sort?: "name" | "price-asc" | "price-desc";
   limit?: number;
@@ -229,6 +230,7 @@ export async function fetchCatalog(f: CatalogFilters): Promise<{ items: Product[
   if (f.families?.length) q = q.in("family", f.families);
   if (f.aesthetics?.length) q = q.in("aesthetic", f.aesthetics);
   if (f.colours?.length) q = q.in("colour", f.colours);
+  if (f.theme) q = q.eq("theme_key", f.theme);
   if (f.flag === "sale") q = q.not("price_old", "is", null);
   else if (f.flag) q = q.eq(f.flag, true);
   if (f.sort === "price-asc") q = q.order("price_amd", { ascending: true, nullsFirst: false });
