@@ -18,6 +18,10 @@ export type Product = {
   url: string | null;
   model_group?: string | null;
   theme_key?: string | null;
+  availability?: string | null;
+  stock_qty?: number | null;
+  stock_reserved?: number | null;
+  lead_time_days?: number | null;
 };
 
 export type ProductCard = Product & {
