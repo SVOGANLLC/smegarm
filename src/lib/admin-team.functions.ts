@@ -4,10 +4,6 @@ import { z } from "zod";
 
 type Role = "admin" | "manager" | "user";
 
-async function assertAdmin(supabase: ReturnType<typeof requireSupabaseAuth.client>[never] extends never ? never : never, userId: string) {
-  void supabase; void userId;
-}
-
 export const listTeam = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
