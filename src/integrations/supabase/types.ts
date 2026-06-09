@@ -249,6 +249,8 @@ export type Database = {
           lang: string
           order_no: number
           payment_method: string
+          payment_status: string | null
+          px_number: string | null
           status: string
           status_history: Json
           total_amd: number
@@ -271,6 +273,8 @@ export type Database = {
           lang?: string
           order_no?: number
           payment_method?: string
+          payment_status?: string | null
+          px_number?: string | null
           status?: string
           status_history?: Json
           total_amd?: number
@@ -293,6 +297,8 @@ export type Database = {
           lang?: string
           order_no?: number
           payment_method?: string
+          payment_status?: string | null
+          px_number?: string | null
           status?: string
           status_history?: Json
           total_amd?: number

@@ -5,6 +5,7 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { useCart } from "@/lib/cart";
 import { createOrder } from "@/lib/orders.functions";
+import { startConversePayment } from "@/lib/converse.functions";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -18,6 +19,7 @@ function CheckoutPage() {
   const { items, total, clear } = useCart();
   const navigate = useNavigate();
   const submit = useServerFn(createOrder);
+  const startPay = useServerFn(startConversePayment);
   const [busy, setBusy] = useState(false);
   const { lang } = useI18n();
 
@@ -28,7 +30,7 @@ function CheckoutPage() {
     city: "Ереван",
     address: "",
     delivery_method: "pickup" as "pickup" | "courier_yerevan" | "courier_armenia",
-    payment_method: "cash" as "cash" | "card_transfer" | "idram",
+    payment_method: "cash" as "cash" | "card_transfer" | "idram" | "card_online",
     comment: "",
   });
 
@@ -48,6 +50,19 @@ function CheckoutPage() {
           items: items.map((i) => ({ sku: i.sku, qty: i.qty })),
         },
       });
+      if (form.payment_method === "card_online") {
+        try {
+          const pay = await startPay({ data: { order_id: res.id, lang } });
+          clear();
+          window.location.href = pay.formUrl;
+          return;
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Не удалось инициализировать платёж");
+          clear();
+          navigate({ to: "/order/$id", params: { id: String(res.order_no) }, replace: true });
+          return;
+        }
+      }
       clear();
       navigate({ to: "/order/$id", params: { id: String(res.order_no) }, replace: true });
     } catch (err) {
@@ -99,6 +114,7 @@ function CheckoutPage() {
                     <Radio name="pay" value="cash" current={form.payment_method} onChange={(v) => set("payment_method", v as typeof form.payment_method)} label="Наличные при получении" />
                     <Radio name="pay" value="card_transfer" current={form.payment_method} onChange={(v) => set("payment_method", v as typeof form.payment_method)} label="Перевод на карту" sub="Реквизиты пришлёт менеджер" />
                     <Radio name="pay" value="idram" current={form.payment_method} onChange={(v) => set("payment_method", v as typeof form.payment_method)} label="Idram" />
+                    <Radio name="pay" value="card_online" current={form.payment_method} onChange={(v) => set("payment_method", v as typeof form.payment_method)} label="Картой онлайн" sub="ConverseBank — Visa / MasterCard / ArCa, 3-D Secure" />
                   </div>
                 </Section>
 

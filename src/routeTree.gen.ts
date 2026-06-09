@@ -22,6 +22,7 @@ import { Route as OrderIdRouteImport } from './routes/order.$id'
 import { Route as CollectionSlugRouteImport } from './routes/collection.$slug'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as PaymentConverseReturnRouteImport } from './routes/payment.converse.return'
 import { Route as AuthenticatedAdminToolsRouteImport } from './routes/_authenticated/admin/tools'
 import { Route as AuthenticatedAdminTeamRouteImport } from './routes/_authenticated/admin/team'
 import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin/products'
@@ -97,6 +98,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const PaymentConverseReturnRoute = PaymentConverseReturnRouteImport.update({
+  id: '/payment/converse/return',
+  path: '/payment/converse/return',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminToolsRoute = AuthenticatedAdminToolsRouteImport.update({
   id: '/tools',
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
   '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/admin/tools': typeof AuthenticatedAdminToolsRoute
+  '/payment/converse/return': typeof PaymentConverseReturnRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -206,6 +213,7 @@ export interface FileRoutesByTo {
   '/admin/orders': typeof AuthenticatedAdminOrdersRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/admin/tools': typeof AuthenticatedAdminToolsRoute
+  '/payment/converse/return': typeof PaymentConverseReturnRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -233,6 +241,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
   '/_authenticated/admin/team': typeof AuthenticatedAdminTeamRoute
   '/_authenticated/admin/tools': typeof AuthenticatedAdminToolsRoute
+  '/payment/converse/return': typeof PaymentConverseReturnRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -260,6 +269,7 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/team'
     | '/admin/tools'
+    | '/payment/converse/return'
     | '/admin/'
     | '/admin/products/$sku'
     | '/api/public/telegram/webhook'
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
     | '/admin/orders'
     | '/admin/team'
     | '/admin/tools'
+    | '/payment/converse/return'
     | '/admin'
     | '/admin/products/$sku'
     | '/api/public/telegram/webhook'
@@ -309,6 +320,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/products'
     | '/_authenticated/admin/team'
     | '/_authenticated/admin/tools'
+    | '/payment/converse/return'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/products/$sku'
     | '/api/public/telegram/webhook'
@@ -327,6 +339,7 @@ export interface RootRouteChildren {
   CollectionSlugRoute: typeof CollectionSlugRoute
   OrderIdRoute: typeof OrderIdRoute
   ProductSkuRoute: typeof ProductSkuRoute
+  PaymentConverseReturnRoute: typeof PaymentConverseReturnRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
@@ -422,6 +435,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/payment/converse/return': {
+      id: '/payment/converse/return'
+      path: '/payment/converse/return'
+      fullPath: '/payment/converse/return'
+      preLoaderRoute: typeof PaymentConverseReturnRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/tools': {
       id: '/_authenticated/admin/tools'
@@ -573,18 +593,9 @@ const rootRouteChildren: RootRouteChildren = {
   CollectionSlugRoute: CollectionSlugRoute,
   OrderIdRoute: OrderIdRoute,
   ProductSkuRoute: ProductSkuRoute,
+  PaymentConverseReturnRoute: PaymentConverseReturnRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
