@@ -10,10 +10,9 @@ function getCreds() {
   return { merchant_id: Number(merchant_id), token };
 }
 
-function getOrigin(): string {
+async function getOrigin(): Promise<string> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getRequestHeader } = require("@tanstack/react-start/server") as typeof import("@tanstack/react-start/server");
+    const { getRequestHeader } = await import("@tanstack/react-start/server");
     const host = getRequestHeader("x-forwarded-host") || getRequestHeader("host");
     const proto = getRequestHeader("x-forwarded-proto") || "https";
     if (host) return `${proto}://${host}`;
@@ -36,7 +35,7 @@ export const startConversePayment = createServerFn({ method: "POST" })
     if (!order.total_amd || order.total_amd < 1) throw new Error("Некорректная сумма");
 
     const { merchant_id, token } = getCreds();
-    const origin = getOrigin();
+    const origin = await getOrigin();
     const returnUrl = `${origin}/payment/converse/return?order=${order.id}`;
 
     const payload = {
