@@ -30,7 +30,7 @@ function CheckoutPage() {
     city: "Ереван",
     address: "",
     delivery_method: "pickup" as "pickup" | "courier_yerevan" | "courier_armenia",
-    payment_method: "cash" as "cash" | "card_transfer" | "idram" | "card_online",
+    payment_method: "cash" as "cash" | "card_online",
     comment: "",
   });
 
@@ -113,8 +113,6 @@ function CheckoutPage() {
                 <Section title="Оплата">
                   <div className="space-y-3">
                     <Radio name="pay" value="cash" current={form.payment_method} onChange={(v) => set("payment_method", v as typeof form.payment_method)} label="Наличные при получении" />
-                    <Radio name="pay" value="card_transfer" current={form.payment_method} onChange={(v) => set("payment_method", v as typeof form.payment_method)} label="Перевод на карту" sub="Реквизиты пришлёт менеджер" />
-                    <Radio name="pay" value="idram" current={form.payment_method} onChange={(v) => set("payment_method", v as typeof form.payment_method)} label="Idram" />
                     <Radio name="pay" value="card_online" current={form.payment_method} onChange={(v) => set("payment_method", v as typeof form.payment_method)} label="Картой онлайн" sub="ConverseBank — Visa / MasterCard / ArCa, 3-D Secure" />
                   </div>
                 </Section>
