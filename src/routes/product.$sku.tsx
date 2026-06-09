@@ -233,12 +233,15 @@ function ProductPage() {
                   image={product.main_image}
                   price={(product as unknown as { price_amd?: number | null }).price_amd ?? null}
                 />
-                <a
-                  href="#dealer"
-                  className="rounded-full border border-border px-6 py-3 text-xs uppercase tracking-[0.2em] hover:border-foreground"
-                >
-                  {t("product.requestPrice")}
-                </a>
+                {((product as unknown as { price_amd?: number | null }).price_amd == null) && (
+                  <Link
+                    to="/"
+                    hash="dealer"
+                    className="rounded-full border border-border px-6 py-3 text-xs uppercase tracking-[0.2em] hover:border-foreground"
+                  >
+                    {t("product.requestPrice")}
+                  </Link>
+                )}
                 {product.pdf && (
                   <a
                     href={product.pdf}
