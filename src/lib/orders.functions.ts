@@ -13,7 +13,7 @@ const OrderInput = z.object({
   city: z.string().max(120).optional().or(z.literal("")),
   address: z.string().max(500).optional().or(z.literal("")),
   delivery_method: z.enum(["pickup", "courier_yerevan", "courier_armenia"]),
-  payment_method: z.enum(["cash", "card_transfer", "idram"]),
+  payment_method: z.enum(["cash", "card_transfer", "idram", "card_online"]),
   comment: z.string().max(2000).optional().or(z.literal("")),
   lang: z.enum(["ru", "en", "hy"]).default("ru"),
   items: z.array(ItemSchema).min(1).max(50),
