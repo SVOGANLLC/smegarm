@@ -9,19 +9,24 @@ import { z } from "zod";
 
 export const Route = createFileRoute("/payment/converse/return")({
   validateSearch: (s: Record<string, unknown>) =>
-    z.object({ order: z.string().uuid().optional() }).parse(s),
+    z.object({ order: z.string().uuid().optional(), demo: z.enum(["loading", "paid", "failed", "pending"]).optional() }).parse(s),
   head: () => ({ meta: [{ title: "Оплата — Smeg Armenia" }, { name: "robots", content: "noindex" }] }),
   component: ReturnPage,
 });
 
 function ReturnPage() {
-  const { order } = Route.useSearch();
+  const { order, demo } = Route.useSearch();
   const check = useServerFn(checkConversePayment);
   const navigate = useNavigate();
   const [state, setState] = useState<"loading" | "paid" | "failed" | "pending">("loading");
   const [orderNo, setOrderNo] = useState<number | null>(null);
 
   useEffect(() => {
+    if (demo) {
+      setState(demo);
+      setOrderNo(12345);
+      return;
+    }
     if (!order) { setState("failed"); return; }
     let cancelled = false;
     let tries = 0;
@@ -44,7 +49,7 @@ function ReturnPage() {
     }
     poll();
     return () => { cancelled = true; };
-  }, [order, check, navigate]);
+  }, [order, check, navigate, demo]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
