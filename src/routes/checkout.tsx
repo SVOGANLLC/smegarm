@@ -52,20 +52,10 @@ function CheckoutPage() {
       });
       if (form.payment_method === "card_online") {
         try {
-          const pay = await startPay({ data: { order_id: res.id, lang } });
+        const pay = await startPay({ data: { order_id: res.id, lang } });
           clear();
-          // Break out of any iframe (preview, embeds) — ConverseBank blocks framing.
-          try {
-            if (window.top && window.top !== window.self) {
-              window.top.location.href = pay.formUrl;
-            } else {
-              window.location.href = pay.formUrl;
-            }
-          } catch {
-            // Cross-origin top access blocked — fallback to opening in a new tab.
-            window.open(pay.formUrl, "_blank", "noopener");
-            window.location.href = pay.formUrl;
-          }
+          window.open(pay.formUrl, "_blank", "noopener");
+          navigate({ to: "/order/$id", params: { id: String(res.order_no) }, replace: true });
           return;
         } catch (err) {
           toast.error(err instanceof Error ? err.message : "Не удалось инициализировать платёж");
