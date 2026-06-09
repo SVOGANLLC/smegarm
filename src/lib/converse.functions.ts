@@ -96,10 +96,8 @@ export const checkConversePayment = createServerFn({ method: "POST" })
     else if (status === "3") payment_status = "cancelled";
     else if (status === "4") payment_status = "refunded";
 
-    const updates: Record<string, unknown> = { payment_status };
-    // Auto-confirm order on successful payment
+    const updates: { payment_status: string; status?: string } = { payment_status };
     if (payment_status === "paid" && order.status === "new") updates.status = "confirmed";
-
     await supabaseAdmin.from("orders").update(updates).eq("id", order.id);
     return { payment_status, order_no: order.order_no };
   });
