@@ -631,8 +631,8 @@ function BulkTranslateSection() {
       {stats && (
         <div className="grid grid-cols-3 gap-3 text-sm">
           <Stat label="Всего товаров" value={stats.total} />
-          <Stat label="Без English" value={stats.needs_en} warn={stats.needs_en > 0} />
-          <Stat label="Без Հայերեն" value={stats.needs_hy} warn={stats.needs_hy > 0} />
+          <Stat label="Без английского" value={stats.needs_en} warn={stats.needs_en > 0} />
+          <Stat label="Без армянского" value={stats.needs_hy} warn={stats.needs_hy > 0} />
         </div>
       )}
       {log.length > 0 && (
