@@ -27,7 +27,7 @@ const KEEP_TERMS = [
 ];
 
 const SYSTEM_PROMPT = `You are a professional translator for a Smeg appliance catalog in Armenia.
-Translate the provided JSON values from Russian to the target language.
+Translate the provided JSON values from English to the target language.
 Rules:
 - Keep these brand and collection names EXACTLY as-is (do not translate or transliterate): ${KEEP_TERMS.join(", ")}.
 - Keep model codes, SKUs, units (W, kW, L, kg, mm, °C), and numbers untouched.
@@ -37,10 +37,10 @@ Rules:
 
 async function callGateway(
   apiKey: string,
-  targetLang: "en" | "hy",
+  targetLang: "ru" | "hy",
   payload: Record<string, string>,
 ): Promise<Record<string, string>> {
-  const langName = targetLang === "en" ? "English" : "Armenian (Հայերեն)";
+  const langName = targetLang === "ru" ? "Russian (Русский)" : "Armenian (Հայերեն)";
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
