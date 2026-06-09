@@ -54,7 +54,18 @@ function CheckoutPage() {
         try {
           const pay = await startPay({ data: { order_id: res.id, lang } });
           clear();
-          window.location.href = pay.formUrl;
+          // Break out of any iframe (preview, embeds) — ConverseBank blocks framing.
+          try {
+            if (window.top && window.top !== window.self) {
+              window.top.location.href = pay.formUrl;
+            } else {
+              window.location.href = pay.formUrl;
+            }
+          } catch {
+            // Cross-origin top access blocked — fallback to opening in a new tab.
+            window.open(pay.formUrl, "_blank", "noopener");
+            window.location.href = pay.formUrl;
+          }
           return;
         } catch (err) {
           toast.error(err instanceof Error ? err.message : "Не удалось инициализировать платёж");
