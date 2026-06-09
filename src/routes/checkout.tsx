@@ -30,7 +30,7 @@ function CheckoutPage() {
     city: "Ереван",
     address: "",
     delivery_method: "pickup" as "pickup" | "courier_yerevan" | "courier_armenia",
-    payment_method: "cash" as "cash" | "card_transfer" | "idram" | "card_online",
+    payment_method: "cash" as "cash" | "card_online",
     comment: "",
   });
 
