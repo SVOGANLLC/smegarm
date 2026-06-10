@@ -56,7 +56,7 @@ export function CartDrawer() {
               <ul className="space-y-4">
                 {items.map((it) => (
                   <li key={it.sku} className="flex gap-3 border-b border-border pb-4">
-                    <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-sm bg-secondary">
+                    <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-sm bg-white">
                       {it.image ? (
                         <img src={it.image} alt={it.name} className="h-full w-full object-contain p-1" />
                       ) : null}
