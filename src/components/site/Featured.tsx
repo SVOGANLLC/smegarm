@@ -22,7 +22,7 @@ export function Featured() {
     .filter((p): p is NonNullable<typeof p> => Boolean(p));
 
   return (
-    <section id="catalog" className="relative light-section py-28 md:py-40">
+    <section id="catalog" className="relative pt-28 md:pt-40">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <SectionHeader eyebrow={t("section.featured.eyebrow")} title={t("section.featured.title")} />
@@ -32,8 +32,9 @@ export function Featured() {
             </Link>
           </Reveal>
         </div>
-
-        <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+      </div>
+      <div className="light-section mt-16 py-16 md:py-24">
+        <div className="mx-auto max-w-[1400px] px-6 md:px-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           {ordered.map((p, i) => (
             <Reveal key={p.sku} delay={i * 0.08}>
               <motion.div

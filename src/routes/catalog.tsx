@@ -307,7 +307,7 @@ function CatalogPage() {
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[260px_1fr]">
             <aside className="hidden lg:block lg:sticky lg:top-28 lg:self-start lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:pr-2">{filters}</aside>
 
-            <section>
+            <section className="light-section rounded-sm p-5 md:p-8">
               {productsQuery.isLoading ? (
                 <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
                   {Array.from({ length: 8 }).map((_, i) => (
