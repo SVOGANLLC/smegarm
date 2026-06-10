@@ -113,7 +113,7 @@ export function HeaderSearch() {
                           onClick={() => setOpen(false)}
                           className="flex items-center gap-4 px-5 py-3 transition hover:bg-secondary/60"
                         >
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-secondary">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-white">
                             {s.main_image ? (
                               <img
                                 src={s.main_image}

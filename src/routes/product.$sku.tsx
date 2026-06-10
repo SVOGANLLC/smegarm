@@ -141,7 +141,7 @@ function ProductPage() {
               {gallery[active] ? (
                 <ProductImageZoom src={gallery[active]} alt={name || product.name} />
               ) : (
-                <div className="flex aspect-square w-full items-center justify-center rounded-sm bg-secondary text-sm text-muted-foreground">
+                <div className="flex aspect-square w-full items-center justify-center rounded-sm bg-white text-sm text-muted-foreground">
                   {t("product.noPhoto")}
                 </div>
               )}
