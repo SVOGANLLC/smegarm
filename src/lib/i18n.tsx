@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { stylesToCss, collectGoogleFonts, type ContentStylesMap } from "./content-styles";
 
 export type Lang = "ru" | "en" | "hy";
 
@@ -403,7 +404,12 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       const { data } = await supabase.from("site_content").select("key,value");
       if (cancelled || !data) return;
       const next: Record<Lang, Dict> = { ru: {}, en: {}, hy: {} };
+      let stylesMap: ContentStylesMap = {};
       for (const row of data) {
+        if (row.key === "__styles__") {
+          stylesMap = (row.value as ContentStylesMap) ?? {};
+          continue;
+        }
         const value = (row.value ?? {}) as Record<string, Partial<Record<Lang, string>>>;
         for (const [k, perLang] of Object.entries(value)) {
           if (!perLang || typeof perLang !== "object") continue;
@@ -414,6 +420,25 @@ export function I18nProvider({ children }: { children: ReactNode }) {
         }
       }
       setOverlay(next);
+      if (typeof document !== "undefined") {
+        const css = stylesToCss(stylesMap);
+        let styleEl = document.getElementById("ck-runtime-styles") as HTMLStyleElement | null;
+        if (!styleEl) {
+          styleEl = document.createElement("style");
+          styleEl.id = "ck-runtime-styles";
+          document.head.appendChild(styleEl);
+        }
+        styleEl.textContent = css;
+        const fonts = collectGoogleFonts(stylesMap);
+        document.querySelectorAll('link[data-ck-font="1"]').forEach((n) => n.remove());
+        for (const f of fonts) {
+          const link = document.createElement("link");
+          link.rel = "stylesheet";
+          link.href = `https://fonts.googleapis.com/css2?family=${f}&display=swap`;
+          link.setAttribute("data-ck-font", "1");
+          document.head.appendChild(link);
+        }
+      }
     })();
     return () => { cancelled = true; };
   }, []);
