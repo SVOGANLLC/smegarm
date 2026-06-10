@@ -54,7 +54,7 @@ export function ProductCard({ p }: { p: ProductCardType }) {
   return (
     <motion.div whileHover={{ y: -4 }} transition={{ type: "spring", stiffness: 220, damping: 22 }}>
       <Link to="/product/$sku" params={{ sku: p.sku }} className="group block">
-        <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-secondary">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-background">
           <Badges p={p} />
           <div className="absolute right-3 bottom-3 z-10 opacity-0 transition-opacity group-hover:opacity-100">
             <AddToCartButton
