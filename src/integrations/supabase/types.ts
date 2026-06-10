@@ -394,6 +394,54 @@ export type Database = {
         }
         Relationships: []
       }
+      partners: {
+        Row: {
+          created_at: string
+          description: string | null
+          description_en: string | null
+          description_hy: string | null
+          id: string
+          is_published: boolean
+          link_url: string | null
+          logo_url: string | null
+          name: string
+          name_en: string | null
+          name_hy: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          description_en?: string | null
+          description_hy?: string | null
+          id?: string
+          is_published?: boolean
+          link_url?: string | null
+          logo_url?: string | null
+          name: string
+          name_en?: string | null
+          name_hy?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          description_en?: string | null
+          description_hy?: string | null
+          id?: string
+          is_published?: boolean
+          link_url?: string | null
+          logo_url?: string | null
+          name?: string
+          name_en?: string | null
+          name_hy?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           aesthetic: string | null
