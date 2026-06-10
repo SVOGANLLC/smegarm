@@ -55,22 +55,39 @@ export function slugify(s: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export type CategoryStat = { category: string; slug: string; count: number };
+export type CategoryStat = {
+  category: string;
+  category_en?: string | null;
+  category_hy?: string | null;
+  slug: string;
+  count: number;
+};
 
 export async function fetchCategories(): Promise<CategoryStat[]> {
   const { data, error } = await supabase
     .from("products")
-    .select("category")
+    .select("category,category_en,category_hy")
     .not("category", "is", null);
   if (error) throw error;
-  const counts = new Map<string, number>();
+  const counts = new Map<string, { count: number; en?: string | null; hy?: string | null }>();
   for (const row of data ?? []) {
-    const c = (row as { category: string | null }).category?.trim();
+    const r = row as { category: string | null; category_en: string | null; category_hy: string | null };
+    const c = r.category?.trim();
     if (!c) continue;
-    counts.set(c, (counts.get(c) ?? 0) + 1);
+    const cur = counts.get(c) ?? { count: 0 };
+    cur.count += 1;
+    if (!cur.en && r.category_en) cur.en = r.category_en;
+    if (!cur.hy && r.category_hy) cur.hy = r.category_hy;
+    counts.set(c, cur);
   }
   return Array.from(counts.entries())
-    .map(([category, count]) => ({ category, slug: slugify(category), count }))
+    .map(([category, v]) => ({
+      category,
+      category_en: v.en ?? null,
+      category_hy: v.hy ?? null,
+      slug: slugify(category),
+      count: v.count,
+    }))
     .sort((a, b) => b.count - a.count);
 }
 
@@ -230,13 +247,13 @@ export async function fetchProductVariants(modelGroup: string, excludeSku: strin
 export type FacetCounts = {
   families: Array<{ value: string; count: number }>;
   aesthetics: Array<{ value: string; count: number }>;
-  colours: Array<{ value: string; count: number }>;
+  colours: Array<{ value: string; count: number; label_en?: string | null; label_hy?: string | null }>;
 };
 
 export async function fetchFacets(): Promise<FacetCounts> {
   const { data, error } = await supabase
     .from("products")
-    .select("family,aesthetic,colour")
+    .select("family,aesthetic,colour,colour_en,colour_hy")
     .limit(5000);
   if (error) throw error;
   const tally = (key: "family" | "aesthetic" | "colour") => {
@@ -250,7 +267,21 @@ export async function fetchFacets(): Promise<FacetCounts> {
       .map(([value, count]) => ({ value, count }))
       .sort((a, b) => b.count - a.count);
   };
-  return { families: tally("family"), aesthetics: tally("aesthetic"), colours: tally("colour") };
+  const colourLabels = new Map<string, { en?: string | null; hy?: string | null }>();
+  for (const r of (data ?? []) as Array<{ colour: string | null; colour_en: string | null; colour_hy: string | null }>) {
+    const v = (r.colour ?? "").trim();
+    if (!v) continue;
+    const cur = colourLabels.get(v) ?? {};
+    if (!cur.en && r.colour_en) cur.en = r.colour_en;
+    if (!cur.hy && r.colour_hy) cur.hy = r.colour_hy;
+    colourLabels.set(v, cur);
+  }
+  const colours = tally("colour").map((c) => ({
+    ...c,
+    label_en: colourLabels.get(c.value)?.en ?? null,
+    label_hy: colourLabels.get(c.value)?.hy ?? null,
+  }));
+  return { families: tally("family"), aesthetics: tally("aesthetic"), colours };
 }
 
 export type CatalogFilters = {
