@@ -396,3 +396,82 @@ function FlagToggle({
     </button>
   );
 }
+
+function CreateProductDialog({
+  onCancel,
+  onSubmit,
+  isPending,
+  categories,
+}: {
+  onCancel: () => void;
+  onSubmit: (v: { sku: string; name: string; category: string }) => void;
+  isPending: boolean;
+  categories: string[];
+}) {
+  const [sku, setSku] = useState("");
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="w-full max-w-md rounded-sm border border-border bg-background p-6">
+        <h2 className="font-serif text-2xl">Новый товар</h2>
+        <p className="mt-1 text-xs text-muted-foreground">После создания откроется страница редактирования.</p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSubmit({ sku, name, category });
+          }}
+          className="mt-5 space-y-4"
+        >
+          <label className="block">
+            <span className="eyebrow mb-1.5 block text-muted-foreground">Артикул (SKU)</span>
+            <input
+              value={sku}
+              onChange={(e) => setSku(e.target.value.toUpperCase())}
+              autoFocus
+              required
+              className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-foreground"
+            />
+          </label>
+          <label className="block">
+            <span className="eyebrow mb-1.5 block text-muted-foreground">Название</span>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+            />
+          </label>
+          <label className="block">
+            <span className="eyebrow mb-1.5 block text-muted-foreground">Категория</span>
+            <input
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              list="admin-new-product-categories"
+              className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+            />
+            <datalist id="admin-new-product-categories">
+              {categories.map((c) => <option key={c} value={c} />)}
+            </datalist>
+          </label>
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="rounded-sm border border-border px-4 py-2 text-xs uppercase tracking-[0.18em] hover:border-foreground"
+            >
+              Отмена
+            </button>
+            <button
+              type="submit"
+              disabled={isPending}
+              className="rounded-sm bg-foreground px-4 py-2 text-xs uppercase tracking-[0.18em] text-background disabled:opacity-50"
+            >
+              {isPending ? "..." : "Создать"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
