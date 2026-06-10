@@ -1,0 +1,16 @@
+{
+  "id": "/admin?source=pwa",
+  "name": "SMEG ARM Admin",
+  "short_name": "SMEG Admin",
+  "description": "SMEG Armenia admin panel.",
+  "start_url": "/admin",
+  "scope": "/admin",
+  "display": "standalone",
+  "background_color": "#0F0F10",
+  "theme_color": "#0F0F10",
+  "orientation": "any",
+  "icons": [
+    { "src": "/icon-admin-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-admin-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
