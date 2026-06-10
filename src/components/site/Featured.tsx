@@ -22,12 +22,12 @@ export function Featured() {
     .filter((p): p is NonNullable<typeof p> => Boolean(p));
 
   return (
-    <section id="catalog" className="relative bg-white text-black py-28 md:py-40">
+    <section id="catalog" className="relative light-section py-28 md:py-40">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <SectionHeader eyebrow={t("section.featured.eyebrow")} title={t("section.featured.title")} />
           <Reveal>
-            <Link to="/catalog" className="smeg-underline text-sm uppercase tracking-[0.2em] text-black/70">
+            <Link to="/catalog" className="smeg-underline text-sm uppercase tracking-[0.2em] text-foreground/70">
               {t("common.shop")} →
             </Link>
           </Reveal>
@@ -53,12 +53,12 @@ export function Featured() {
                   </div>
                   <div className="mt-5 flex items-baseline justify-between gap-4">
                     <div className="min-w-0">
-                      <h3 className="font-serif text-lg text-black line-clamp-1">{p.name}</h3>
-                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-black/60">
+                      <h3 className="font-serif text-lg text-foreground line-clamp-1">{p.name}</h3>
+                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted-foreground">
                         {[p.category, p.colour].filter(Boolean).join(" · ")}
                       </p>
                     </div>
-                    <span className="text-xs uppercase tracking-[0.2em] text-black/60 transition-colors group-hover:text-[color:var(--brand)]">
+                    <span className="text-xs uppercase tracking-[0.2em] text-foreground/60 transition-colors group-hover:text-accent">
                       →
                     </span>
                   </div>
