@@ -1,6 +1,7 @@
 {
-  "name": "Smeg Armenia",
-  "short_name": "Smeg",
+  "id": "/?source=pwa",
+  "name": "SMEG ARM",
+  "short_name": "SMEG ARM",
   "description": "Official Smeg representative in Armenia. Iconic Italian appliances.",
   "start_url": "/",
   "scope": "/",
