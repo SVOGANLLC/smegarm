@@ -54,10 +54,10 @@ export function Hero() {
       <div className="relative z-10 mx-auto flex h-full max-w-[1480px] flex-col justify-center px-5 pt-24 pb-24 md:px-10 md:pt-32 md:pb-36">
         <div className="flex items-center gap-3 animate-hero-rise" style={{ animationDelay: "100ms" }}>
           <span className="inline-block h-2 w-2 rounded-full bg-[color:var(--brand)]" />
-          <span className="eyebrow text-foreground/70">{t("hero.eyebrow")}</span>
+          <span data-ck="hero.eyebrow" className="eyebrow text-foreground/70">{t("hero.eyebrow")}</span>
         </div>
 
-        <h1 className="mt-4 max-w-[18ch] font-sans font-bold uppercase text-[clamp(1.5rem,4.5vw,3.5rem)] leading-[1.05] tracking-tighter text-foreground">
+        <h1 data-ck="hero.title" className="mt-4 max-w-[18ch] font-sans font-bold uppercase text-[clamp(1.5rem,4.5vw,3.5rem)] leading-[1.05] tracking-tighter text-foreground">
           {title.split("\n").map((line, i) => (
             <span
               key={i}
@@ -70,6 +70,7 @@ export function Hero() {
         </h1>
 
         <p
+          data-ck="hero.subtitle"
           className="mt-6 max-w-md animate-hero-rise text-base leading-relaxed text-foreground/80 md:text-lg"
           style={{ animationDelay: "700ms" }}
         >
@@ -82,12 +83,13 @@ export function Hero() {
         >
           <Link
             to="/catalog"
+            data-ck="hero.cta"
             className="group inline-flex items-center gap-3 rounded-full bg-foreground px-6 py-3.5 text-[11px] uppercase tracking-[0.22em] text-background transition-transform hover:-translate-y-0.5 md:px-8 md:py-4 md:text-xs"
           >
             {t("hero.cta")}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
-          <a href="#story" className="smeg-underline text-xs uppercase tracking-[0.22em] text-foreground/80">
+          <a href="#story" data-ck="hero.cta2" className="smeg-underline text-xs uppercase tracking-[0.22em] text-foreground/80">
             {t("hero.cta2")}
           </a>
         </div>
@@ -130,6 +132,7 @@ export function Hero() {
       <div className="absolute inset-x-0 bottom-8 z-10 mx-auto flex max-w-[1480px] items-end justify-between gap-6 px-6 md:bottom-10 md:px-10">
         <a
           href="#featured"
+          data-ck="hero.scroll"
           className="group inline-flex animate-hero-rise items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-foreground/70"
           style={{ animationDelay: "1250ms" }}
         >
@@ -140,8 +143,8 @@ export function Hero() {
         </a>
 
         <div className="hidden animate-hero-rise text-right md:block" style={{ animationDelay: "1250ms" }}>
-          <p className="font-serif text-base italic text-foreground/85">{t("hero.quote")}</p>
-          <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-foreground/55">{t("hero.quoteCaption")}</p>
+          <p data-ck="hero.quote" className="font-serif text-base italic text-foreground/85">{t("hero.quote")}</p>
+          <p data-ck="hero.quoteCaption" className="mt-1 text-[10px] uppercase tracking-[0.3em] text-foreground/55">{t("hero.quoteCaption")}</p>
         </div>
       </div>
     </section>
