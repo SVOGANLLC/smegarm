@@ -31,13 +31,13 @@ export function ShowcaseStrip({
   });
   if (!isLoading && !items.length) return null;
   return (
-    <section className="py-24 md:py-32">
+    <section className="bg-white text-black py-24 md:py-32">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <SectionHeader eyebrow={resolve(eyebrow)} title={resolve(title)} />
           {to && ctaLabel && (
             <Reveal>
-              <Link to={to} className="smeg-underline text-sm uppercase tracking-[0.2em] text-foreground/70">
+              <Link to={to} className="smeg-underline text-sm uppercase tracking-[0.2em] text-black/70">
                 {resolve(ctaLabel)} →
               </Link>
             </Reveal>
