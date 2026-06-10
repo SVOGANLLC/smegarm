@@ -27,7 +27,7 @@ export function Footer() {
               SMEG{" "}
               <span className="ml-2 text-sm uppercase tracking-[0.3em] text-background/50">Armenia</span>
             </div>
-            <p className="mt-4 max-w-sm text-sm text-background/65">
+            <p data-ck="footer.tagline" className="mt-4 max-w-sm text-sm text-background/65">
               {t("footer.tagline")}
             </p>
           </div>
@@ -46,10 +46,10 @@ export function Footer() {
 
           <div className="md:col-span-2">
             <p className="eyebrow text-background/50">{t("footer.address")}</p>
-            <p className="mt-3 text-sm text-background/80">
+            <p data-ck="footer.address.line1" className="mt-3 text-sm text-background/80">
               {t("footer.address.line1")}
               <br />
-              {t("footer.address.line2")}
+              <span data-ck="footer.address.line2">{t("footer.address.line2")}</span>
             </p>
           </div>
 
