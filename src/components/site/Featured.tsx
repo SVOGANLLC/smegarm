@@ -22,7 +22,7 @@ export function Featured() {
     .filter((p): p is NonNullable<typeof p> => Boolean(p));
 
   return (
-    <section id="catalog" className="relative py-28 md:py-40">
+    <section id="catalog" className="relative light-section py-28 md:py-40">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <SectionHeader eyebrow={t("section.featured.eyebrow")} title={t("section.featured.title")} />
