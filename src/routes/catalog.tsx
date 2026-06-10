@@ -86,9 +86,20 @@ function CatalogPage() {
   const facetsQuery = useQuery({ queryKey: ["facets"], queryFn: fetchFacets, staleTime: 10 * 60_000 });
   const swatchesQuery = useQuery({ queryKey: ["color-swatches"], queryFn: fetchColorSwatches, staleTime: 30 * 60_000 });
 
-  const categoryName = category
-    ? catsQuery.data?.find((c) => c.slug === category)?.category
+  const currentCat = category ? catsQuery.data?.find((c) => c.slug === category) : undefined;
+  const categoryName = currentCat?.category;
+  const categoryLabel = currentCat
+    ? pickLocalized(currentCat as unknown as Record<string, unknown>, "category", lang) || currentCat.category
     : undefined;
+
+  // colour value (canonical) → localized label for current lang
+  const colourLabel = (value: string) => {
+    const f = facetsQuery.data?.colours.find((c) => c.value === value);
+    if (!f) return value;
+    if (lang === "en") return f.label_en || value;
+    if (lang === "hy") return f.label_hy || value;
+    return value; // ru base; colour stored canonically in English on most rows
+  };
 
   const productsQuery = useQuery({
     queryKey: ["catalog", categoryName ?? null, q ?? "", colours, families, aesthetics, theme ?? "", flag ?? "", sort ?? "", page],
@@ -165,7 +176,7 @@ function CatalogPage() {
             <FilterPill key={v} onClear={() => toggleIn("family", v)}>{v}</FilterPill>
           ))}
           {colours.map((v) => (
-            <FilterPill key={v} onClear={() => toggleIn("colour", v)}>{v}</FilterPill>
+            <FilterPill key={v} onClear={() => toggleIn("colour", v)}>{colourLabel(v)}</FilterPill>
           ))}
         </div>
       )}
@@ -222,10 +233,11 @@ function CatalogPage() {
             .map((c) => {
             const hex = swatchesQuery.data?.find((s) => s.colour === c.value)?.hex ?? "#d4d4d4";
             const active = colours.includes(c.value);
+            const label = colourLabel(c.value);
             return (
               <button
                 key={c.value}
-                title={`${c.value} (${c.count})`}
+                title={`${label} (${c.count})`}
                 onClick={() => toggleIn("colour", c.value)}
                 className={`h-7 w-7 rounded-full border transition ${active ? "ring-2 ring-foreground ring-offset-2 ring-offset-background border-transparent" : "border-border hover:border-foreground"}`}
                 style={{ background: hex }}
@@ -270,7 +282,7 @@ function CatalogPage() {
           <div className="mb-8 md:mb-10">
             <p className="eyebrow text-muted-foreground">{t("catalog.title")}</p>
             <h1 className="mt-3 font-serif text-3xl sm:text-4xl md:text-6xl">
-              {categoryName ?? t("catalog.all")}
+              {categoryLabel ?? t("catalog.all")}
             </h1>
             <p className="mt-3 text-sm text-muted-foreground">
               {total > 0 ? `${total} ${t("catalog.modelsSuffix")}` : productsQuery.isLoading ? t("catalog.loading") : t("catalog.empty")}
