@@ -40,9 +40,9 @@ function Index() {
         <Hero />
         <Featured />
         <Marquee />
-        <ShowcaseStrip flag="is_bestseller" eyebrow="Bestsellers" title="Хиты продаж" to="/catalog" ctaLabel="Все товары" bg />
-        <ShowcaseStrip flag="is_special_offer" eyebrow="Special offers" title="Спецпредложения" to="/sale" ctaLabel="Все акции" />
-        <ShowcaseStrip flag="is_new" eyebrow="New arrivals" title="Новинки" to="/catalog" ctaLabel="Каталог" bg />
+        <ShowcaseStrip flag="is_bestseller" eyebrow="showcase.bestsellers.eyebrow" title="showcase.bestsellers.title" to="/catalog" ctaLabel="cta.allProducts" bg />
+        <ShowcaseStrip flag="is_special_offer" eyebrow="showcase.special.eyebrow" title="showcase.special.title" to="/sale" ctaLabel="cta.allOffers" />
+        <ShowcaseStrip flag="is_new" eyebrow="showcase.new.eyebrow" title="showcase.new.title" to="/catalog" ctaLabel="cta.catalog" bg />
         <Collections />
         <Categories />
         <Benefits />
