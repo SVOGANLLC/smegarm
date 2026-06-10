@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export type Lang = "ru" | "en" | "hy";
 
@@ -11,34 +12,59 @@ const dicts: Record<Lang, Dict> = {
     "nav.story": "Бренд",
     "nav.dealer": "Дилер в Армении",
     "nav.contact": "Контакты",
-    "hero.eyebrow": "Официальный представитель SMEG в Армении",
+    "hero.eyebrow": "Официальный SMEG в Армении",
     "hero.title": "ВЫБЕРИ ЦВЕТ\nСВОЕГО НАСТРОЕНИЯ",
     "hero.subtitle":
       "Итальянская техника, превращающая каждое движение на кухне в ритуал.",
     "hero.cta": "Открыть каталог",
     "hero.cta2": "История бренда",
+    "hero.scroll": "Прокрутить",
+    "hero.quote": "«Bellezza, qualità, prestazioni.»",
+    "hero.quoteCaption": "— Манифест Smeg",
+    "header.menu": "Меню",
+    "header.close": "Закрыть",
     "section.featured.eyebrow": "Избранное",
     "section.featured.title": "Иконы Smeg",
     "section.collections.eyebrow": "Коллекции",
     "section.collections.title": "Десять способов\nвыразить себя.",
     "section.categories.eyebrow": "Категории",
     "section.categories.title": "Каждая деталь\nна своём месте.",
+    "section.categories.small": "Малая техника",
+    "section.categories.refrigerators": "Холодильники",
+    "section.categories.ovens": "Духовые шкафы",
+    "section.categories.hobs": "Варочные панели",
     "section.benefits.eyebrow": "Почему Smeg",
+    "section.benefits.title": "Итальянское мастерство.\nАрмянская забота.",
+    "section.benefits.1.t": "Сделано в Италии",
+    "section.benefits.1.d": "Сборка на заводах Smeg в Гуасталле — 76 лет опыта.",
+    "section.benefits.2.t": "Иконический дизайн",
+    "section.benefits.2.d": "От FAB50 до Linea — модели от ведущих мировых дизайнеров.",
+    "section.benefits.3.t": "Энергоэффективность",
+    "section.benefits.3.d": "Технологии A-класса для современного дома.",
+    "section.benefits.4.t": "Официальная гарантия",
+    "section.benefits.4.d": "Полная гарантия Smeg и сертифицированный сервис по Армении.",
     "section.story.eyebrow": "С 1948 года",
     "section.story.title": "Семейная история\nиз Гвасталлы.",
     "section.story.body":
       "Более семидесяти лет Smeg объединяет инженерию, дизайн и итальянскую культуру дома. Каждая модель — это диалог между функцией и формой.",
     "section.story.cta": "Узнать историю",
+    "section.story.stat.years": "Лет",
+    "section.story.stat.countries": "Стран",
+    "section.story.stat.colours": "Цветов",
     "section.dealer.eyebrow": "Smeg Armenia",
     "section.dealer.title": "Showroom в Ереване",
     "section.dealer.body":
       "Приходите в наш салон, чтобы увидеть Smeg вживую, обсудить проект кухни с консультантом и оформить доставку по всей Армении.",
     "section.dealer.cta": "Записаться на визит",
+    "section.dealer.address": "ул. Нар-Доса 2, Ереван, Армения",
     "footer.contact": "Контакты",
     "footer.address": "Адрес",
     "footer.follow": "Соцсети",
     "footer.rights": "Все права защищены.",
     "footer.designed": "Designed & Developed by",
+    "footer.tagline": "Официальный SMEG в Армении. Премиальная итальянская техника с 1948 года.",
+    "footer.address.line1": "ул. Нар-Доса 2",
+    "footer.address.line2": "Ереван, Армения",
     "common.discover": "Подробнее",
     "common.shop": "В каталог",
     "product.sku": "Артикул",
@@ -102,34 +128,59 @@ const dicts: Record<Lang, Dict> = {
     "nav.story": "Brand",
     "nav.dealer": "Armenia Dealer",
     "nav.contact": "Contact",
-    "hero.eyebrow": "Official Smeg dealer in Armenia",
+    "hero.eyebrow": "Official SMEG in Armenia",
     "hero.title": "CHOOSE THE COLOR\nOF YOUR MOOD",
     "hero.subtitle":
       "Italian appliances that turn every kitchen gesture into a ritual.",
     "hero.cta": "Explore the catalog",
     "hero.cta2": "Our story",
+    "hero.scroll": "Scroll",
+    "hero.quote": "“Bellezza, qualità, prestazioni.”",
+    "hero.quoteCaption": "— Smeg manifesto",
+    "header.menu": "Menu",
+    "header.close": "Close",
     "section.featured.eyebrow": "Featured",
     "section.featured.title": "Smeg icons",
     "section.collections.eyebrow": "Collections",
     "section.collections.title": "Ten ways\nto express yourself.",
     "section.categories.eyebrow": "Categories",
     "section.categories.title": "Every detail\nin its place.",
+    "section.categories.small": "Small appliances",
+    "section.categories.refrigerators": "Refrigerators",
+    "section.categories.ovens": "Ovens",
+    "section.categories.hobs": "Hobs & Cooktops",
     "section.benefits.eyebrow": "Why Smeg",
+    "section.benefits.title": "Italian craft.\nArmenian care.",
+    "section.benefits.1.t": "Made in Italy",
+    "section.benefits.1.d": "Assembled in Smeg's Guastalla factories with 76 years of know-how.",
+    "section.benefits.2.t": "Iconic design",
+    "section.benefits.2.d": "From the FAB50 to Linea — pieces curated by world-class designers.",
+    "section.benefits.3.t": "Energy efficiency",
+    "section.benefits.3.d": "A-class technology engineered for the modern Mediterranean home.",
+    "section.benefits.4.t": "Official warranty",
+    "section.benefits.4.d": "Full Smeg warranty and certified service across Armenia.",
     "section.story.eyebrow": "Since 1948",
     "section.story.title": "A family story\nfrom Guastalla.",
     "section.story.body":
       "For over seventy years Smeg has united engineering, design and Italian home culture. Every model is a conversation between function and form.",
     "section.story.cta": "Discover the story",
+    "section.story.stat.years": "Years",
+    "section.story.stat.countries": "Countries",
+    "section.story.stat.colours": "Colours",
     "section.dealer.eyebrow": "Smeg Armenia",
     "section.dealer.title": "Yerevan showroom",
     "section.dealer.body":
       "Visit our showroom to experience Smeg in person, plan your kitchen with a consultant and arrange delivery anywhere in Armenia.",
     "section.dealer.cta": "Book a visit",
+    "section.dealer.address": "2 Nar-Dos St, Yerevan, Armenia",
     "footer.contact": "Contact",
     "footer.address": "Address",
     "footer.follow": "Follow",
     "footer.rights": "All rights reserved.",
     "footer.designed": "Designed & Developed by",
+    "footer.tagline": "Official SMEG in Armenia. Premium Italian appliances since 1948.",
+    "footer.address.line1": "2 Nar-Dos St",
+    "footer.address.line2": "Yerevan, Armenia",
     "common.discover": "Discover",
     "common.shop": "Shop",
     "product.sku": "SKU",
@@ -193,34 +244,59 @@ const dicts: Record<Lang, Dict> = {
     "nav.story": "Բրենդ",
     "nav.dealer": "Հայաստան",
     "nav.contact": "Կապ",
-    "hero.eyebrow": "Smeg-ի պաշտոնական ներկայացուցիչը Հայաստանում",
+    "hero.eyebrow": "Պաշտոնական SMEG Հայաստանում",
     "hero.title": "ԸՆՐԻՐ ՔՈ\nՏՐԱՄԱԴՐՈՒԹՅԱՆ ԳՈՒՅՆԸ",
     "hero.subtitle":
       "Իտալական տեխնիկա, որը խոհանոցի յուրաքանչյուր շարժում վերածում է ծեսի։",
     "hero.cta": "Տեսնել կատալոգը",
     "hero.cta2": "Բրենդի պատմությունը",
+    "hero.scroll": "Ոլորել",
+    "hero.quote": "«Bellezza, qualità, prestazioni.»",
+    "hero.quoteCaption": "— Smeg-ի մանիֆեստ",
+    "header.menu": "Մենյու",
+    "header.close": "Փակել",
     "section.featured.eyebrow": "Ընտրված",
     "section.featured.title": "Smeg-ի խորհրդանիշները",
     "section.collections.eyebrow": "Կոլեկցիաներ",
     "section.collections.title": "Տասը ձև՝\nարտահայտվելու։",
     "section.categories.eyebrow": "Կատեգորիաներ",
     "section.categories.title": "Ամեն մանրուք՝\nիր տեղում։",
+    "section.categories.small": "Փոքր տեխնիկա",
+    "section.categories.refrigerators": "Սառնարաններ",
+    "section.categories.ovens": "Փուռեր",
+    "section.categories.hobs": "Կրակասալիկներ",
     "section.benefits.eyebrow": "Ինչու Smeg",
+    "section.benefits.title": "Իտալական վարպետություն։\nՀայկական խնամք։",
+    "section.benefits.1.t": "Արտադրված Իտալիայում",
+    "section.benefits.1.d": "Հավաքվում է Smeg-ի Գուաստալայի գործարաններում՝ 76 տարվա փորձով։",
+    "section.benefits.2.t": "Խորհրդանշական դիզայն",
+    "section.benefits.2.d": "FAB50-ից մինչև Linea՝ համաշխարհային մակարդակի դիզայներների գործեր։",
+    "section.benefits.3.t": "Էներգախնայողություն",
+    "section.benefits.3.d": "A դասի տեխնոլոգիա ժամանակակից տան համար։",
+    "section.benefits.4.t": "Պաշտոնական երաշխիք",
+    "section.benefits.4.d": "Smeg-ի լրիվ երաշխիք և սերտիֆիկացված սպասարկում Հայաստանում։",
     "section.story.eyebrow": "1948 թվականից",
     "section.story.title": "Ընտանեկան\nպատմություն Գուաստալայից։",
     "section.story.body":
       "Ավելի քան յոթանասուն տարի Smeg-ը միավորում է ինժեներիան, դիզայնը և տան իտալական մշակույթը։",
     "section.story.cta": "Բացահայտել պատմությունը",
+    "section.story.stat.years": "Տարի",
+    "section.story.stat.countries": "Երկիր",
+    "section.story.stat.colours": "Գույն",
     "section.dealer.eyebrow": "Smeg Armenia",
     "section.dealer.title": "Showroom Երևանում",
     "section.dealer.body":
       "Այցելեք մեր սրահ՝ տեսնելու Smeg-ը կենդանի, խորհրդակցելու և կազմակերպելու առաքում ողջ Հայաստանում։",
     "section.dealer.cta": "Ամրագրել այց",
+    "section.dealer.address": "Նար-Դոս 2, Երևան, Հայաստան",
     "footer.contact": "Կապ",
     "footer.address": "Հասցե",
     "footer.follow": "Հետևեք",
     "footer.rights": "Բոլոր իրավունքները պաշտպանված են։",
     "footer.designed": "Դիզայնը և մշակումը՝",
+    "footer.tagline": "Պաշտոնական SMEG Հայաստանում։ Պրեմիում իտալական տեխնիկա 1948 թվականից։",
+    "footer.address.line1": "Նար-Դոս 2",
+    "footer.address.line2": "Երևան, Հայաստան",
     "common.discover": "Իմանալ ավելին",
     "common.shop": "Կատալոգ",
     "product.sku": "Արտ․ համար",
@@ -283,17 +359,42 @@ const dicts: Record<Lang, Dict> = {
 type I18nCtx = { lang: Lang; setLang: (l: Lang) => void; t: (key: string) => string };
 const Ctx = createContext<I18nCtx | null>(null);
 
+export function getI18nDefaults(): Record<Lang, Dict> {
+  return dicts;
+}
+
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("ru");
+  const [overlay, setOverlay] = useState<Record<Lang, Dict>>({ ru: {}, en: {}, hy: {} });
   useEffect(() => {
     const stored = typeof window !== "undefined" ? (localStorage.getItem("smeg.lang") as Lang | null) : null;
     if (stored && stored in dicts) setLangState(stored);
+  }, []);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from("site_content").select("key,value");
+      if (cancelled || !data) return;
+      const next: Record<Lang, Dict> = { ru: {}, en: {}, hy: {} };
+      for (const row of data) {
+        const value = (row.value ?? {}) as Record<string, Partial<Record<Lang, string>>>;
+        for (const [k, perLang] of Object.entries(value)) {
+          if (!perLang || typeof perLang !== "object") continue;
+          (["ru", "en", "hy"] as Lang[]).forEach((l) => {
+            const v = perLang[l];
+            if (typeof v === "string" && v.trim()) next[l][k] = v;
+          });
+        }
+      }
+      setOverlay(next);
+    })();
+    return () => { cancelled = true; };
   }, []);
   const setLang = (l: Lang) => {
     setLangState(l);
     if (typeof window !== "undefined") localStorage.setItem("smeg.lang", l);
   };
-  const t = (key: string) => dicts[lang][key] ?? key;
+  const t = (key: string) => overlay[lang][key] ?? dicts[lang][key] ?? key;
   return <Ctx.Provider value={{ lang, setLang, t }}>{children}</Ctx.Provider>;
 }
 

@@ -136,12 +136,12 @@ export function Hero() {
           <span className="inline-flex h-9 w-9 animate-hero-bounce items-center justify-center rounded-full border border-foreground/40 group-hover:border-foreground">
             <ArrowDown className="h-3.5 w-3.5" />
           </span>
-          Scroll
+          {t("hero.scroll")}
         </a>
 
         <div className="hidden animate-hero-rise text-right md:block" style={{ animationDelay: "1250ms" }}>
-          <p className="font-serif text-base italic text-foreground/85">“Bellezza, qualità, prestazioni.”</p>
-          <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-foreground/55">— Smeg manifesto</p>
+          <p className="font-serif text-base italic text-foreground/85">{t("hero.quote")}</p>
+          <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-foreground/55">{t("hero.quoteCaption")}</p>
         </div>
       </div>
     </section>

@@ -14,7 +14,7 @@ import { ShowcaseStrip } from "@/components/site/ShowcaseStrip";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Smeg Armenia — Official Italian appliances dealer in Yerevan" },
+      { title: "Smeg Armenia — Official SMEG Italian appliances in Yerevan" },
       {
         name: "description",
         content:

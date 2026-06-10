@@ -80,27 +80,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Smeg Armenia — Official Italian appliances in Yerevan" },
+      { title: "Smeg Armenia — Official SMEG Italian appliances in Yerevan" },
       {
         name: "description",
         content:
-          "Official Smeg representative in Armenia. Iconic Italian refrigerators, ovens, coffee machines and small appliances. Showroom at Nar-Dos 2, Yerevan.",
+          "Official SMEG in Armenia. Iconic Italian refrigerators, ovens, coffee machines and small appliances. Showroom at Nar-Dos 2, Yerevan.",
       },
       { name: "author", content: "Smeg Armenia" },
-      { name: "theme-color", content: "#0F0F10" },
-      { property: "og:title", content: "Smeg Armenia — Official Italian appliances in Yerevan" },
+      { name: "theme-color", content: "#FFFFFF" },
+      { property: "og:title", content: "Smeg Armenia — Official SMEG Italian appliances in Yerevan" },
       {
         property: "og:description",
         content:
-          "Discover the official Smeg collection in Armenia. Visit our Yerevan showroom at Nar-Dos 2.",
+          "Discover the official SMEG collection in Armenia. Visit our Yerevan showroom at Nar-Dos 2.",
       },
       { property: "og:site_name", content: "Smeg Armenia" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Smeg Armenia — Official Italian appliances in Yerevan" },
-      { name: "description", content: "Smeg Armenia — Official Italian appliances in Yerevan" },
-      { property: "og:description", content: "Smeg Armenia — Official Italian appliances in Yerevan" },
-      { name: "twitter:description", content: "Smeg Armenia — Official Italian appliances in Yerevan" },
+      { name: "twitter:title", content: "Smeg Armenia — Official SMEG Italian appliances in Yerevan" },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/b18234ac-f85a-490a-ad39-7642ae6feb9b" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/b18234ac-f85a-490a-ad39-7642ae6feb9b" },
     ],
