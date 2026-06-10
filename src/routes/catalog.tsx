@@ -324,7 +324,7 @@ function CatalogPage() {
                         params={{ sku: p.sku }}
                         className="group block"
                       >
-                        <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-secondary">
+                        <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-white">
                           {p.main_image ? (
                             <img
                               src={p.main_image}
