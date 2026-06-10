@@ -25,7 +25,7 @@ export function Dealer() {
           <Reveal delay={0.1}>
             <p className="mt-8 max-w-md text-base text-muted-foreground md:text-lg">{t("section.dealer.body")}</p>
             <ul className="mt-10 space-y-5">
-              <Info icon={<MapPin className="h-4 w-4" />} label="Nar-Dos 2, Yerevan, Armenia" />
+              <Info icon={<MapPin className="h-4 w-4" />} label={t("section.dealer.address")} />
               <Info icon={<Phone className="h-4 w-4" />} label="+374 60 68 00 88" href="tel:+37460680088" />
               <Info icon={<Mail className="h-4 w-4" />} label="smeg@smeg.am" href="mailto:smeg@smeg.am" />
             </ul>
@@ -41,7 +41,7 @@ export function Dealer() {
           <div className="relative aspect-[4/3] overflow-hidden rounded-sm border border-border bg-secondary">
             <iframe
               title="Smeg Armenia Showroom"
-              src="https://www.openstreetmap.org/export/embed.html?bbox=44.5108%2C40.1750%2C44.5208%2C40.1830&layer=mapnik&marker=40.1790,44.5158"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=44.504432%2C40.162068%2C44.513432%2C40.167068&layer=mapnik&marker=40.164568%2C44.508932"
               className="h-full w-full grayscale-[40%]"
               loading="lazy"
             />

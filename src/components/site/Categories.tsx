@@ -8,9 +8,9 @@ import { slugify, fetchFeatured } from "@/lib/products";
 // Real Smeg products used as category covers (50's Style icons)
 const COVER_SKUS = ["FAB10HLRD6", "SF6905P1", "PV395LN"];
 const main = [
-  { sku: "FAB10HLRD6", key: "Refrigerators", label: "Refrigerators" },
-  { sku: "SF6905P1", key: "Oven", label: "Ovens" },
-  { sku: "PV395LN", key: "Hobs", label: "Hobs & Cooktops" },
+  { sku: "FAB10HLRD6", key: "Refrigerators", i18n: "section.categories.refrigerators" },
+  { sku: "SF6905P1", key: "Oven", i18n: "section.categories.ovens" },
+  { sku: "PV395LN", key: "Hobs", i18n: "section.categories.hobs" },
 ];
 
 const small = [
@@ -48,7 +48,7 @@ export function Categories() {
                 {imgFor(c.sku) && (
                   <motion.img
                     src={imgFor(c.sku)!}
-                    alt={c.label}
+                    alt={t(c.i18n)}
                     loading="lazy"
                     variants={{ hover: { scale: 1.06 } }}
                     transition={{ duration: 1.2, ease: [0.2, 0.7, 0.2, 1] }}
@@ -58,7 +58,7 @@ export function Categories() {
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/55 via-transparent to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-6 text-background md:p-8">
                   <div>
-                    <h3 className="mt-2 font-serif text-2xl md:text-3xl">{c.label}</h3>
+                    <h3 className="mt-2 font-serif text-2xl md:text-3xl">{t(c.i18n)}</h3>
                   </div>
                   <span className="opacity-80 transition-transform group-hover:translate-x-1">→</span>
                 </div>
@@ -70,7 +70,7 @@ export function Categories() {
 
         <Reveal>
           <div className="mt-16 flex flex-wrap items-center gap-3">
-            <span className="eyebrow mr-4 text-muted-foreground">Small appliances</span>
+            <span className="eyebrow mr-4 text-muted-foreground">{t("section.categories.small")}</span>
             {small.map((s) => (
               <Link
                 key={s}

@@ -31,9 +31,9 @@ export function Story() {
           <Reveal delay={0.1}>
             <p className="mt-8 max-w-md text-base text-background/75 md:text-lg">{t("section.story.body")}</p>
             <div className="mt-10 grid grid-cols-3 gap-6 border-t border-background/15 pt-8">
-              <Stat n="76" label="Years" />
-              <Stat n="50+" label="Countries" />
-              <Stat n="11" label="Colours" />
+              <Stat n="76" label={t("section.story.stat.years")} />
+              <Stat n="50+" label={t("section.story.stat.countries")} />
+              <Stat n="11" label={t("section.story.stat.colours")} />
             </div>
             <a href="#" className="mt-10 inline-flex w-fit items-center gap-3 text-sm uppercase tracking-[0.2em] text-background smeg-underline">
               {t("section.story.cta")} →

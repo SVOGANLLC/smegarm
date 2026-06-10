@@ -116,7 +116,7 @@ export function Header() {
             className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-4 py-2 backdrop-blur lg:hidden"
           >
             {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-            <span className="text-[11px] font-medium uppercase tracking-wider">{menuOpen ? "Закрыть" : "Меню"}</span>
+            <span className="text-[11px] font-medium uppercase tracking-wider">{menuOpen ? t("header.close") : t("header.menu")}</span>
           </button>
         </div>
       </div>

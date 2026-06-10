@@ -20,21 +20,21 @@ export function Footer() {
   const { t } = useI18n();
   return (
     <footer id="contact" className="bg-foreground text-background">
-      <div className="mx-auto max-w-[1400px] px-6 py-20 md:px-10 md:py-28">
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-12">
+      <div className="mx-auto max-w-[1400px] px-6 py-10 md:px-10 md:py-14">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
           <div className="md:col-span-5">
-            <div className="font-serif text-3xl">
+            <div className="font-serif text-2xl">
               SMEG{" "}
-              <span className="ml-2 text-base uppercase tracking-[0.3em] text-background/50">Armenia</span>
+              <span className="ml-2 text-sm uppercase tracking-[0.3em] text-background/50">Armenia</span>
             </div>
-            <p className="mt-6 max-w-sm text-sm text-background/65">
-              Official Smeg representative in Armenia. Premium Italian household and professional appliances since 1948.
+            <p className="mt-4 max-w-sm text-sm text-background/65">
+              {t("footer.tagline")}
             </p>
           </div>
 
           <div className="md:col-span-3">
             <p className="eyebrow text-background/50">{t("footer.contact")}</p>
-            <ul className="mt-5 space-y-2 text-sm">
+            <ul className="mt-3 space-y-1.5 text-sm">
               <li>
                 <a href="tel:+37460680088" className="smeg-underline">+374 60 68 00 88</a>
               </li>
@@ -46,16 +46,16 @@ export function Footer() {
 
           <div className="md:col-span-2">
             <p className="eyebrow text-background/50">{t("footer.address")}</p>
-            <p className="mt-5 text-sm text-background/80">
-              Nar-Dos 2
+            <p className="mt-3 text-sm text-background/80">
+              {t("footer.address.line1")}
               <br />
-              Yerevan, Armenia
+              {t("footer.address.line2")}
             </p>
           </div>
 
           <div className="md:col-span-2">
             <p className="eyebrow text-background/50">{t("footer.follow")}</p>
-            <div className="mt-5 flex gap-3">
+            <div className="mt-3 flex gap-3">
               <SocialLink href="https://instagram.com/smegarmenia/" label="Instagram">
                 <Instagram className="h-4 w-4" />
               </SocialLink>
@@ -66,7 +66,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-20 flex flex-col items-start justify-between gap-4 border-t border-background/15 pt-8 text-xs text-background/55 md:flex-row md:items-center">
+        <div className="mt-10 flex flex-col items-start justify-between gap-3 border-t border-background/15 pt-6 text-xs text-background/55 md:flex-row md:items-center">
           <p>© {new Date().getFullYear()} Smeg Armenia. {t("footer.rights")}</p>
           <p>
             {t("footer.designed")}{" "}
