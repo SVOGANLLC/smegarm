@@ -131,6 +131,8 @@ const dicts: Record<Lang, Dict> = {
     "cta.allProducts": "Все товары",
     "cta.allOffers": "Все акции",
     "cta.catalog": "Каталог",
+    "section.partners.eyebrow": "Партнёры",
+    "section.partners.title": "Наши партнёры",
   },
   en: {
     "nav.catalog": "Shop",
@@ -256,6 +258,8 @@ const dicts: Record<Lang, Dict> = {
     "cta.allProducts": "All products",
     "cta.allOffers": "All offers",
     "cta.catalog": "Catalogue",
+    "section.partners.eyebrow": "Partners",
+    "section.partners.title": "Our partners",
   },
   hy: {
     "nav.catalog": "Կատալոգ",
@@ -381,6 +385,8 @@ const dicts: Record<Lang, Dict> = {
     "cta.allProducts": "Բոլոր ապրանքները",
     "cta.allOffers": "Բոլոր առաջարկները",
     "cta.catalog": "Կատալոգ",
+    "section.partners.eyebrow": "Գործընկերներ",
+    "section.partners.title": "Մեր գործընկերները",
   },
 };
 
