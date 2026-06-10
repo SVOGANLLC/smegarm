@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate, useRouteContext } from "@tanstack/react-router";
 import { ReactNode, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Inbox, FileText, LogOut, Home, Layers, Wrench, ShoppingCart, Users, Bell, Menu, X } from "lucide-react";
+import { Package, Inbox, FileText, LogOut, Home, Layers, Wrench, ShoppingCart, Users, Bell, Menu, X, Handshake } from "lucide-react";
 import { toast } from "sonner";
 
 type NavItem = { to: string; label: string; icon: typeof Home; exact?: boolean; adminOnly?: boolean };
@@ -12,6 +12,7 @@ const nav: NavItem[] = [
   { to: "/admin/products", label: "Товары", icon: Package, adminOnly: true },
   { to: "/admin/collections", label: "Коллекции", icon: Layers, adminOnly: true },
   { to: "/admin/content", label: "Контент", icon: FileText, adminOnly: true },
+  { to: "/admin/partners", label: "Партнёры", icon: Handshake, adminOnly: true },
   { to: "/admin/team", label: "Команда", icon: Users, adminOnly: true },
   { to: "/admin/notifications", label: "Уведомления", icon: Bell },
   { to: "/admin/tools", label: "Инструменты", icon: Wrench, adminOnly: true },
