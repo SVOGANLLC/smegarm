@@ -359,6 +359,10 @@ const dicts: Record<Lang, Dict> = {
 type I18nCtx = { lang: Lang; setLang: (l: Lang) => void; t: (key: string) => string };
 const Ctx = createContext<I18nCtx | null>(null);
 
+export function getI18nDefaults(): Record<Lang, Dict> {
+  return dicts;
+}
+
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("ru");
   const [overlay, setOverlay] = useState<Record<Lang, Dict>>({ ru: {}, en: {}, hy: {} });
