@@ -22,16 +22,20 @@ export function SectionHeader({
   title,
   align = "left",
   className,
+  eyebrowKey,
+  titleKey,
 }: {
   eyebrow: string;
   title: string;
   align?: "left" | "center";
   className?: string;
+  eyebrowKey?: string;
+  titleKey?: string;
 }) {
   return (
     <Reveal className={cn(align === "center" && "text-center", className)}>
-      <p data-ck-eyebrow="" className="eyebrow text-accent">{eyebrow}</p>
-      <h2 data-ck-title="" className="mt-4 display-xl text-[clamp(2rem,5vw,4.5rem)] text-foreground whitespace-pre-line">
+      <p data-ck={eyebrowKey} className="eyebrow text-accent">{eyebrow}</p>
+      <h2 data-ck={titleKey} className="mt-4 display-xl text-[clamp(2rem,5vw,4.5rem)] text-foreground whitespace-pre-line">
         {title}
       </h2>
     </Reveal>
