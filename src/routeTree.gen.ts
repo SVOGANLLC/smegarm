@@ -32,6 +32,7 @@ import { Route as AuthenticatedAdminInquiriesRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminContentRouteImport } from './routes/_authenticated/admin/content'
 import { Route as AuthenticatedAdminCollectionsRouteImport } from './routes/_authenticated/admin/collections'
 import { Route as AuthenticatedAdminProductsIndexRouteImport } from './routes/_authenticated/admin/products.index'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as AuthenticatedAdminProductsSkuRouteImport } from './routes/_authenticated/admin/products.$sku'
 
@@ -156,6 +157,12 @@ const AuthenticatedAdminProductsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAdminProductsRoute,
   } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTelegramWebhookRoute =
   ApiPublicTelegramWebhookRouteImport.update({
     id: '/api/public/telegram/webhook',
@@ -193,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -217,6 +225,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/admin/products': typeof AuthenticatedAdminProductsIndexRoute
 }
 export interface FileRoutesById {
@@ -245,6 +254,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
 }
 export interface FileRouteTypes {
@@ -273,6 +283,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/products/$sku'
     | '/api/public/telegram/webhook'
+    | '/lovable/email/queue/process'
     | '/admin/products/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -297,6 +308,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/products/$sku'
     | '/api/public/telegram/webhook'
+    | '/lovable/email/queue/process'
     | '/admin/products'
   id:
     | '__root__'
@@ -324,6 +336,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/'
     | '/_authenticated/admin/products/$sku'
     | '/api/public/telegram/webhook'
+    | '/lovable/email/queue/process'
     | '/_authenticated/admin/products/'
   fileRoutesById: FileRoutesById
 }
@@ -341,6 +354,7 @@ export interface RootRouteChildren {
   ProductSkuRoute: typeof ProductSkuRoute
   PaymentConverseReturnRoute: typeof PaymentConverseReturnRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
+  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -506,6 +520,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminProductsIndexRouteImport
       parentRoute: typeof AuthenticatedAdminProductsRoute
     }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/telegram/webhook': {
       id: '/api/public/telegram/webhook'
       path: '/api/public/telegram/webhook'
@@ -595,17 +616,8 @@ const rootRouteChildren: RootRouteChildren = {
   ProductSkuRoute: ProductSkuRoute,
   PaymentConverseReturnRoute: PaymentConverseReturnRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
+  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
