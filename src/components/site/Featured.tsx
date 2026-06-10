@@ -41,7 +41,7 @@ export function Featured() {
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
               >
                 <Link to="/product/$sku" params={{ sku: p.sku }} className="group block">
-                  <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-secondary">
+                  <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-background">
                     {p.main_image && (
                       <img
                         src={p.main_image}
