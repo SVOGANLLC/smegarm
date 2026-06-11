@@ -42,8 +42,9 @@ export function Featured() {
         </div>
       </div>
       <div className="light-section mt-16 py-16 md:py-24">
-        <div className="mx-auto max-w-[1400px] px-6 md:px-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-          {ordered.map((p, i) => (
+        <div className="mx-auto max-w-[1400px] px-6 md:px-10 flex flex-col lg:flex-row items-start gap-8">
+          <div className="grid flex-1 grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+            {ordered.map((p, i) => (
             <Reveal key={p.sku} delay={i * 0.08}>
               <motion.div
                 whileHover={{ y: -6 }}
@@ -76,7 +77,15 @@ export function Featured() {
             </Reveal>
           ))}
         </div>
+        <div className="hidden shrink-0 items-center justify-center lg:flex">
+          <img
+            src={smegLogoWhite.url}
+            alt="SMEG"
+            className="h-28 w-auto opacity-90 md:h-36"
+          />
+        </div>
       </div>
-    </section>
+    </div>
+  </section>
   );
 }
