@@ -12,7 +12,8 @@ import {
 import { z } from "zod";
 import { useState } from "react";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
-import { useI18n, pickLocalized } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
+import { categoryLabel as catLabel } from "@/lib/category-i18n";
 
 const searchSchema = z.object({
   category: z.string().optional(),
@@ -87,10 +88,8 @@ function CatalogPage() {
   const swatchesQuery = useQuery({ queryKey: ["color-swatches"], queryFn: fetchColorSwatches, staleTime: 30 * 60_000 });
 
   const currentCat = category ? catsQuery.data?.find((c) => c.slug === category) : undefined;
-  const categoryName = currentCat?.category;
-  const categoryLabel = currentCat
-    ? pickLocalized(currentCat as unknown as Record<string, unknown>, "category", lang) || currentCat.category
-    : undefined;
+  const categoryRawList = currentCat?.raw;
+  const categoryLabel = currentCat ? catLabel(currentCat.category, lang) : undefined;
 
   // colour value (canonical) → localized label for current lang
   const colourLabel = (value: string) => {
@@ -102,10 +101,10 @@ function CatalogPage() {
   };
 
   const productsQuery = useQuery({
-    queryKey: ["catalog", categoryName ?? null, q ?? "", colours, families, aesthetics, theme ?? "", flag ?? "", sort ?? "", page],
+    queryKey: ["catalog", currentCat?.slug ?? null, q ?? "", colours, families, aesthetics, theme ?? "", flag ?? "", sort ?? "", page],
     queryFn: () =>
       fetchCatalog({
-        category: categoryName,
+        categoryIn: categoryRawList,
         search: q || undefined,
         colours: colours.length ? colours : undefined,
         families: families.length ? families : undefined,
@@ -116,7 +115,7 @@ function CatalogPage() {
         limit: PAGE_SIZE,
         offset: (page - 1) * PAGE_SIZE,
       }),
-    enabled: !category || !!categoryName,
+    enabled: !category || !!categoryRawList,
   });
 
   const total = productsQuery.data?.total ?? 0;
@@ -219,7 +218,7 @@ function CatalogPage() {
             }
             className={`flex w-full items-baseline justify-between text-left text-sm transition ${category === c.slug ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
           >
-            <span>{pickLocalized(c as unknown as Record<string, unknown>, "category", lang) || c.category}</span>
+            <span>{catLabel(c.category, lang)}</span>
             <span className="text-[11px] text-muted-foreground">{c.count}</span>
           </button>
         ))}
