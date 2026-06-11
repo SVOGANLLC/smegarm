@@ -21,7 +21,7 @@ export function Featured() {
             key={`smeg-${i}`}
             src={smegLogoWhite.url}
             alt="SMEG"
-            className="inline-block h-[0.8em] w-auto align-baseline mx-1"
+            className="inline-block h-[0.8em] w-auto align-middle mx-1"
           />,
           part,
         ],
