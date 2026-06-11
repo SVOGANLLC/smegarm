@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { Instagram, Facebook } from "lucide-react";
+import { Instagram, Facebook, MessageCircle } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import smegLogoWhite from "@/assets/smeg-logo-white.png.asset.json";
 
 function SocialLink({ href, label, children }: { href: string; label: string; children: ReactNode }) {
   return (
@@ -23,9 +24,9 @@ export function Footer() {
       <div className="mx-auto max-w-[1400px] px-6 py-10 md:px-10 md:py-14">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
           <div className="md:col-span-5">
-            <div className="font-serif text-2xl">
-              SMEG{" "}
-              <span className="ml-2 text-sm uppercase tracking-[0.3em] text-background/50">Armenia</span>
+            <div className="flex items-center gap-3">
+              <img src={smegLogoWhite.url} alt="SMEG" className="h-7 w-auto" />
+              <span className="text-sm uppercase tracking-[0.3em] text-background/50">Armenia</span>
             </div>
             <p data-ck="footer.tagline" className="mt-4 max-w-sm text-sm text-background/65">
               {t("footer.tagline")}
@@ -37,6 +38,17 @@ export function Footer() {
             <ul className="mt-3 space-y-1.5 text-sm">
               <li>
                 <a href="tel:+37460680088" className="smeg-underline">+374 60 68 00 88</a>
+              </li>
+              <li>
+                <a
+                  href="https://wa.me/37498580085"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="smeg-underline inline-flex items-center gap-1.5"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  WhatsApp +374 98 58 00 85
+                </a>
               </li>
               <li>
                 <a href="mailto:smeg@smeg.am" className="smeg-underline">smeg@smeg.am</a>

@@ -344,11 +344,11 @@ function AvailabilityBadge({
   const { t } = useI18n();
   const avail = product.availability ?? "on_request";
   const qty = Math.max(0, (product.stock_qty ?? 0) - (product.stock_reserved ?? 0));
-  if (avail === "in_stock") {
+  if (avail === "in_stock" || qty > 0) {
     return (
       <span className="inline-flex w-full items-center gap-2 text-sm text-emerald-700">
         <span className="h-2 w-2 rounded-full bg-emerald-600" />
-        {t("avail.inStock")}{qty > 0 ? ` · ${qty} ${t("avail.unit")}` : ""}
+        {t("avail.inStock")}
       </span>
     );
   }

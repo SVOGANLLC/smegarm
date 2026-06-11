@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { Menu, X } from "lucide-react";
 import { useI18n, type Lang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import smegLogo from "@/assets/smeg-logo.svg.asset.json";
+import smegLogo from "@/assets/smeg-logo.png.asset.json";
 import { CartButton } from "@/components/site/CartDrawer";
 import { HeaderSearch } from "@/components/site/HeaderSearch";
 
@@ -49,19 +49,10 @@ export function Header() {
     >
       <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-6 md:h-20 md:px-10">
         <Link to="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 text-foreground">
-          <span
-            aria-label="SMEG"
-            className="block h-5 w-[100px] bg-current md:h-6 md:w-[120px]"
-            style={{
-              WebkitMaskImage: `url(${smegLogo.url})`,
-              maskImage: `url(${smegLogo.url})`,
-              WebkitMaskRepeat: "no-repeat",
-              maskRepeat: "no-repeat",
-              WebkitMaskSize: "contain",
-              maskSize: "contain",
-              WebkitMaskPosition: "left center",
-              maskPosition: "left center",
-            }}
+          <img
+            src={smegLogo.url}
+            alt="SMEG"
+            className="block h-5 w-auto md:h-6"
           />
           <span className="hidden border-l border-border/60 pl-3 text-[10px] uppercase tracking-[0.3em] text-muted-foreground md:inline">
             Armenia
