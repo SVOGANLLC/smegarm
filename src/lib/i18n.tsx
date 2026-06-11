@@ -262,9 +262,9 @@ const dicts: Record<Lang, Dict> = {
     "section.partners.title": "Our partners",
   },
   hy: {
-    "nav.catalog": "Կատալոգ",
-    "nav.collections": "Կոլեկցիաներ",
-    "nav.story": "Բրենդ",
+    "nav.catalog": "Ապրանքային",
+    "nav.collections": "Հավաքածու",
+    "nav.story": "Ապրանքանիշ",
     "nav.dealer": "Հայաստան",
     "nav.contact": "Կապ",
     "hero.eyebrow": "Պաշտոնական SMEG Հայաստանում",
