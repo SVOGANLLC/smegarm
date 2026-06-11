@@ -11,6 +11,21 @@ const ICONIC_SKUS = ["ECF03PBEU", "KLF03PKEU", "TSF02PGEU", "BLF03CREU"];
 
 export function Featured() {
   const { t } = useI18n();
+  const titleRaw = t("section.featured.title");
+  const titleParts = titleRaw.split(/Smeg/i);
+  const renderedTitle = titleParts.flatMap((part, i) =>
+    i === 0
+      ? [part]
+      : [
+          <img
+            key={`smeg-${i}`}
+            src={smegLogoWhite.url}
+            alt="SMEG"
+            className="inline-block h-[0.8em] w-auto align-baseline mx-1"
+          />,
+          part,
+        ],
+  );
   const { data: products = [] } = useQuery({
     queryKey: ["featured", ICONIC_SKUS],
     queryFn: () => fetchFeatured(ICONIC_SKUS),
@@ -27,12 +42,7 @@ export function Featured() {
       <div className="mx-auto max-w-[1400px] px-6 md:px-10">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <div>
-            <img
-              src={smegLogoWhite.url}
-              alt="SMEG"
-              className="mb-6 h-10 w-auto md:h-14"
-            />
-            <SectionHeader eyebrow={t("section.featured.eyebrow")} title={t("section.featured.title")} />
+            <SectionHeader eyebrow={t("section.featured.eyebrow")} title={<>{renderedTitle}</>} />
           </div>
           <Reveal>
             <Link to="/catalog" className="smeg-underline text-sm uppercase tracking-[0.2em] text-foreground/70">
@@ -42,8 +52,8 @@ export function Featured() {
         </div>
       </div>
       <div className="light-section mt-16 py-16 md:py-24">
-        <div className="mx-auto max-w-[1400px] px-6 md:px-10 flex flex-col lg:flex-row items-start gap-8">
-          <div className="grid flex-1 grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+        <div className="mx-auto max-w-[1400px] px-6 md:px-10">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
             {ordered.map((p, i) => (
             <Reveal key={p.sku} delay={i * 0.08}>
               <motion.div
@@ -76,13 +86,6 @@ export function Featured() {
               </motion.div>
             </Reveal>
           ))}
-        </div>
-        <div className="hidden shrink-0 items-center justify-center lg:flex">
-          <img
-            src={smegLogoWhite.url}
-            alt="SMEG"
-            className="h-28 w-auto opacity-90 md:h-36"
-          />
         </div>
       </div>
     </div>
