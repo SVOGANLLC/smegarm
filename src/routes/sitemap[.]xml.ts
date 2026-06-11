@@ -20,7 +20,7 @@ export const Route = createFileRoute("/sitemap.xml")({
             .eq("is_published", true),
           supabaseAdmin
             .from("products")
-            .select("category")
+            .select("category,category_en")
             .eq("is_published", true)
             .not("category", "is", null)
             .limit(5000),
@@ -30,7 +30,16 @@ export const Route = createFileRoute("/sitemap.xml")({
           s.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
         const categorySlugs = Array.from(
-          new Set((cats ?? []).map((c) => slugify(c.category as string)).filter(Boolean)),
+          new Set(
+            (cats ?? [])
+              .map((c) =>
+                slugify(
+                  ((c as { category_en: string | null; category: string }).category_en ||
+                    (c as { category: string }).category) as string,
+                ),
+              )
+              .filter(Boolean),
+          ),
         );
 
         const staticUrls = ["/", "/catalog", "/sale"];
