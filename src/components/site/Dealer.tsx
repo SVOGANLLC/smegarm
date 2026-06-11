@@ -40,7 +40,6 @@ function Info({
     </li>
   );
 }
-}
 
 export function Dealer() {
   const { t } = useI18n();
