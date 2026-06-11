@@ -26,7 +26,7 @@ export function SectionHeader({
   titleKey,
 }: {
   eyebrow: string;
-  title: string;
+  title: ReactNode;
   align?: "left" | "center";
   className?: string;
   eyebrowKey?: string;
