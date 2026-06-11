@@ -127,7 +127,7 @@ function ProductPage() {
                 <span>/</span>
                 <Link
                   to="/catalog"
-                  search={{ category: slugify(product.category), page: 1 }}
+                  search={{ category: slugify(product.category_en || product.category), page: 1 }}
                   className="hover:text-foreground"
                 >
                   {category || product.category}
@@ -166,7 +166,7 @@ function ProductPage() {
               {product.category && (
                 <Link
                   to="/catalog"
-                  search={{ category: slugify(product.category), page: 1 }}
+                  search={{ category: slugify(product.category_en || product.category), page: 1 }}
                   className="eyebrow text-muted-foreground transition hover:text-foreground"
                 >
                   {category || product.category}
