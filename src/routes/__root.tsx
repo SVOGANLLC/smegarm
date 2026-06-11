@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "../lib/i18n";
 import { CartProvider } from "../lib/cart";
 import { CartDrawer } from "../components/site/CartDrawer";
+import { WhatsAppFab } from "../components/site/WhatsAppFab";
 
 function NotFoundComponent() {
   return (
@@ -148,6 +149,7 @@ function RootComponent() {
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
           <CartDrawer />
+          <WhatsAppFab />
         </CartProvider>
       </I18nProvider>
     </QueryClientProvider>
