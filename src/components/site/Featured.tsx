@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n";
 import { SectionHeader, Reveal } from "./Section";
 import { fetchFeatured } from "@/lib/products";
+import smegLogoWhite from "@/assets/smeg-logo-white.png.asset.json";
 
 // Iconic Smeg 50's-style appliances, real SKUs from catalogue
 const ICONIC_SKUS = ["ECF03PBEU", "KLF03PKEU", "TSF02PGEU", "BLF03CREU"];
@@ -25,7 +26,14 @@ export function Featured() {
     <section id="catalog" className="relative pt-28 md:pt-40">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
-          <SectionHeader eyebrow={t("section.featured.eyebrow")} title={t("section.featured.title")} />
+          <div>
+            <img
+              src={smegLogoWhite.url}
+              alt="SMEG"
+              className="mb-6 h-10 w-auto md:h-14"
+            />
+            <SectionHeader eyebrow={t("section.featured.eyebrow")} title={t("section.featured.title")} />
+          </div>
           <Reveal>
             <Link to="/catalog" className="smeg-underline text-sm uppercase tracking-[0.2em] text-foreground/70">
               {t("common.shop")} →

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Instagram, Facebook, MessageCircle } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import smegLogoWhite from "@/assets/smeg-logo-white.png.asset.json";
+import smegLogoBlack from "@/assets/smeg-logo.png.asset.json";
 
 function SocialLink({ href, label, children }: { href: string; label: string; children: ReactNode }) {
   return (
@@ -25,7 +25,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
           <div className="md:col-span-5">
             <div className="flex items-center gap-3">
-              <img src={smegLogoWhite.url} alt="SMEG" className="h-7 w-auto" />
+              <img src={smegLogoBlack.url} alt="SMEG" className="h-7 w-auto" />
               <span className="text-sm uppercase tracking-[0.3em] text-background/50">Armenia</span>
             </div>
             <p data-ck="footer.tagline" className="mt-4 max-w-sm text-sm text-background/65">
