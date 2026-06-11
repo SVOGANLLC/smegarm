@@ -77,7 +77,15 @@ export function Featured() {
             </Reveal>
           ))}
         </div>
+        <div className="hidden shrink-0 items-center justify-center lg:flex">
+          <img
+            src={smegLogoWhite.url}
+            alt="SMEG"
+            className="h-28 w-auto opacity-90 md:h-36"
+          />
+        </div>
       </div>
-    </section>
+    </div>
+  </section>
   );
 }
