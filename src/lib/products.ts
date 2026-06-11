@@ -56,9 +56,14 @@ export function slugify(s: string): string {
 }
 
 export type CategoryStat = {
+  /** Canonical English key (falls back to raw `category` when no translation exists). */
   category: string;
+  /** All raw `category` values that collapse into this canonical group. Use with `.in('category', raw)`. */
+  raw: string[];
+  /** Best-effort localized label snapshots collected from the DB rows in the group. */
   category_en?: string | null;
   category_hy?: string | null;
+  category_ru?: string | null;
   slug: string;
   count: number;
 };
@@ -69,23 +74,34 @@ export async function fetchCategories(): Promise<CategoryStat[]> {
     .select("category,category_en,category_hy")
     .not("category", "is", null);
   if (error) throw error;
-  const counts = new Map<string, { count: number; en?: string | null; hy?: string | null }>();
+  const hasCyrillic = (s: string) => /[\u0400-\u04FF]/.test(s);
+  const hasArmenian = (s: string) => /[\u0530-\u058F]/.test(s);
+  const groups = new Map<
+    string,
+    { count: number; raw: Set<string>; en?: string | null; hy?: string | null; ru?: string | null }
+  >();
   for (const row of data ?? []) {
     const r = row as { category: string | null; category_en: string | null; category_hy: string | null };
-    const c = r.category?.trim();
-    if (!c) continue;
-    const cur = counts.get(c) ?? { count: 0 };
+    const raw = r.category?.trim();
+    if (!raw) continue;
+    const canonical = (r.category_en?.trim() || raw).trim();
+    const cur = groups.get(canonical) ?? { count: 0, raw: new Set<string>() };
     cur.count += 1;
-    if (!cur.en && r.category_en) cur.en = r.category_en;
-    if (!cur.hy && r.category_hy) cur.hy = r.category_hy;
-    counts.set(c, cur);
+    cur.raw.add(raw);
+    if (!cur.en) cur.en = r.category_en?.trim() || (hasCyrillic(raw) || hasArmenian(raw) ? null : raw);
+    if (!cur.hy && r.category_hy?.trim()) cur.hy = r.category_hy.trim();
+    if (!cur.hy && hasArmenian(raw)) cur.hy = raw;
+    if (!cur.ru && hasCyrillic(raw)) cur.ru = raw;
+    groups.set(canonical, cur);
   }
-  return Array.from(counts.entries())
-    .map(([category, v]) => ({
-      category,
-      category_en: v.en ?? null,
+  return Array.from(groups.entries())
+    .map(([canonical, v]) => ({
+      category: canonical,
+      raw: Array.from(v.raw),
+      category_en: v.en ?? canonical,
       category_hy: v.hy ?? null,
-      slug: slugify(category),
+      category_ru: v.ru ?? null,
+      slug: slugify(canonical),
       count: v.count,
     }))
     .sort((a, b) => b.count - a.count);
@@ -286,6 +302,7 @@ export async function fetchFacets(): Promise<FacetCounts> {
 
 export type CatalogFilters = {
   category?: string;
+  categoryIn?: string[];
   search?: string;
   families?: string[];
   aesthetics?: string[];
@@ -304,7 +321,8 @@ export async function fetchCatalog(f: CatalogFilters): Promise<{ items: Product[
       "sku,name,name_en,name_hy,category,category_en,category_hy,brand,aesthetic,colour,colour_en,colour_hy,family,ean,description,description_en,description_hy,specs,specs_en,specs_hy,main_image,images,pdf,energy_label,url,price_amd,price_old,availability,stock_qty,stock_reserved,lead_time_days",
       { count: "exact" },
     );
-  if (f.category) q = q.eq("category", f.category);
+  if (f.categoryIn?.length) q = q.in("category", f.categoryIn);
+  else if (f.category) q = q.eq("category", f.category);
   if (f.search) {
     // Use the search RPC for matching SKUs, then constrain by them; keeps other filters working.
     const { data: rows, error: e } = await supabase.rpc("search_products", {
