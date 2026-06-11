@@ -12,7 +12,7 @@ import {
 import { z } from "zod";
 import { useState } from "react";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, pickLocalized } from "@/lib/i18n";
 import { categoryLabel as catLabel } from "@/lib/category-i18n";
 
 const searchSchema = z.object({
