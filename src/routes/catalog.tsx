@@ -210,18 +210,20 @@ function CatalogPage() {
         >
           {t("facet.all")}
         </button>
-        {catsQuery.data?.slice(0, 12).map((c) => (
-          <button
-            key={c.slug}
-            onClick={() =>
-              navigate({ search: (prev: CatalogSearch) => ({ ...prev, category: c.slug, page: 1 }) })
-            }
-            className={`flex w-full items-baseline justify-between text-left text-sm transition ${category === c.slug ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
-          >
-            <span>{catLabel(c.category, lang)}</span>
-            <span className="text-[11px] text-muted-foreground">{c.count}</span>
-          </button>
-        ))}
+        <div className="max-h-72 space-y-1 overflow-y-auto pr-1">
+          {catsQuery.data?.map((c) => (
+            <button
+              key={c.slug}
+              onClick={() =>
+                navigate({ search: (prev: CatalogSearch) => ({ ...prev, category: c.slug, page: 1 }) })
+              }
+              className={`flex w-full items-baseline justify-between text-left text-sm transition ${category === c.slug ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
+            >
+              <span>{catLabel(c.category, lang)}</span>
+              <span className="text-[11px] text-muted-foreground">{c.count}</span>
+            </button>
+          ))}
+        </div>
       </FacetGroup>
 
       <FacetGroup label={t("facet.colour")}>

@@ -33,6 +33,17 @@ export const CATEGORY_LABELS: Record<string, { ru: string; en: string; hy: strin
   "Built-in drawers": { ru: "Встраиваемые ящики", en: "Built-in drawers", hy: "Ներկառուցվող դարակներ" },
   "Hand blenders": { ru: "Погружные блендеры", en: "Hand blenders", hy: "Ձեռքի բլենդերներ" },
   "Citrus juicers": { ru: "Соковыжималки для цитрусовых", en: "Citrus juicers", hy: "Ցիտրուսի հյութահան" },
+  Freezers: { ru: "Морозильники", en: "Freezers", hy: "Սառցարաններ" },
+  "Tabletop ovens": { ru: "Настольные печи", en: "Tabletop ovens", hy: "Սեղանադիր վառարաններ" },
+  "Soda makers": { ru: "Сифоны для газирования воды", en: "Soda makers", hy: "Գազավորման սարքեր" },
+  Lighting: { ru: "Освещение", en: "Lighting", hy: "Լուսավորություն" },
+  "Knife sets": { ru: "Наборы ножей", en: "Knife sets", hy: "Դանակների հավաքածուներ" },
+  "Washer dryer": { ru: "Стирально-сушильные машины", en: "Washer dryer", hy: "Լվացք-չորանոց մեքենաներ" },
+  "Washing Machine": { ru: "Стиральные машины", en: "Washing machine", hy: "Լվացքի մեքենաներ" },
+  "Hand mixers": { ru: "Ручные миксеры", en: "Hand mixers", hy: "Ձեռքի միքսերներ" },
+  "Electric barbecues": { ru: "Электрические грили", en: "Electric barbecues", hy: "Էլեկտրական բարբեքյուներ" },
+  "Blast chillers": { ru: "Шокеры (быстрое охлаждение)", en: "Blast chillers", hy: "Արագ սառեցուցիչներ" },
+  "Kitchen scales": { ru: "Кухонные весы", en: "Kitchen scales", hy: "Խոհանոցային կշեռքներ" },
 };
 
 export function categoryLabel(canonical: string, lang: Lang): string {
