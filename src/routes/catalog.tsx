@@ -356,35 +356,25 @@ function CatalogPage() {
                           <h3 className="mt-1 line-clamp-2 font-serif text-base leading-snug text-foreground group-hover:text-accent">
                             {pickLocalized(p as unknown as Record<string, unknown>, "name", lang) || p.name}
                           </h3>
-                          <div className="mt-2 flex items-baseline gap-2">
-                            {p.price_amd != null ? (
+                          {p.price_amd != null && (
+                            <div className="mt-2 flex items-baseline gap-2">
                               <span className="text-base font-medium text-foreground">
                                 {new Intl.NumberFormat("ru-RU").format(p.price_amd)} ֏
                               </span>
-                            ) : (
-                              <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                                {t("avail.onRequest")}
-                              </span>
-                            )}
-                            {p.price_old != null && p.price_amd != null && p.price_old > p.price_amd && (
-                              <span className="text-xs text-muted-foreground line-through">
-                                {new Intl.NumberFormat("ru-RU").format(p.price_old)} ֏
-                              </span>
-                            )}
-                          </div>
-                          <p className={`mt-1 text-[10px] uppercase tracking-[0.18em] ${
-                            p.availability === "in_stock"
-                              ? "text-emerald-600"
-                              : p.availability === "pre_order"
-                                ? "text-amber-600"
-                                : "text-muted-foreground"
-                          }`}>
-                            {p.availability === "in_stock"
-                              ? t("avail.inStock")
-                              : p.availability === "pre_order"
-                                ? t("avail.preOrder")
-                                : t("avail.onRequest")}
-                          </p>
+                              {p.price_old != null && p.price_old > p.price_amd && (
+                                <span className="text-xs text-muted-foreground line-through">
+                                  {new Intl.NumberFormat("ru-RU").format(p.price_old)} ֏
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {(p.availability === "in_stock" || p.availability === "pre_order") && (
+                            <p className={`mt-1 text-[10px] uppercase tracking-[0.18em] ${
+                              p.availability === "in_stock" ? "text-emerald-600" : "text-amber-600"
+                            }`}>
+                              {p.availability === "in_stock" ? t("avail.inStock") : t("avail.preOrder")}
+                            </p>
+                          )}
                         </div>
                       </Link>
                     ))}
