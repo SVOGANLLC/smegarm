@@ -598,7 +598,7 @@ function BulkTranslateSection() {
   return (
     <Card title="AI-перевод каталога (RU → EN + HY)" icon={Languages}>
       <p className="text-sm text-muted-foreground">
-        Перевод названий, описаний, категорий, цветов и характеристик через Lovable AI. Бренды
+        Перевод названий, описаний, категорий, цветов и характеристик через ИИ. Бренды
         (Smeg, Dolce&nbsp;&amp;&nbsp;Gabbana, Blu&nbsp;Mediterraneo, Porsche, Coca-Cola и т.д.) и
         модельные коды не переводятся.
       </p>

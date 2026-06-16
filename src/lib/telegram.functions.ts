@@ -2,16 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const GATEWAY = "https://connector-gateway.lovable.dev/telegram";
-
 async function tgSend(chatId: string, text: string) {
-  const r = await fetch(`${GATEWAY}/sendMessage`, {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return false;
+  const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
-    headers: {
-      "Authorization": `Bearer ${process.env.LOVABLE_API_KEY}`,
-      "X-Connection-Api-Key": process.env.TELEGRAM_API_KEY!,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
   });
   return r.ok;

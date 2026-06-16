@@ -180,7 +180,8 @@ function ProductPage() {
               <ColorSwitcher
                 modelGroup={product.model_group ?? null}
                 currentSku={product.sku}
-                currentColour={product.colour}
+                currentColour={colour}
+                currentColourEn={product.colour_en ?? product.colour}
                 currentImage={product.main_image}
               />
 

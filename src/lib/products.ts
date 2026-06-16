@@ -200,7 +200,7 @@ export type Theme = {
   description_hy?: string | null;
 };
 
-export type Variant = { sku: string; colour: string | null; main_image: string | null };
+export type Variant = { sku: string; colour: string | null; colour_en: string | null; main_image: string | null };
 
 export type SearchSuggestion = {
   sku: string;
@@ -250,7 +250,7 @@ export async function fetchTheme(key: string): Promise<Theme | null> {
 export async function fetchProductVariants(modelGroup: string, excludeSku: string): Promise<Variant[]> {
   const { data, error } = await supabase
     .from("products")
-    .select("sku,colour,main_image")
+    .select("sku,colour,colour_en,main_image")
     .eq("model_group", modelGroup)
     .neq("sku", excludeSku)
     .not("colour", "is", null)
@@ -263,7 +263,7 @@ export async function fetchProductVariants(modelGroup: string, excludeSku: strin
 export type FacetCounts = {
   families: Array<{ value: string; count: number }>;
   aesthetics: Array<{ value: string; count: number }>;
-  colours: Array<{ value: string; count: number; label_en?: string | null; label_hy?: string | null }>;
+  colours: Array<{ value: string; value_en?: string | null; count: number; label_en?: string | null; label_hy?: string | null }>;
 };
 
 export async function fetchFacets(): Promise<FacetCounts> {
@@ -294,6 +294,7 @@ export async function fetchFacets(): Promise<FacetCounts> {
   }
   const colours = tally("colour").map((c) => ({
     ...c,
+    value_en: colourLabels.get(c.value)?.en ?? null,
     label_en: colourLabels.get(c.value)?.en ?? null,
     label_hy: colourLabels.get(c.value)?.hy ?? null,
   }));

@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHash, timingSafeEqual } from "crypto";
 
-function deriveSecret(apiKey: string) {
-  return createHash("sha256").update(`telegram-webhook:${apiKey}`).digest("base64url");
+function deriveSecret(token: string) {
+  return createHash("sha256").update(`telegram-webhook:${token}`).digest("base64url");
 }
 
 function safeEqual(a: string, b: string) {
@@ -11,16 +11,12 @@ function safeEqual(a: string, b: string) {
   return x.length === y.length && timingSafeEqual(x, y);
 }
 
-const GATEWAY = "https://connector-gateway.lovable.dev/telegram";
-
 async function sendMessage(chatId: number | string, text: string) {
-  await fetch(`${GATEWAY}/sendMessage`, {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
-    headers: {
-      "Authorization": `Bearer ${process.env.LOVABLE_API_KEY}`,
-      "X-Connection-Api-Key": process.env.TELEGRAM_API_KEY!,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
   });
 }
@@ -46,10 +42,10 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const key = process.env.TELEGRAM_API_KEY;
-        if (!key) return new Response("not configured", { status: 500 });
+        const token = process.env.TELEGRAM_BOT_TOKEN;
+        if (!token) return new Response("not configured", { status: 500 });
 
-        const expected = deriveSecret(key);
+        const expected = deriveSecret(token);
         const got = request.headers.get("X-Telegram-Bot-Api-Secret-Token") ?? "";
         if (!safeEqual(got, expected)) {
           return new Response("Unauthorized", { status: 401 });

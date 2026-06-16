@@ -1,0 +1,27 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY}
+        VITE_SUPABASE_PROJECT_ID: ${VITE_SUPABASE_PROJECT_ID}
+    image: smeg-armenia:latest
+    container_name: smeg-armenia
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: 3000
+      # SSR talks to Supabase API on the shared Docker network.
+      SUPABASE_URL: http://smeg-api:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - default
+      - supabase
+
+networks:
+  supabase:
+    external: true
+    name: supabase_default

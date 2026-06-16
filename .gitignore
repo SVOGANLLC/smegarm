@@ -16,6 +16,17 @@ dist-ssr
 .nitro
 *.local
 
+# Local env files (contain secrets — never commit)
+.env
+.env.*
+!.env.example
+
+# Handover artifacts (contain secrets / DB dumps — never commit)
+_handover_build/
+smeg-armenia-site.zip
+deploy/data/export/
+*.sql.gz
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

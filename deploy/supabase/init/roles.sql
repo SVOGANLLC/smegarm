@@ -1,0 +1,2 @@
+-- Placeholder so init-scripts directory is mounted; supabase/postgres image
+-- already provisions roles (anon, authenticated, service_role, etc.).

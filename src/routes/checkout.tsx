@@ -52,10 +52,9 @@ function CheckoutPage() {
       });
       if (form.payment_method === "card_online") {
         try {
-        const pay = await startPay({ data: { order_id: res.id, lang } });
+          const pay = await startPay({ data: { order_id: res.id, lang } });
           clear();
-          window.open(pay.formUrl, "_blank", "noopener");
-          navigate({ to: "/order/$id", params: { id: String(res.order_no) }, replace: true });
+          window.location.href = pay.formUrl;
           return;
         } catch (err) {
           toast.error(err instanceof Error ? err.message : "Не удалось инициализировать платёж");

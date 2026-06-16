@@ -33,10 +33,10 @@ import { Route as AuthenticatedAdminInquiriesRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminContentRouteImport } from './routes/_authenticated/admin/content'
 import { Route as AuthenticatedAdminCollectionsRouteImport } from './routes/_authenticated/admin/collections'
 import { Route as AuthenticatedAdminProductsIndexRouteImport } from './routes/_authenticated/admin/products.index'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicTranslateTickRouteImport } from './routes/api/public/translate/tick'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as AuthenticatedAdminProductsSkuRouteImport } from './routes/_authenticated/admin/products.$sku'
+import { Route as ApiPublicEmailQueueProcessRouteImport } from './routes/api/public/email/queue/process'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -165,12 +165,6 @@ const AuthenticatedAdminProductsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAdminProductsRoute,
   } as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicTranslateTickRoute = ApiPublicTranslateTickRouteImport.update({
   id: '/api/public/translate/tick',
   path: '/api/public/translate/tick',
@@ -187,6 +181,12 @@ const AuthenticatedAdminProductsSkuRoute =
     id: '/$sku',
     path: '/$sku',
     getParentRoute: () => AuthenticatedAdminProductsRoute,
+  } as any)
+const ApiPublicEmailQueueProcessRoute =
+  ApiPublicEmailQueueProcessRouteImport.update({
+    id: '/api/public/email/queue/process',
+    path: '/api/public/email/queue/process',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -215,8 +215,8 @@ export interface FileRoutesByFullPath {
   '/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/api/public/translate/tick': typeof ApiPublicTranslateTickRoute
-  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
+  '/api/public/email/queue/process': typeof ApiPublicEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -242,8 +242,8 @@ export interface FileRoutesByTo {
   '/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/api/public/translate/tick': typeof ApiPublicTranslateTickRoute
-  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/admin/products': typeof AuthenticatedAdminProductsIndexRoute
+  '/api/public/email/queue/process': typeof ApiPublicEmailQueueProcessRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -273,8 +273,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/api/public/translate/tick': typeof ApiPublicTranslateTickRoute
-  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
+  '/api/public/email/queue/process': typeof ApiPublicEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -304,8 +304,8 @@ export interface FileRouteTypes {
     | '/admin/products/$sku'
     | '/api/public/telegram/webhook'
     | '/api/public/translate/tick'
-    | '/lovable/email/queue/process'
     | '/admin/products/'
+    | '/api/public/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -331,8 +331,8 @@ export interface FileRouteTypes {
     | '/admin/products/$sku'
     | '/api/public/telegram/webhook'
     | '/api/public/translate/tick'
-    | '/lovable/email/queue/process'
     | '/admin/products'
+    | '/api/public/email/queue/process'
   id:
     | '__root__'
     | '/'
@@ -361,8 +361,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/products/$sku'
     | '/api/public/telegram/webhook'
     | '/api/public/translate/tick'
-    | '/lovable/email/queue/process'
     | '/_authenticated/admin/products/'
+    | '/api/public/email/queue/process'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -380,7 +380,7 @@ export interface RootRouteChildren {
   PaymentConverseReturnRoute: typeof PaymentConverseReturnRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
   ApiPublicTranslateTickRoute: typeof ApiPublicTranslateTickRoute
-  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
+  ApiPublicEmailQueueProcessRoute: typeof ApiPublicEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -553,13 +553,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminProductsIndexRouteImport
       parentRoute: typeof AuthenticatedAdminProductsRoute
     }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/translate/tick': {
       id: '/api/public/translate/tick'
       path: '/api/public/translate/tick'
@@ -580,6 +573,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/products/$sku'
       preLoaderRoute: typeof AuthenticatedAdminProductsSkuRouteImport
       parentRoute: typeof AuthenticatedAdminProductsRoute
+    }
+    '/api/public/email/queue/process': {
+      id: '/api/public/email/queue/process'
+      path: '/api/public/email/queue/process'
+      fullPath: '/api/public/email/queue/process'
+      preLoaderRoute: typeof ApiPublicEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -659,8 +659,18 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentConverseReturnRoute: PaymentConverseReturnRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
   ApiPublicTranslateTickRoute: ApiPublicTranslateTickRoute,
-  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
+  ApiPublicEmailQueueProcessRoute: ApiPublicEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+import { oauth } from "@/integrations/auth-oauth";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -68,7 +68,7 @@ function AuthPage() {
   async function signInGoogle() {
     setLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
+      const result = await oauth.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin + "/admin",
       });
       if (result.error) {

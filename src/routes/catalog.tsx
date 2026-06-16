@@ -227,10 +227,10 @@ function CatalogPage() {
       <FacetGroup label={t("facet.colour")}>
         <div className="flex flex-wrap gap-2">
           {facetsQuery.data?.colours
-            .filter((c) => c.value !== "Decorated / Special")
+            .filter((c) => (c.value_en ?? c.value) !== "Decorated / Special")
             .slice(0, 30)
             .map((c) => {
-            const hex = swatchesQuery.data?.find((s) => s.colour === c.value)?.hex ?? "#d4d4d4";
+            const hex = swatchesQuery.data?.find((s) => s.colour === (c.value_en ?? c.value))?.hex ?? "#d4d4d4";
             const active = colours.includes(c.value);
             const label = colourLabel(c.value);
             return (

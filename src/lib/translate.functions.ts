@@ -45,7 +45,7 @@ async function callGateway(
     }),
   });
   if (res.status === 429) throw new Error("AI rate limit. Подождите минуту и повторите.");
-  if (res.status === 402) throw new Error("Кончились кредиты Lovable AI. Пополните в Settings → Workspace → Usage.");
+  if (res.status === 402) throw new Error("Закончились кредиты ИИ-перевода. Пополните баланс в панели провайдера ИИ.");
   if (!res.ok) throw new Error(`AI error: ${res.status} ${await res.text()}`);
   const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
   const text = json.choices?.[0]?.message?.content ?? "{}";

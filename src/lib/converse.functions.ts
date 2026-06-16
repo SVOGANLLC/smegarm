@@ -11,13 +11,17 @@ function getCreds() {
 }
 
 async function getOrigin(): Promise<string> {
+  // Explicit base URL wins — this is the address ConverseBank returns the
+  // customer to. Set PUBLIC_BASE_URL on the server (e.g. https://smeg.am).
+  const explicit = process.env.PUBLIC_BASE_URL || process.env.SITE_URL;
+  if (explicit) return explicit.replace(/\/+$/, "");
   try {
     const { getRequestHeader } = await import("@tanstack/react-start/server");
     const host = getRequestHeader("x-forwarded-host") || getRequestHeader("host");
     const proto = getRequestHeader("x-forwarded-proto") || "https";
     if (host) return `${proto}://${host}`;
   } catch { /* ignore */ }
-  return "https://smeg.previewsite.cc";
+  return "https://smeg.am";
 }
 
 /** Register a payment with HostX for an existing order and return the formUrl */
