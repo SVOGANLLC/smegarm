@@ -2,10 +2,21 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
+function getSupabaseUrl(): string {
+  // Browser: Supabase API is proxied on the same host (/rest/v1, /auth/v1, …).
+  // Using window.location.origin avoids mixed-content blocks (HTTPS page → HTTP API)
+  // and works across smeg.am / smeg.previewsite.cc / IP without rebuilding.
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  // SSR: use internal Docker URL first, then build-time public URL.
+  return process.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || '';
+}
+
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env for SSR (server-side rendering)
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  const SUPABASE_URL = getSupabaseUrl();
   const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
