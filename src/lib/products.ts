@@ -22,6 +22,8 @@ export type Product = {
   stock_qty?: number | null;
   stock_reserved?: number | null;
   lead_time_days?: number | null;
+  price_amd?: number | null;
+  price_old?: number | null;
   name_en?: string | null;
   name_hy?: string | null;
   description_en?: string | null;

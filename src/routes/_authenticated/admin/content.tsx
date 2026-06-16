@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -7,6 +7,10 @@ import { getI18nDefaults, type Lang } from "@/lib/i18n";
 import { FONT_OPTIONS, type ContentStyle, type ContentStylesMap } from "@/lib/content-styles";
 
 export const Route = createFileRoute("/_authenticated/admin/content")({
+  beforeLoad: ({ context }) => {
+    const role = (context as { role?: string }).role;
+    if (role !== "admin") throw redirect({ to: "/admin" });
+  },
   component: ContentPage,
 });
 
