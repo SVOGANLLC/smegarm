@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef } from "react";
 import * as XLSX from "xlsx";
@@ -9,6 +9,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { countUntranslated, translateBatch } from "@/lib/translate.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/tools")({
+  beforeLoad: ({ context }) => {
+    const role = (context as { role?: string }).role;
+    if (role !== "admin") throw redirect({ to: "/admin" });
+  },
   component: AdminTools,
 });
 

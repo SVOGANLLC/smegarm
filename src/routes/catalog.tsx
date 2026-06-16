@@ -210,18 +210,20 @@ function CatalogPage() {
         >
           {t("facet.all")}
         </button>
-        {catsQuery.data?.slice(0, 12).map((c) => (
-          <button
-            key={c.slug}
-            onClick={() =>
-              navigate({ search: (prev: CatalogSearch) => ({ ...prev, category: c.slug, page: 1 }) })
-            }
-            className={`flex w-full items-baseline justify-between text-left text-sm transition ${category === c.slug ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
-          >
-            <span>{catLabel(c.category, lang)}</span>
-            <span className="text-[11px] text-muted-foreground">{c.count}</span>
-          </button>
-        ))}
+        <div className="max-h-72 space-y-1 overflow-y-auto pr-1">
+          {catsQuery.data?.map((c) => (
+            <button
+              key={c.slug}
+              onClick={() =>
+                navigate({ search: (prev: CatalogSearch) => ({ ...prev, category: c.slug, page: 1 }) })
+              }
+              className={`flex w-full items-baseline justify-between text-left text-sm transition ${category === c.slug ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
+            >
+              <span>{catLabel(c.category, lang)}</span>
+              <span className="text-[11px] text-muted-foreground">{c.count}</span>
+            </button>
+          ))}
+        </div>
       </FacetGroup>
 
       <FacetGroup label={t("facet.colour")}>
@@ -356,6 +358,25 @@ function CatalogPage() {
                           <h3 className="mt-1 line-clamp-2 font-serif text-base leading-snug text-foreground group-hover:text-accent">
                             {pickLocalized(p as unknown as Record<string, unknown>, "name", lang) || p.name}
                           </h3>
+                          {p.price_amd != null && (
+                            <div className="mt-2 flex items-baseline gap-2">
+                              <span className="text-base font-medium text-foreground">
+                                {new Intl.NumberFormat("ru-RU").format(p.price_amd)} ֏
+                              </span>
+                              {p.price_old != null && p.price_old > p.price_amd && (
+                                <span className="text-xs text-muted-foreground line-through">
+                                  {new Intl.NumberFormat("ru-RU").format(p.price_old)} ֏
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {(p.availability === "in_stock" || p.availability === "pre_order") && (
+                            <p className={`mt-1 text-[10px] uppercase tracking-[0.18em] ${
+                              p.availability === "in_stock" ? "text-emerald-600" : "text-amber-600"
+                            }`}>
+                              {p.availability === "in_stock" ? t("avail.inStock") : t("avail.preOrder")}
+                            </p>
+                          )}
                         </div>
                       </Link>
                     ))}
