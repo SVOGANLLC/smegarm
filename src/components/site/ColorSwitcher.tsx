@@ -1,5 +1,8 @@
 import { Link } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useI18n, pickLocalized } from "@/lib/i18n";
+import { colourLabel } from "@/lib/colour-i18n";
 import { fetchColorSwatches, fetchProductVariants } from "@/lib/products";
 
 export function ColorSwitcher({
@@ -15,9 +18,10 @@ export function ColorSwitcher({
   currentColourEn?: string | null;
   currentImage?: string | null;
 }) {
+  const { lang, t } = useI18n();
   const { data: variants } = useQuery({
     queryKey: ["variants", modelGroup],
-    queryFn: () => (modelGroup ? fetchProductVariants(modelGroup, currentSku) : Promise.resolve([])),
+    queryFn: () => (modelGroup ? fetchProductVariants(modelGroup) : Promise.resolve([])),
     enabled: !!modelGroup,
     staleTime: 5 * 60_000,
   });
@@ -27,22 +31,28 @@ export function ColorSwitcher({
     staleTime: 30 * 60_000,
   });
 
-  // Use the stable English colour for matching/dedup so it works regardless of UI language.
-  const isDecorated = (currentColourEn ?? currentColour) === "Decorated / Special";
-  // For prints/specials dedup by sku (each print is unique); otherwise dedup by colour name
-  const seen = new Set<string>();
-  const distinct = (variants ?? []).filter((v) => {
-    if (v.sku === currentSku) return false;
-    const colourKey = v.colour_en ?? v.colour;
-    const key = colourKey === "Decorated / Special" || isDecorated ? v.sku : colourKey;
-    if (!key) return false;
-    if (!isDecorated && colourKey === (currentColourEn ?? currentColour)) return false;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  }).sort((a, b) => (a.colour ?? "").localeCompare(b.colour ?? ""));
+  const canonicalEn = currentColourEn ?? currentColour ?? "";
+  const isDecorated = canonicalEn === "Decorated / Special";
 
-  if (!distinct.length) return null;
+  const items = useMemo(() => {
+    const list = variants ?? [];
+    const seen = new Set<string>();
+    const out: typeof list = [];
+    for (const v of list) {
+      const colourKey = v.colour_en ?? v.colour ?? "";
+      const key = colourKey === "Decorated / Special" ? v.sku : colourKey;
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(v);
+    }
+    return out.sort((a, b) => {
+      const la = pickLocalized(a as unknown as Record<string, unknown>, "colour", lang) || colourLabel(a.colour_en ?? a.colour ?? "", lang);
+      const lb = pickLocalized(b as unknown as Record<string, unknown>, "colour", lang) || colourLabel(b.colour_en ?? b.colour ?? "", lang);
+      return la.localeCompare(lb);
+    });
+  }, [variants, lang]);
+
+  if (!items.length) return null;
 
   const hexFor = (c: string) => swatches?.find((s) => s.colour === c)?.hex ?? "#d4d4d4";
 
@@ -54,31 +64,46 @@ export function ColorSwitcher({
   const currentStyle =
     isDecorated && currentImage
       ? { backgroundImage: `url(${currentImage})`, backgroundSize: "cover", backgroundPosition: "center" }
-      : { background: currentColourEn ?? currentColour ? hexFor((currentColourEn ?? currentColour) as string) : "#fff" };
+      : { background: canonicalEn ? hexFor(canonicalEn) : "#fff" };
+
+  const labelFor = (v: { colour_en: string | null; colour: string | null; colour_hy?: string | null }) =>
+    pickLocalized(v as unknown as Record<string, unknown>, "colour", lang) ||
+    colourLabel(v.colour_en ?? v.colour ?? "", lang);
+
+  const currentLabel = currentColour || colourLabel(canonicalEn, lang);
 
   return (
     <div className="mt-6">
       <p className="eyebrow mb-3 text-muted-foreground">
-        {isDecorated ? "Принт" : "Цвет"}:{" "}
-        <span className="text-foreground">{currentColour ?? "—"}</span>
+        {isDecorated ? t("product.print") : t("product.colour")}:{" "}
+        <span className="text-foreground">{currentLabel}</span>
       </p>
       <div className="flex flex-wrap gap-2">
-        <span
-          aria-current
-          className="relative h-9 w-9 rounded-full ring-2 ring-foreground ring-offset-2 ring-offset-background"
-          style={currentStyle}
-          title={currentColour ?? ""}
-        />
-        {distinct.map((v) => (
-          <Link
-            key={v.sku}
-            to="/product/$sku"
-            params={{ sku: v.sku }}
-            title={v.sku}
-            className="h-9 w-9 overflow-hidden rounded-full border border-border bg-white transition hover:ring-2 hover:ring-foreground hover:ring-offset-2 hover:ring-offset-background"
-            style={swatchStyle(v)}
-          />
-        ))}
+        {items.map((v) => {
+          const isCurrent = v.sku === currentSku;
+          const title = labelFor(v);
+          if (isCurrent) {
+            return (
+              <span
+                key={v.sku}
+                aria-current
+                className="relative h-9 w-9 rounded-full ring-2 ring-foreground ring-offset-2 ring-offset-background"
+                style={currentStyle}
+                title={title}
+              />
+            );
+          }
+          return (
+            <Link
+              key={v.sku}
+              to="/product/$sku"
+              params={{ sku: v.sku }}
+              title={title}
+              className="h-9 w-9 overflow-hidden rounded-full border border-border bg-white transition hover:ring-2 hover:ring-foreground hover:ring-offset-2 hover:ring-offset-background"
+              style={swatchStyle(v)}
+            />
+          );
+        })}
       </div>
     </div>
   );

@@ -8,6 +8,8 @@ import { ColorSwitcher } from "@/components/site/ColorSwitcher";
 import { AddToCartButton } from "@/components/site/AddToCartButton";
 import { useState } from "react";
 import { useI18n, pickLocalized, pickLocalizedSpecs } from "@/lib/i18n";
+import { localizedProductColour } from "@/lib/colour-i18n";
+import { categoryLabel } from "@/lib/category-i18n";
 
 export const Route = createFileRoute("/product/$sku")({
   loader: async ({ params, context }) => {
@@ -86,8 +88,10 @@ function ProductPage() {
   if (!product) return null;
   const name = pickLocalized(product as unknown as Record<string, unknown>, "name", lang);
   const description = pickLocalized(product as unknown as Record<string, unknown>, "description", lang);
-  const category = pickLocalized(product as unknown as Record<string, unknown>, "category", lang);
-  const colour = pickLocalized(product as unknown as Record<string, unknown>, "colour", lang);
+  const category =
+    pickLocalized(product as unknown as Record<string, unknown>, "category", lang) ||
+    categoryLabel(product.category_en ?? product.category ?? "", lang);
+  const colour = localizedProductColour(product, lang);
   const themeName = pickLocalized(theme as unknown as Record<string, unknown> | null, "name", lang);
   const specEntries = Object.entries(pickLocalizedSpecs(product as unknown as Record<string, unknown>, lang));
 

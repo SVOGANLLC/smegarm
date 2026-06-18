@@ -71,6 +71,7 @@ const dicts: Record<Lang, Dict> = {
     "product.sku": "Артикул",
     "product.style": "Стиль",
     "product.colour": "Цвет",
+    "product.print": "Принт",
     "product.family": "Семейство",
     "product.ean": "EAN",
     "product.requestPrice": "Запросить цену",
@@ -198,6 +199,7 @@ const dicts: Record<Lang, Dict> = {
     "product.sku": "SKU",
     "product.style": "Style",
     "product.colour": "Colour",
+    "product.print": "Print",
     "product.family": "Family",
     "product.ean": "EAN",
     "product.requestPrice": "Request price",
@@ -325,6 +327,7 @@ const dicts: Record<Lang, Dict> = {
     "product.sku": "Արտ․ համար",
     "product.style": "Ոճ",
     "product.colour": "Գույն",
+    "product.print": "Պրինտ",
     "product.family": "Ընտանիք",
     "product.ean": "EAN",
     "product.requestPrice": "Հարցնել գինը",
@@ -390,6 +393,20 @@ const dicts: Record<Lang, Dict> = {
   },
 };
 
+const LANGS: Lang[] = ["ru", "en", "hy"];
+const DEFAULT_LANG: Lang = "hy";
+const STORAGE_KEY = "smeg.lang";
+
+function readStoredLang(): Lang {
+  if (typeof window === "undefined") return DEFAULT_LANG;
+  const stored = localStorage.getItem(STORAGE_KEY) as Lang | null;
+  return stored && LANGS.includes(stored) ? stored : DEFAULT_LANG;
+}
+
+function isCyrillic(text: string): boolean {
+  return /[\u0400-\u04FF]/.test(text);
+}
+
 type I18nCtx = { lang: Lang; setLang: (l: Lang) => void; t: (key: string) => string };
 const Ctx = createContext<I18nCtx | null>(null);
 
@@ -398,12 +415,11 @@ export function getI18nDefaults(): Record<Lang, Dict> {
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("ru");
+  const [lang, setLangState] = useState<Lang>(readStoredLang);
   const [overlay, setOverlay] = useState<Record<Lang, Dict>>({ ru: {}, en: {}, hy: {} });
   useEffect(() => {
-    const stored = typeof window !== "undefined" ? (localStorage.getItem("smeg.lang") as Lang | null) : null;
-    if (stored && stored in dicts) setLangState(stored);
-  }, []);
+    if (typeof document !== "undefined") document.documentElement.lang = lang;
+  }, [lang]);
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -450,7 +466,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, []);
   const setLang = (l: Lang) => {
     setLangState(l);
-    if (typeof window !== "undefined") localStorage.setItem("smeg.lang", l);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEY, l);
+      document.documentElement.lang = l;
+    }
   };
   const t = (key: string) => overlay[lang][key] ?? dicts[lang][key] ?? key;
   return <Ctx.Provider value={{ lang, setLang, t }}>{children}</Ctx.Provider>;
@@ -473,11 +492,15 @@ export function pickLocalized(
   lang: Lang,
 ): string {
   if (!obj) return "";
-  const key = lang === "ru" ? base : `${base}_${lang}`;
-  const raw = obj[key];
-  if (typeof raw === "string" && raw.trim()) return raw;
-  const fallback = obj[base];
-  return typeof fallback === "string" ? fallback : "";
+  const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : "");
+  const ru = str(obj[base]);
+  const en = str(obj[`${base}_en`]);
+  const hy = str(obj[`${base}_hy`]);
+
+  if (lang === "ru") return ru || en || hy;
+  if (lang === "en") return en || hy || (ru && !isCyrillic(ru) ? ru : "");
+  // hy: prefer Armenian, then English — avoid Russian fallback on Armenian UI
+  return hy || en || (ru && !isCyrillic(ru) ? ru : "");
 }
 
 /** Specs JSON localized with fallback. */
@@ -487,7 +510,15 @@ export function pickLocalizedSpecs(
 ): Record<string, string> {
   if (!obj) return {};
   const key = lang === "ru" ? "specs" : `specs_${lang}`;
-  const raw = (obj[key] as Record<string, string> | null | undefined) ?? null;
-  if (raw && Object.keys(raw).length) return raw;
+  const localized = (obj[key] as Record<string, string> | null | undefined) ?? null;
+  if (localized && Object.keys(localized).length) return localized;
+  if (lang === "hy") {
+    const en = (obj.specs_en as Record<string, string> | null | undefined) ?? null;
+    if (en && Object.keys(en).length) return en;
+  }
+  if (lang === "en") {
+    const hy = (obj.specs_hy as Record<string, string> | null | undefined) ?? null;
+    if (hy && Object.keys(hy).length) return hy;
+  }
   return (obj.specs as Record<string, string> | null | undefined) ?? {};
 }

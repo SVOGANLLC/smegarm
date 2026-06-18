@@ -202,7 +202,7 @@ export type Theme = {
   description_hy?: string | null;
 };
 
-export type Variant = { sku: string; colour: string | null; colour_en: string | null; main_image: string | null };
+export type Variant = { sku: string; colour: string | null; colour_en: string | null; colour_hy: string | null; main_image: string | null };
 
 export type SearchSuggestion = {
   sku: string;
@@ -249,12 +249,11 @@ export async function fetchTheme(key: string): Promise<Theme | null> {
   return (data as Theme | null) ?? null;
 }
 
-export async function fetchProductVariants(modelGroup: string, excludeSku: string): Promise<Variant[]> {
+export async function fetchProductVariants(modelGroup: string): Promise<Variant[]> {
   const { data, error } = await supabase
     .from("products")
-    .select("sku,colour,colour_en,main_image")
+    .select("sku,colour,colour_en,colour_hy,main_image")
     .eq("model_group", modelGroup)
-    .neq("sku", excludeSku)
     .not("colour", "is", null)
     .order("sku", { ascending: true })
     .limit(40);

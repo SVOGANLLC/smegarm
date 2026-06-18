@@ -14,6 +14,7 @@ import { useState } from "react";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useI18n, pickLocalized } from "@/lib/i18n";
 import { categoryLabel as catLabel } from "@/lib/category-i18n";
+import { colourLabel as colourI18n } from "@/lib/colour-i18n";
 
 const searchSchema = z.object({
   category: z.string().optional(),
@@ -94,10 +95,10 @@ function CatalogPage() {
   // colour value (canonical) → localized label for current lang
   const colourLabel = (value: string) => {
     const f = facetsQuery.data?.colours.find((c) => c.value === value);
-    if (!f) return value;
-    if (lang === "en") return f.label_en || value;
-    if (lang === "hy") return f.label_hy || value;
-    return value; // ru base; colour stored canonically in English on most rows
+    const canonical = f?.value_en ?? value;
+    if (lang === "hy") return f?.label_hy || colourI18n(canonical, lang);
+    if (lang === "en") return f?.label_en || colourI18n(canonical, lang);
+    return colourI18n(canonical, lang);
   };
 
   const productsQuery = useQuery({
