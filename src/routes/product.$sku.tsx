@@ -10,6 +10,17 @@ import { useState } from "react";
 import { useI18n, pickLocalized, pickLocalizedSpecs } from "@/lib/i18n";
 import { localizedProductColour } from "@/lib/colour-i18n";
 import { categoryLabel } from "@/lib/category-i18n";
+import { deliveryLeadDays, isProductInStock } from "@/lib/availability";
+import {
+  breadcrumbJsonLd,
+  canonicalLink,
+  hreflangLinks,
+  productDescription,
+  productJsonLd,
+  productOgImage,
+  productTitle,
+  seoMeta,
+} from "@/lib/seo";
 
 export const Route = createFileRoute("/product/$sku")({
   loader: async ({ params, context }) => {
@@ -20,28 +31,34 @@ export const Route = createFileRoute("/product/$sku")({
     if (!product) throw notFound();
     return { product };
   },
-  head: ({ loaderData }) => ({
-    meta: loaderData?.product
-      ? [
-          { title: `${loaderData.product.name} (${loaderData.product.sku}) — Smeg Armenia` },
-          {
-            name: "description",
-            content: (loaderData.product.description ?? loaderData.product.name).slice(0, 160),
-          },
-          { property: "og:title", content: loaderData.product.name },
-          {
-            property: "og:description",
-            content: (loaderData.product.description ?? "").slice(0, 200),
-          },
-          ...(loaderData.product.main_image
-            ? [
-                { property: "og:image", content: loaderData.product.main_image },
-                { name: "twitter:image", content: loaderData.product.main_image },
-              ]
-            : []),
-        ]
-      : [{ title: "Smeg Armenia" }],
-  }),
+  head: ({ loaderData }) => {
+    if (!loaderData?.product) return { meta: [{ title: "Smeg Armenia" }] };
+    const p = loaderData.product;
+    const title = productTitle(p);
+    const description = productDescription(p);
+    const image = productOgImage(p);
+    const path = `/product/${p.sku}`;
+    return {
+      meta: seoMeta({ title, description, path, image, type: "product" }),
+      links: [...hreflangLinks(path), ...canonicalLink(path)],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(productJsonLd(p)),
+        },
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(
+            breadcrumbJsonLd([
+              { name: "Smeg Armenia", path: "/" },
+              { name: "Catalogue", path: "/catalog" },
+              { name: title.split(" (")[0], path },
+            ]),
+          ),
+        },
+      ],
+    };
+  },
   errorComponent: ({ error }) => <ProductErrorView message={error.message} />,
   notFoundComponent: () => <ProductNotFoundView />,
   component: ProductPage,
@@ -108,8 +125,8 @@ function ProductPage() {
   return (
     <div className="min-h-screen text-foreground transition-colors duration-700" style={themeStyle}>
       <Header />
-      <main className="pt-32 pb-24">
-        <div className="mx-auto max-w-[1400px] px-6 md:px-10">
+      <main className="pb-28 pt-20 md:pb-24 md:pt-32">
+        <div className="mx-auto max-w-[1400px] px-4 md:px-10">
           {theme && product.theme_key && (
             <Link
               to="/catalog"
@@ -150,7 +167,7 @@ function ProductPage() {
                 </div>
               )}
               {gallery.length > 1 && (
-                <div className="mt-4 grid grid-cols-6 gap-2">
+                <div className="mt-4 grid grid-cols-5 gap-2 md:grid-cols-6">
                   {gallery.slice(0, 12).map((src, i) => (
                     <button
                       key={src + i}
@@ -176,7 +193,7 @@ function ProductPage() {
                   {category || product.category}
                 </Link>
               )}
-              <h1 className="mt-3 font-serif text-3xl md:text-5xl leading-tight">
+              <h1 className="mt-3 font-serif text-2xl leading-tight md:text-5xl">
                 {name || product.name}
               </h1>
               <p className="mt-3 text-sm text-muted-foreground">{t("product.sku")}: {product.sku}</p>
@@ -232,12 +249,14 @@ function ProductPage() {
                   </p>
                 )}
                 <AvailabilityBadge product={product} />
-                <AddToCartButton
-                  sku={product.sku}
-                  name={name || product.name}
-                  image={product.main_image}
-                  price={(product as unknown as { price_amd?: number | null }).price_amd ?? null}
-                />
+                <div className="hidden lg:contents">
+                  <AddToCartButton
+                    sku={product.sku}
+                    name={name || product.name}
+                    image={product.main_image}
+                    price={(product as unknown as { price_amd?: number | null }).price_amd ?? null}
+                  />
+                </div>
                 {((product as unknown as { price_amd?: number | null }).price_amd == null) && (
                   <Link
                     to="/"
@@ -300,6 +319,27 @@ function ProductPage() {
           )}
         </div>
       </main>
+
+      {/* Mobile sticky buy bar */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
+        <div className="flex items-center gap-3">
+          {(product as unknown as { price_amd?: number | null }).price_amd != null && (
+            <p className="shrink-0 font-serif text-xl">
+              {(product as unknown as { price_amd: number }).price_amd.toLocaleString("ru-RU")} ֏
+            </p>
+          )}
+          <div className="min-w-0 flex-1">
+            <AddToCartButton
+              sku={product.sku}
+              name={name || product.name}
+              image={product.main_image}
+              price={(product as unknown as { price_amd?: number | null }).price_amd ?? null}
+              className="w-full justify-center"
+            />
+          </div>
+        </div>
+      </div>
+
       <Footer />
     </div>
   );
@@ -341,15 +381,9 @@ function InfoLink({
   );
 }
 
-function AvailabilityBadge({
-  product,
-}: {
-  product: { availability?: string | null; stock_qty?: number | null; stock_reserved?: number | null; lead_time_days?: number | null };
-}) {
+function AvailabilityBadge({ product }: { product: { availability?: string | null; stock_qty?: number | null; stock_reserved?: number | null; lead_time_days?: number | null } }) {
   const { t } = useI18n();
-  const avail = product.availability ?? "on_request";
-  const qty = Math.max(0, (product.stock_qty ?? 0) - (product.stock_reserved ?? 0));
-  if (avail === "in_stock" || qty > 0) {
+  if (isProductInStock(product)) {
     return (
       <span className="inline-flex w-full items-center gap-2 text-sm text-emerald-700">
         <span className="h-2 w-2 rounded-full bg-emerald-600" />
@@ -357,18 +391,11 @@ function AvailabilityBadge({
       </span>
     );
   }
-  if (avail === "pre_order") {
-    return (
-      <span className="inline-flex w-full items-center gap-2 text-sm text-amber-700">
-        <span className="h-2 w-2 rounded-full bg-amber-500" />
-        {t("avail.preOrder")}{product.lead_time_days ? ` · ${t("avail.delivery")} ~${product.lead_time_days} ${t("avail.days")}` : ""}
-      </span>
-    );
-  }
+  const days = deliveryLeadDays(product);
   return (
-    <span className="inline-flex w-full items-center gap-2 text-sm text-muted-foreground">
-      <span className="h-2 w-2 rounded-full bg-muted-foreground/60" />
-      {t("avail.onRequest")}
+    <span className="inline-flex w-full items-center gap-2 text-sm text-sky-800">
+      <span className="h-2 w-2 rounded-full bg-sky-500" />
+      {t("avail.deliveryFromDays", { n: days })}
     </span>
   );
 }

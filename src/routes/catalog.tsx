@@ -12,18 +12,21 @@ import {
 import { z } from "zod";
 import { useState } from "react";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
-import { useI18n, pickLocalized } from "@/lib/i18n";
+import { useI18n, getI18nDefaults } from "@/lib/i18n";
 import { categoryLabel as catLabel } from "@/lib/category-i18n";
+import { ProductCard } from "@/components/site/ProductCard";
+import type { ProductCard as ProductCardType } from "@/lib/products";
 import { colourLabel as colourI18n } from "@/lib/colour-i18n";
+import { canonicalLink, hreflangLinks, seoMeta } from "@/lib/seo";
 
 const searchSchema = z.object({
   category: z.string().optional(),
   q: z.string().optional(),
   colour: z.string().optional(), // csv
-  family: z.string().optional(),
   aesthetic: z.string().optional(),
   theme: z.string().optional(),
   flag: z.enum(["is_featured", "is_new", "is_bestseller", "is_special_offer", "sale"]).optional(),
+  inStock: z.boolean().optional(),
   sort: z.enum(["name", "price-asc", "price-desc"]).optional(),
   page: z.number().int().min(1).default(1),
 });
@@ -32,19 +35,19 @@ type CatalogSearch = z.infer<typeof searchSchema>;
 const split = (v?: string) => (v ? v.split(",").filter(Boolean) : []);
 const join = (arr: string[]) => (arr.length ? arr.join(",") : undefined);
 
+const hyMeta = getI18nDefaults().hy;
+
 export const Route = createFileRoute("/catalog")({
   validateSearch: (s) => searchSchema.parse(s),
   head: () => ({
-    meta: [
-      { title: "Smeg Armenia — Каталог" },
-      {
-        name: "description",
-        content:
-          "Полный каталог техники Smeg в Армении: холодильники, духовки, варочные панели, кофемашины и мелкая бытовая техника.",
-      },
-      { property: "og:title", content: "Каталог Smeg Armenia" },
-      { property: "og:type", content: "website" },
-    ],
+    meta: seoMeta({
+      title: hyMeta["catalog.metaTitle"],
+      description: hyMeta["catalog.metaDesc"],
+      path: "/catalog",
+      keywords: "Smeg catalog Armenia, SMEG appliances Yerevan, refrigerators, ovens, coffee machines",
+      locale: "hy_AM",
+    }),
+    links: [...hreflangLinks("/catalog"), ...canonicalLink("/catalog")],
   }),
   errorComponent: ({ error }) => <CatalogErrorView message={error.message} />,
   notFoundComponent: () => <CatalogNotFoundView />,
@@ -72,12 +75,12 @@ const PAGE_SIZE = 36;
 
 function CatalogPage() {
   const search = Route.useSearch();
-  const { category, q, page, flag, sort, theme } = search;
+  const { category, q, page, flag, sort, theme, inStock } = search;
   const colours = split(search.colour);
-  const families = split(search.family);
   const aesthetics = split(search.aesthetic);
   const navigate = useNavigate({ from: Route.fullPath });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [shuffleKey] = useState(() => Math.random());
   const { lang, t } = useI18n();
 
   const catsQuery = useQuery({
@@ -90,7 +93,20 @@ function CatalogPage() {
 
   const currentCat = category ? catsQuery.data?.find((c) => c.slug === category) : undefined;
   const categoryRawList = currentCat?.raw;
-  const categoryLabel = currentCat ? catLabel(currentCat.category, lang) : undefined;
+  const categoryLabel = currentCat
+    ? catLabel(currentCat.category, lang, {
+        hy: currentCat.category_hy,
+        en: currentCat.category_en ?? currentCat.category,
+        ru: currentCat.category_ru,
+      })
+    : undefined;
+
+  const sortedCategories = [...(catsQuery.data ?? [])].sort((a, b) =>
+    catLabel(a.category, lang, { hy: a.category_hy, en: a.category_en, ru: a.category_ru }).localeCompare(
+      catLabel(b.category, lang, { hy: b.category_hy, en: b.category_en, ru: b.category_ru }),
+      lang === "hy" ? "hy" : lang === "ru" ? "ru" : "en",
+    ),
+  );
 
   // colour value (canonical) → localized label for current lang
   const colourLabel = (value: string) => {
@@ -102,17 +118,18 @@ function CatalogPage() {
   };
 
   const productsQuery = useQuery({
-    queryKey: ["catalog", currentCat?.slug ?? null, q ?? "", colours, families, aesthetics, theme ?? "", flag ?? "", sort ?? "", page],
+    queryKey: ["catalog", currentCat?.slug ?? null, q ?? "", colours, aesthetics, theme ?? "", flag ?? "", inStock ?? false, sort ?? "", page, shuffleKey],
     queryFn: () =>
       fetchCatalog({
-        categoryIn: categoryRawList,
+        categoryIn: q ? undefined : categoryRawList,
         search: q || undefined,
         colours: colours.length ? colours : undefined,
-        families: families.length ? families : undefined,
         aesthetics: aesthetics.length ? aesthetics : undefined,
         theme: theme || undefined,
         flag,
+        inStock,
         sort,
+        shuffleSeed: sort ? undefined : shuffleKey,
         limit: PAGE_SIZE,
         offset: (page - 1) * PAGE_SIZE,
       }),
@@ -122,7 +139,7 @@ function CatalogPage() {
   const total = productsQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const toggleIn = (key: "colour" | "family" | "aesthetic", value: string) => {
+  const toggleIn = (key: "colour" | "aesthetic", value: string) => {
     const current = split(search[key]);
     const next = current.includes(value) ? current.filter((x) => x !== value) : [...current, value];
     navigate({ search: (prev: CatalogSearch) => ({ ...prev, [key]: join(next), page: 1 }) });
@@ -132,7 +149,7 @@ function CatalogPage() {
     navigate({ search: { page: 1 } as CatalogSearch });
 
   const activeCount =
-    colours.length + families.length + aesthetics.length + (flag ? 1 : 0) + (q ? 1 : 0) + (theme ? 1 : 0);
+    colours.length + aesthetics.length + (flag ? 1 : 0) + (inStock ? 1 : 0) + (q ? 1 : 0) + (theme ? 1 : 0);
 
   const filters = (
     <div className="space-y-7">
@@ -145,7 +162,14 @@ function CatalogPage() {
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               const v = (e.target as HTMLInputElement).value.trim();
-              navigate({ search: (prev: CatalogSearch) => ({ ...prev, q: v || undefined, page: 1 }) });
+              navigate({
+                search: (prev: CatalogSearch) => ({
+                  ...prev,
+                  q: v || undefined,
+                  category: undefined,
+                  page: 1,
+                }),
+              });
             }
           }}
           className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
@@ -169,11 +193,13 @@ function CatalogPage() {
               {t(`flag.${flag}`)}
             </FilterPill>
           )}
+          {inStock && (
+            <FilterPill onClear={() => navigate({ search: (prev: CatalogSearch) => ({ ...prev, inStock: undefined, page: 1 }) })}>
+              {t("avail.inStock")}
+            </FilterPill>
+          )}
           {aesthetics.map((v) => (
             <FilterPill key={v} onClear={() => toggleIn("aesthetic", v)}>{v}</FilterPill>
-          ))}
-          {families.map((v) => (
-            <FilterPill key={v} onClear={() => toggleIn("family", v)}>{v}</FilterPill>
           ))}
           {colours.map((v) => (
             <FilterPill key={v} onClear={() => toggleIn("colour", v)}>{colourLabel(v)}</FilterPill>
@@ -182,6 +208,16 @@ function CatalogPage() {
       )}
 
       <FacetGroup label={t("facet.marketing")}>
+        <button
+          onClick={() =>
+            navigate({
+              search: (prev: CatalogSearch) => ({ ...prev, inStock: inStock ? undefined : true, page: 1 }),
+            })
+          }
+          className={`block w-full text-left text-sm transition ${inStock ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
+        >
+          {t("avail.inStock")}
+        </button>
         {(
           [
             ["is_bestseller", "flag.is_bestseller"],
@@ -212,7 +248,7 @@ function CatalogPage() {
           {t("facet.all")}
         </button>
         <div className="max-h-72 space-y-1 overflow-y-auto pr-1">
-          {catsQuery.data?.map((c) => (
+          {sortedCategories.map((c) => (
             <button
               key={c.slug}
               onClick={() =>
@@ -220,7 +256,7 @@ function CatalogPage() {
               }
               className={`flex w-full items-baseline justify-between text-left text-sm transition ${category === c.slug ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
             >
-              <span>{catLabel(c.category, lang)}</span>
+              <span>{catLabel(c.category, lang, { hy: c.category_hy, en: c.category_en, ru: c.category_ru })}</span>
               <span className="text-[11px] text-muted-foreground">{c.count}</span>
             </button>
           ))}
@@ -257,14 +293,6 @@ function CatalogPage() {
         />
       </FacetGroup>
 
-      <FacetGroup label={t("facet.family")}>
-        <ScrollableFacet
-          items={facetsQuery.data?.families ?? []}
-          selected={families}
-          onToggle={(v) => toggleIn("family", v)}
-        />
-      </FacetGroup>
-
       {activeCount > 0 && (
         <button
           onClick={clearAll}
@@ -279,11 +307,11 @@ function CatalogPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
-      <main className="pt-32 pb-20">
-        <div className="mx-auto max-w-[1400px] px-6 md:px-10">
-          <div className="mb-8 md:mb-10">
+      <main className="pb-20 pt-20 md:pt-32 md:pb-20">
+        <div className="mx-auto max-w-[1400px] px-4 md:px-10">
+          <div className="mb-6 md:mb-10">
             <p className="eyebrow text-muted-foreground">{t("catalog.title")}</p>
-            <h1 className="mt-3 font-serif text-3xl sm:text-4xl md:text-6xl">
+            <h1 className="mt-2 font-serif text-2xl leading-tight sm:text-3xl md:mt-3 md:text-6xl">
               {categoryLabel ?? t("catalog.all")}
             </h1>
             <p className="mt-3 text-sm text-muted-foreground">
@@ -292,18 +320,19 @@ function CatalogPage() {
 
             <div className="mt-5 flex items-center gap-3">
               <select
-                value={sort ?? "name"}
+                value={sort ?? ""}
                 onChange={(e) =>
                   navigate({
                     search: (prev: CatalogSearch) => ({
                       ...prev,
-                      sort: (e.target.value as CatalogSearch["sort"]) ?? undefined,
+                      sort: (e.target.value as CatalogSearch["sort"]) || undefined,
                       page: 1,
                     }),
                   })
                 }
                 className="flex-1 rounded-sm border border-border bg-background px-3 py-2 text-xs uppercase tracking-[0.14em] md:flex-none"
               >
+                <option value="">{t("catalog.sort.random")}</option>
                 <option value="name">{t("catalog.sort.name")}</option>
                 <option value="price-asc">{t("catalog.sort.priceAsc")}</option>
                 <option value="price-desc">{t("catalog.sort.priceDesc")}</option>
@@ -321,65 +350,18 @@ function CatalogPage() {
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[260px_1fr]">
             <aside className="hidden lg:block lg:sticky lg:top-28 lg:self-start lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:pr-2">{filters}</aside>
 
-            <section className="light-section rounded-sm p-5 md:p-8">
+            <section className="light-section rounded-sm p-4 md:p-8">
               {productsQuery.isLoading ? (
-                <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                   {Array.from({ length: 8 }).map((_, i) => (
                     <div key={i} className="aspect-[4/5] animate-pulse bg-secondary" />
                   ))}
                 </div>
               ) : productsQuery.data?.items.length ? (
                 <>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-x-6 sm:gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+                  <div className="grid grid-cols-1 gap-y-8 sm:grid-cols-2 sm:gap-x-6 md:grid-cols-3 lg:grid-cols-4">
                     {productsQuery.data.items.map((p) => (
-                      <Link
-                        key={p.sku}
-                        to="/product/$sku"
-                        params={{ sku: p.sku }}
-                        className="group block"
-                      >
-                        <div className="relative aspect-[4/5] overflow-hidden rounded-sm bg-white">
-                          {p.main_image ? (
-                            <img
-                              src={p.main_image}
-                              alt={pickLocalized(p as unknown as Record<string, unknown>, "name", lang) || p.name}
-                              loading="lazy"
-                              className="h-full w-full object-contain p-4 transition-transform duration-700 group-hover:scale-105"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                              {t("product.noPhoto")}
-                            </div>
-                          )}
-                        </div>
-                        <div className="mt-3">
-                          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                            {p.sku}
-                          </p>
-                          <h3 className="mt-1 line-clamp-2 font-serif text-base leading-snug text-foreground group-hover:text-accent">
-                            {pickLocalized(p as unknown as Record<string, unknown>, "name", lang) || p.name}
-                          </h3>
-                          {p.price_amd != null && (
-                            <div className="mt-2 flex items-baseline gap-2">
-                              <span className="text-base font-medium text-foreground">
-                                {new Intl.NumberFormat("ru-RU").format(p.price_amd)} ֏
-                              </span>
-                              {p.price_old != null && p.price_old > p.price_amd && (
-                                <span className="text-xs text-muted-foreground line-through">
-                                  {new Intl.NumberFormat("ru-RU").format(p.price_old)} ֏
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          {(p.availability === "in_stock" || p.availability === "pre_order") && (
-                            <p className={`mt-1 text-[10px] uppercase tracking-[0.18em] ${
-                              p.availability === "in_stock" ? "text-emerald-600" : "text-amber-600"
-                            }`}>
-                              {p.availability === "in_stock" ? t("avail.inStock") : t("avail.preOrder")}
-                            </p>
-                          )}
-                        </div>
-                      </Link>
+                      <ProductCard key={p.sku} p={p as unknown as ProductCardType} />
                     ))}
                   </div>
 

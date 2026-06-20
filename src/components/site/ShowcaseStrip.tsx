@@ -31,8 +31,8 @@ export function ShowcaseStrip({
   });
   if (!isLoading && !items.length) return null;
   return (
-    <section className="pt-24 md:pt-32">
-      <div className="mx-auto max-w-[1400px] px-6 md:px-10">
+    <section className="site-section pt-12 md:pt-32">
+      <div className="mx-auto max-w-[1400px] px-4 md:px-10">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <SectionHeader eyebrow={resolve(eyebrow)} title={resolve(title)} />
           {to && ctaLabel && (
@@ -44,8 +44,8 @@ export function ShowcaseStrip({
           )}
         </div>
       </div>
-      <div className="light-section mt-12 py-16 md:py-20">
-        <div className="mx-auto max-w-[1400px] px-6 md:px-10">
+      <div className="mt-8 md:mt-12">
+        <div className="mx-auto max-w-[1400px] px-4 md:px-10">
           <ProductGrid items={items} />
         </div>
       </div>

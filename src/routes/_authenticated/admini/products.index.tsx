@@ -6,14 +6,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Eye, EyeOff, Pencil, Sparkles, Flame, Tag, Plus } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
-export const Route = createFileRoute("/_authenticated/admin/products/")({
+export const Route = createFileRoute("/_authenticated/admini/products/")({
   component: AdminProducts,
 });
 
 const PAGE = 30;
 
 function AdminProducts() {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
@@ -96,14 +98,14 @@ function AdminProducts() {
       qc.invalidateQueries({ queryKey: ["admin-products"] });
       qc.invalidateQueries({ queryKey: ["admin-stats"] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Ошибка"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
 
   const createProduct = useMutation({
     mutationFn: async (input: { sku: string; name: string; category: string }) => {
       const sku = input.sku.trim().toUpperCase();
-      if (!sku) throw new Error("Артикул обязателен");
-      if (!input.name.trim()) throw new Error("Название обязательно");
+      if (!sku) throw new Error(t("admin.products.skuRequired"));
+      if (!input.name.trim()) throw new Error(t("admin.products.nameRequired"));
       const { error } = await supabase.from("products").insert({
         sku,
         name: input.name.trim(),
@@ -117,9 +119,9 @@ function AdminProducts() {
       qc.invalidateQueries({ queryKey: ["admin-products"] });
       qc.invalidateQueries({ queryKey: ["admin-product-categories"] });
       setCreating(false);
-      navigate({ to: "/admin/products/$sku", params: { sku } });
+      navigate({ to: "/admini/products/$sku", params: { sku } });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Ошибка"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
 
   const total = list.data?.total ?? 0;
@@ -138,13 +140,13 @@ function AdminProducts() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-serif text-4xl">Товары</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{total} позиций</p>
+          <h1 className="font-serif text-4xl">{t("admin.products.title")}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{t("admin.products.count", { n: total })}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <input
             type="search"
-            placeholder="Поиск по артикулу или названию"
+            placeholder={t("admin.products.search")}
             value={q}
             onChange={(e) => {
               setQ(e.target.value);
@@ -157,7 +159,7 @@ function AdminProducts() {
             onClick={() => setCreating(true)}
             className="inline-flex items-center gap-2 rounded-sm bg-foreground px-4 py-2 text-xs uppercase tracking-[0.18em] text-background hover:opacity-90"
           >
-            <Plus className="h-3.5 w-3.5" /> Добавить
+            <Plus className="h-3.5 w-3.5" /> {t("admin.add")}
           </button>
         </div>
       </div>
@@ -168,7 +170,7 @@ function AdminProducts() {
           onChange={(e) => { setCategory(e.target.value); setPage(1); }}
           className="rounded-sm border border-border bg-background px-3 py-2 text-xs uppercase tracking-[0.14em]"
         >
-          <option value="">Все категории</option>
+          <option value="">{t("admin.products.allCategories")}</option>
           {categories.data?.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
         <select
@@ -176,31 +178,31 @@ function AdminProducts() {
           onChange={(e) => { setVisibility(e.target.value as "all" | "published" | "hidden"); setPage(1); }}
           className="rounded-sm border border-border bg-background px-3 py-2 text-xs uppercase tracking-[0.14em]"
         >
-          <option value="all">Все</option>
-          <option value="published">Опубликованные</option>
-          <option value="hidden">Скрытые</option>
+          <option value="all">{t("admin.all")}</option>
+          <option value="published">{t("admin.products.published")}</option>
+          <option value="hidden">{t("admin.products.hidden")}</option>
         </select>
         <select
           value={availability}
           onChange={(e) => { setAvailability(e.target.value); setPage(1); }}
           className="rounded-sm border border-border bg-background px-3 py-2 text-xs uppercase tracking-[0.14em]"
         >
-          <option value="">Любое наличие</option>
-          <option value="in_stock">В наличии</option>
-          <option value="pre_order">Под заказ</option>
-          <option value="on_request">По запросу</option>
-          <option value="out_of_stock">Нет в наличии</option>
+          <option value="">{t("admin.products.anyStock")}</option>
+          <option value="in_stock">{t("admin.products.inStock")}</option>
+          <option value="pre_order">{t("admin.products.preOrder")}</option>
+          <option value="on_request">{t("admin.products.onRequest")}</option>
+          <option value="out_of_stock">{t("admin.products.outOfStock")}</option>
         </select>
         <select
           value={flagFilter}
           onChange={(e) => { setFlagFilter(e.target.value as typeof flagFilter); setPage(1); }}
           className="rounded-sm border border-border bg-background px-3 py-2 text-xs uppercase tracking-[0.14em]"
         >
-          <option value="">Все метки</option>
-          <option value="is_bestseller">Хит продаж</option>
-          <option value="is_new">Новинка</option>
-          <option value="is_special_offer">Спецпредложение</option>
-          <option value="is_featured">На главной</option>
+          <option value="">{t("admin.products.anyBadge")}</option>
+          <option value="is_bestseller">{t("admin.products.bestseller")}</option>
+          <option value="is_new">{t("admin.products.newItem")}</option>
+          <option value="is_special_offer">{t("admin.products.special")}</option>
+          <option value="is_featured">{t("admin.products.featured")}</option>
         </select>
         {activeFilters > 0 && (
           <button
@@ -208,7 +210,7 @@ function AdminProducts() {
             onClick={resetFilters}
             className="rounded-sm border border-border px-3 py-2 text-xs uppercase tracking-[0.14em] hover:border-foreground"
           >
-            Сбросить ({activeFilters})
+            {t("admin.products.resetFilters", { n: activeFilters })}
           </button>
         )}
       </div>
@@ -227,13 +229,13 @@ function AdminProducts() {
           <thead className="bg-secondary/50 text-left text-xs uppercase tracking-[0.15em] text-muted-foreground">
             <tr>
               <th className="w-16 p-3"></th>
-              <th className="p-3">Артикул / название</th>
-              <th className="p-3">Категория</th>
-              <th className="p-3">Цена, ֏</th>
-              <th className="p-3">Остаток</th>
-              <th className="p-3">Наличие</th>
-              <th className="p-3 text-center">Метки</th>
-              <th className="p-3 text-center">Виден</th>
+              <th className="p-3">{t("admin.products.colSku")}</th>
+              <th className="p-3">{t("admin.products.colCategory")}</th>
+              <th className="p-3">{t("admin.products.colPrice")}, ֏</th>
+              <th className="p-3">{t("admin.products.colStock")}</th>
+              <th className="p-3">{t("admin.products.colAvail")}</th>
+              <th className="p-3 text-center">{t("admin.products.colBadges")}</th>
+              <th className="p-3 text-center">{t("admin.products.colVisible")}</th>
               <th className="p-3"></th>
             </tr>
           </thead>
@@ -269,21 +271,21 @@ function AdminProducts() {
                     <FlagToggle
                       active={p.is_bestseller}
                       onClick={() => toggleFlag.mutate({ sku: p.sku, field: "is_bestseller", value: !p.is_bestseller })}
-                      title="Хит продаж"
+                      title={t("admin.products.bestseller")}
                     >
                       <Flame className="h-3.5 w-3.5" />
                     </FlagToggle>
                     <FlagToggle
                       active={p.is_new}
                       onClick={() => toggleFlag.mutate({ sku: p.sku, field: "is_new", value: !p.is_new })}
-                      title="Новинка"
+                      title={t("admin.products.newItem")}
                     >
                       <Sparkles className="h-3.5 w-3.5" />
                     </FlagToggle>
                     <FlagToggle
                       active={p.is_special_offer}
                       onClick={() => toggleFlag.mutate({ sku: p.sku, field: "is_special_offer", value: !p.is_special_offer })}
-                      title="Спецпредложение"
+                      title={t("admin.products.special")}
                     >
                       <Tag className="h-3.5 w-3.5" />
                     </FlagToggle>
@@ -304,18 +306,18 @@ function AdminProducts() {
                 </td>
                 <td className="p-3 text-right">
                   <Link
-                    to="/admin/products/$sku"
+                    to="/admini/products/$sku"
                     params={{ sku: p.sku }}
                     className="inline-flex items-center gap-1 text-xs uppercase tracking-[0.18em] text-foreground/70 hover:text-foreground"
                   >
-                    <Pencil className="h-3 w-3" /> Изменить
+                    <Pencil className="h-3 w-3" /> {t("admin.change")}
                   </Link>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {list.isLoading && <div className="p-6 text-center text-sm text-muted-foreground">Загрузка…</div>}
+        {list.isLoading && <div className="p-6 text-center text-sm text-muted-foreground">{t("admin.loading")}</div>}
       </div>
 
       {totalPages > 1 && (
@@ -325,7 +327,7 @@ function AdminProducts() {
             onClick={() => setPage((p) => p - 1)}
             className="rounded-full border border-border px-4 py-2 text-xs uppercase tracking-[0.15em] disabled:opacity-30"
           >
-            ← Назад
+            {t("admin.prev")}
           </button>
           <span className="text-xs text-muted-foreground">
             {page} / {totalPages}
@@ -335,7 +337,7 @@ function AdminProducts() {
             onClick={() => setPage((p) => p + 1)}
             className="rounded-full border border-border px-4 py-2 text-xs uppercase tracking-[0.15em] disabled:opacity-30"
           >
-            Дальше →
+            {t("admin.next")}
           </button>
         </div>
       )}
@@ -344,27 +346,29 @@ function AdminProducts() {
 }
 
 function AvailBadge({ value }: { value: string }) {
-  const map: Record<string, { label: string; cls: string }> = {
-    in_stock: { label: "В наличии", cls: "bg-emerald-100 text-emerald-900" },
-    pre_order: { label: "Под заказ", cls: "bg-amber-100 text-amber-900" },
-    out_of_stock: { label: "Нет", cls: "bg-rose-100 text-rose-900" },
-    on_request: { label: "По запросу", cls: "bg-secondary text-foreground/70" },
+  const { t } = useI18n();
+  const map: Record<string, { key: string; cls: string }> = {
+    in_stock: { key: "admin.products.inStock", cls: "bg-emerald-100 text-emerald-900" },
+    pre_order: { key: "admin.products.preOrder", cls: "bg-amber-100 text-amber-900" },
+    out_of_stock: { key: "admin.no", cls: "bg-rose-100 text-rose-900" },
+    on_request: { key: "admin.products.onRequest", cls: "bg-secondary text-foreground/70" },
   };
   const v = map[value] ?? map.on_request;
-  return <span className={`rounded-full px-2 py-1 ${v.cls}`}>{v.label}</span>;
+  return <span className={`rounded-full px-2 py-1 ${v.cls}`}>{t(v.key)}</span>;
 }
 
 function StockCell({ qty, reserved, lead }: { qty: number; reserved: number; lead: number | null }) {
+  const { t } = useI18n();
   const avail = Math.max(0, qty - reserved);
   return (
     <div className="space-y-0.5">
       <div>
         <span className="font-medium text-foreground">{avail}</span>
         <span className="text-muted-foreground"> / {qty}</span>
-        {reserved > 0 && <span className="text-amber-700"> (рез. {reserved})</span>}
+        {reserved > 0 && <span className="text-amber-700"> {t("admin.products.reserved", { n: reserved })}</span>}
       </div>
       {lead != null && lead > 0 && (
-        <div className="text-[10px] text-muted-foreground">~{lead} дн.</div>
+        <div className="text-[10px] text-muted-foreground">{t("admin.products.leadDays", { n: lead })}</div>
       )}
     </div>
   );
@@ -408,14 +412,15 @@ function CreateProductDialog({
   isPending: boolean;
   categories: string[];
 }) {
+  const { t } = useI18n();
   const [sku, setSku] = useState("");
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-md rounded-sm border border-border bg-background p-6">
-        <h2 className="font-serif text-2xl">Новый товар</h2>
-        <p className="mt-1 text-xs text-muted-foreground">После создания откроется страница редактирования.</p>
+        <h2 className="font-serif text-2xl">{t("admin.products.newProduct")}</h2>
+        <p className="mt-1 text-xs text-muted-foreground">{t("admin.products.newProductDesc")}</p>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -424,7 +429,7 @@ function CreateProductDialog({
           className="mt-5 space-y-4"
         >
           <label className="block">
-            <span className="eyebrow mb-1.5 block text-muted-foreground">Артикул (SKU)</span>
+            <span className="eyebrow mb-1.5 block text-muted-foreground">{t("admin.products.skuLabel")}</span>
             <input
               value={sku}
               onChange={(e) => setSku(e.target.value.toUpperCase())}
@@ -434,7 +439,7 @@ function CreateProductDialog({
             />
           </label>
           <label className="block">
-            <span className="eyebrow mb-1.5 block text-muted-foreground">Название</span>
+            <span className="eyebrow mb-1.5 block text-muted-foreground">{t("admin.products.nameLabel")}</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -443,7 +448,7 @@ function CreateProductDialog({
             />
           </label>
           <label className="block">
-            <span className="eyebrow mb-1.5 block text-muted-foreground">Категория</span>
+            <span className="eyebrow mb-1.5 block text-muted-foreground">{t("admin.products.categoryLabel")}</span>
             <input
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -460,14 +465,14 @@ function CreateProductDialog({
               onClick={onCancel}
               className="rounded-sm border border-border px-4 py-2 text-xs uppercase tracking-[0.18em] hover:border-foreground"
             >
-              Отмена
+              {t("admin.cancel")}
             </button>
             <button
               type="submit"
               disabled={isPending}
               className="rounded-sm bg-foreground px-4 py-2 text-xs uppercase tracking-[0.18em] text-background disabled:opacity-50"
             >
-              {isPending ? "..." : "Создать"}
+              {isPending ? "..." : t("admin.create")}
             </button>
           </div>
         </form>

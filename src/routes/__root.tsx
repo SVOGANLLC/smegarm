@@ -4,10 +4,11 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportError } from "../lib/error-reporting";
@@ -15,6 +16,7 @@ import { I18nProvider } from "../lib/i18n";
 import { CartProvider } from "../lib/cart";
 import { CartDrawer } from "../components/site/CartDrawer";
 import { WhatsAppFab } from "../components/site/WhatsAppFab";
+import { canonicalLink, faviconLinks, hreflangLinks, seoMeta, absoluteUrl } from "../lib/seo";
 
 function NotFoundComponent() {
   return (
@@ -78,30 +80,12 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Smeg Armenia — Official SMEG Italian appliances in Yerevan" },
-      {
-        name: "description",
-        content:
-          "Official SMEG in Armenia. Iconic Italian refrigerators, ovens, coffee machines and small appliances. Showroom at Nar-Dos 2, Yerevan.",
-      },
-      { name: "author", content: "Smeg Armenia" },
-      { name: "theme-color", content: "#FFFFFF" },
-      { property: "og:title", content: "Smeg Armenia — Official SMEG Italian appliances in Yerevan" },
-      {
-        property: "og:description",
-        content:
-          "Discover the official SMEG collection in Armenia. Visit our Yerevan showroom at Nar-Dos 2.",
-      },
-      { property: "og:site_name", content: "Smeg Armenia" },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Smeg Armenia — Official SMEG Italian appliances in Yerevan" },
-      { property: "og:image", content: "https://smeg.am/og-image.png" },
-      { name: "twitter:image", content: "https://smeg.am/og-image.png" },
-    ],
+    meta: seoMeta({
+      title: "Smeg Armenia — Official SMEG Italian appliances in Yerevan",
+      description:
+        "Official SMEG in Armenia. Iconic Italian refrigerators, ovens, coffee machines and small appliances. Showroom at Nar-Dos 2, Yerevan.",
+      path: "/",
+    }),
     links: [
       {
         rel: "stylesheet",
@@ -114,12 +98,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap",
       },
       { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "icon", href: "/favicon.ico", sizes: "any" },
-      { rel: "icon", type: "image/png", sizes: "16x16", href: "/favicon-16.png" },
-      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32.png" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
-      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
-      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png" },
+      ...faviconLinks(),
+      { rel: "icon", type: "image/png", sizes: "512x512", href: absoluteUrl("/icon-512.png?v=3") },
+      ...hreflangLinks("/"),
+      ...canonicalLink("/"),
     ],
   }),
   shellComponent: RootShell,
@@ -132,6 +114,8 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="hy">
       <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <HeadContent />
       </head>
       <body>
@@ -142,6 +126,24 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function ScrollToTop() {
+  const { pathname, searchStr, hash } = useRouterState({
+    select: (s) => ({
+      pathname: s.location.pathname,
+      searchStr: s.location.searchStr,
+      hash: s.location.hash,
+    }),
+  });
+
+  useLayoutEffect(() => {
+    // Homepage anchors (#collections etc.) — handled in index route
+    if (pathname === "/" && hash) return;
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname, searchStr, hash]);
+
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
@@ -149,6 +151,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
         <CartProvider>
+          <ScrollToTop />
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
           <CartDrawer />

@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { randomBytes } from "node:crypto";
 
 const CONVERSE_BASE = "https://pay.conversebank.am";
 
@@ -8,6 +9,21 @@ function getCreds() {
   const token = process.env.CONVERSE_TOKEN;
   if (!merchant_id || !token) throw new Error("ConverseBank credentials not configured");
   return { merchant_id: Number(merchant_id), token };
+}
+
+/** Converse requires a unique merchant-local ID per payment session (not just per order). */
+function buildConverseOrderNumber(orderNo: number) {
+  return `${orderNo}-${randomBytes(4).toString("hex")}`;
+}
+
+async function converseCheckStatus(merchant_id: number, token: string, pxNumber: string) {
+  const res = await fetch(`${CONVERSE_BASE}/ecommerce.php?c=check_status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ merchant_id, token, pxNumber }),
+  });
+  const json: any = await res.json().catch(() => ({}));
+  return String(json?.content?.status ?? "");
 }
 
 async function getOrigin(): Promise<string> {
@@ -31,7 +47,7 @@ export const startConversePayment = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: order, error } = await supabaseAdmin
       .from("orders")
-      .select("id,order_no,total_amd,payment_status")
+      .select("id,order_no,total_amd,payment_status,px_number")
       .eq("id", data.order_id)
       .single();
     if (error || !order) throw new Error("Заказ не найден");
@@ -39,6 +55,12 @@ export const startConversePayment = createServerFn({ method: "POST" })
     if (!order.total_amd || order.total_amd < 1) throw new Error("Некорректная сумма");
 
     const { merchant_id, token } = getCreds();
+
+    if (order.px_number) {
+      const status = await converseCheckStatus(merchant_id, token, order.px_number);
+      if (status === "2") throw new Error("Заказ уже оплачен");
+    }
+
     const origin = await getOrigin();
     const returnUrl = `${origin}/payment/converse/return?order=${order.id}`;
 
@@ -46,7 +68,7 @@ export const startConversePayment = createServerFn({ method: "POST" })
       merchant_id,
       amount: order.total_amd,
       currency: "051", // AMD
-      orderNumber: String(order.order_no),
+      orderNumber: buildConverseOrderNumber(order.order_no),
       returnUrl,
       lang: data.lang,
       token,
@@ -59,8 +81,25 @@ export const startConversePayment = createServerFn({ method: "POST" })
     });
     const json: any = await res.json().catch(() => ({}));
     if (!json?.success || !json?.content?.formUrl) {
-      console.error("converse register failed", json);
-      throw new Error(json?.respmess || "Не удалось инициализировать платёж");
+      console.error("converse register failed", { orderId: order.id, orderNo: order.order_no, json });
+      const msg = String(json?.respmess ?? "");
+      if (msg.includes("DUPLICAT")) {
+        throw new Error("Платёж уже был инициализирован. Попробуйте ещё раз через несколько секунд.");
+      }
+      throw new Error(msg || "Не удалось инициализировать платёж");
+    }
+
+    let formUrl: string;
+    try {
+      formUrl = new URL(String(json.content.formUrl)).href;
+      const host = new URL(formUrl).hostname.toLowerCase();
+      if (!host.endsWith("conversebank.am")) {
+        console.error("converse unexpected formUrl host", formUrl);
+        throw new Error("Некорректный ответ платёжного шлюза");
+      }
+    } catch (e) {
+      console.error("converse invalid formUrl", json.content.formUrl, e);
+      throw new Error("Некорректный адрес формы оплаты");
     }
 
     await supabaseAdmin
@@ -68,7 +107,7 @@ export const startConversePayment = createServerFn({ method: "POST" })
       .update({ px_number: json.content.pxNumber, payment_status: "pending" })
       .eq("id", order.id);
 
-    return { formUrl: json.content.formUrl as string, pxNumber: json.content.pxNumber as string };
+    return { formUrl, pxNumber: json.content.pxNumber as string };
   });
 
 /** Poll HostX for status and update the order. Returns final payment_status. */
@@ -85,13 +124,7 @@ export const checkConversePayment = createServerFn({ method: "POST" })
     if (!order.px_number) return { payment_status: order.payment_status ?? "unknown", order_no: order.order_no };
 
     const { merchant_id, token } = getCreds();
-    const res = await fetch(`${CONVERSE_BASE}/ecommerce.php?c=check_status`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ merchant_id, token, pxNumber: order.px_number }),
-    });
-    const json: any = await res.json().catch(() => ({}));
-    const status = String(json?.content?.status ?? "");
+    const status = await converseCheckStatus(merchant_id, token, order.px_number);
     // 2 = paid, 6 = not paid, 3 = cancelled/reversed, 4 = refunded
     let payment_status = order.payment_status ?? "pending";
     if (status === "2") payment_status = "paid";

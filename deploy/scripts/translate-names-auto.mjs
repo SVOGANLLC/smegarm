@@ -490,7 +490,9 @@ function phraseReplace(en, lang) {
   return translateFragment(en, lang);
 }
 
-// --- main ---
+export { translateName };
+
+async function runMain() {
 const rows = await api("products?select=sku,name&name_en=is.null&limit=5000");
 
 const byName = new Map();
@@ -548,3 +550,12 @@ if (fallback > 0) {
 }
 
 console.log("Done.");
+}
+
+import { fileURLToPath } from "url";
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  runMain().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}

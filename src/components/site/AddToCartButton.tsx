@@ -1,4 +1,5 @@
 import { useCart } from "@/lib/cart";
+import { useI18n } from "@/lib/i18n";
 import { ShoppingBag, Check } from "lucide-react";
 import { useState } from "react";
 
@@ -13,6 +14,7 @@ type Props = {
 
 export function AddToCartButton({ sku, name, image, price, className, variant = "primary" }: Props) {
   const { add } = useCart();
+  const { t } = useI18n();
   const [added, setAdded] = useState(false);
 
   function handle(e: React.MouseEvent) {
@@ -31,7 +33,7 @@ export function AddToCartButton({ sku, name, image, price, className, variant = 
           "flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-background hover:opacity-90 " +
           (className ?? "")
         }
-        aria-label="В корзину"
+        aria-label={t("cart.add")}
       >
         {added ? <Check className="h-4 w-4" /> : <ShoppingBag className="h-4 w-4" />}
       </button>
@@ -47,7 +49,7 @@ export function AddToCartButton({ sku, name, image, price, className, variant = 
       }
     >
       {added ? <Check className="h-4 w-4" /> : <ShoppingBag className="h-4 w-4" />}
-      {added ? "Добавлено" : "В корзину"}
+      {added ? t("cart.added") : t("cart.add")}
     </button>
   );
 }

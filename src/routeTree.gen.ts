@@ -20,22 +20,23 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductSkuRouteImport } from './routes/product.$sku'
 import { Route as OrderIdRouteImport } from './routes/order.$id'
 import { Route as CollectionSlugRouteImport } from './routes/collection.$slug'
-import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
-import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AdminChar123SplatChar125RouteImport } from './routes/admin.{-$splat}'
+import { Route as AuthenticatedAdminiRouteRouteImport } from './routes/_authenticated/admini/route'
+import { Route as AuthenticatedAdminiIndexRouteImport } from './routes/_authenticated/admini/index'
 import { Route as PaymentConverseReturnRouteImport } from './routes/payment.converse.return'
-import { Route as AuthenticatedAdminToolsRouteImport } from './routes/_authenticated/admin/tools'
-import { Route as AuthenticatedAdminTeamRouteImport } from './routes/_authenticated/admin/team'
-import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin/products'
-import { Route as AuthenticatedAdminPartnersRouteImport } from './routes/_authenticated/admin/partners'
-import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenticated/admin/orders'
-import { Route as AuthenticatedAdminNotificationsRouteImport } from './routes/_authenticated/admin/notifications'
-import { Route as AuthenticatedAdminInquiriesRouteImport } from './routes/_authenticated/admin/inquiries'
-import { Route as AuthenticatedAdminContentRouteImport } from './routes/_authenticated/admin/content'
-import { Route as AuthenticatedAdminCollectionsRouteImport } from './routes/_authenticated/admin/collections'
-import { Route as AuthenticatedAdminProductsIndexRouteImport } from './routes/_authenticated/admin/products.index'
+import { Route as AuthenticatedAdminiToolsRouteImport } from './routes/_authenticated/admini/tools'
+import { Route as AuthenticatedAdminiTeamRouteImport } from './routes/_authenticated/admini/team'
+import { Route as AuthenticatedAdminiProductsRouteImport } from './routes/_authenticated/admini/products'
+import { Route as AuthenticatedAdminiPartnersRouteImport } from './routes/_authenticated/admini/partners'
+import { Route as AuthenticatedAdminiOrdersRouteImport } from './routes/_authenticated/admini/orders'
+import { Route as AuthenticatedAdminiNotificationsRouteImport } from './routes/_authenticated/admini/notifications'
+import { Route as AuthenticatedAdminiInquiriesRouteImport } from './routes/_authenticated/admini/inquiries'
+import { Route as AuthenticatedAdminiContentRouteImport } from './routes/_authenticated/admini/content'
+import { Route as AuthenticatedAdminiCollectionsRouteImport } from './routes/_authenticated/admini/collections'
+import { Route as AuthenticatedAdminiProductsIndexRouteImport } from './routes/_authenticated/admini/products.index'
 import { Route as ApiPublicTranslateTickRouteImport } from './routes/api/public/translate/tick'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
-import { Route as AuthenticatedAdminProductsSkuRouteImport } from './routes/_authenticated/admin/products.$sku'
+import { Route as AuthenticatedAdminiProductsSkuRouteImport } from './routes/_authenticated/admini/products.$sku'
 import { Route as ApiPublicEmailQueueProcessRouteImport } from './routes/api/public/email/queue/process'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -92,78 +93,87 @@ const CollectionSlugRoute = CollectionSlugRouteImport.update({
   path: '/collection/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedAdminRouteRoute,
-} as any)
+const AdminChar123SplatChar125Route =
+  AdminChar123SplatChar125RouteImport.update({
+    id: '/admin/{-$splat}',
+    path: '/admin/{-$splat}',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedAdminiRouteRoute =
+  AuthenticatedAdminiRouteRouteImport.update({
+    id: '/admini',
+    path: '/admini',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminiIndexRoute =
+  AuthenticatedAdminiIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
+  } as any)
 const PaymentConverseReturnRoute = PaymentConverseReturnRouteImport.update({
   id: '/payment/converse/return',
   path: '/payment/converse/return',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminToolsRoute = AuthenticatedAdminToolsRouteImport.update({
-  id: '/tools',
-  path: '/tools',
-  getParentRoute: () => AuthenticatedAdminRouteRoute,
-} as any)
-const AuthenticatedAdminTeamRoute = AuthenticatedAdminTeamRouteImport.update({
+const AuthenticatedAdminiToolsRoute =
+  AuthenticatedAdminiToolsRouteImport.update({
+    id: '/tools',
+    path: '/tools',
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
+  } as any)
+const AuthenticatedAdminiTeamRoute = AuthenticatedAdminiTeamRouteImport.update({
   id: '/team',
   path: '/team',
-  getParentRoute: () => AuthenticatedAdminRouteRoute,
+  getParentRoute: () => AuthenticatedAdminiRouteRoute,
 } as any)
-const AuthenticatedAdminProductsRoute =
-  AuthenticatedAdminProductsRouteImport.update({
+const AuthenticatedAdminiProductsRoute =
+  AuthenticatedAdminiProductsRouteImport.update({
     id: '/products',
     path: '/products',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
   } as any)
-const AuthenticatedAdminPartnersRoute =
-  AuthenticatedAdminPartnersRouteImport.update({
+const AuthenticatedAdminiPartnersRoute =
+  AuthenticatedAdminiPartnersRouteImport.update({
     id: '/partners',
     path: '/partners',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
   } as any)
-const AuthenticatedAdminOrdersRoute =
-  AuthenticatedAdminOrdersRouteImport.update({
+const AuthenticatedAdminiOrdersRoute =
+  AuthenticatedAdminiOrdersRouteImport.update({
     id: '/orders',
     path: '/orders',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
   } as any)
-const AuthenticatedAdminNotificationsRoute =
-  AuthenticatedAdminNotificationsRouteImport.update({
+const AuthenticatedAdminiNotificationsRoute =
+  AuthenticatedAdminiNotificationsRouteImport.update({
     id: '/notifications',
     path: '/notifications',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
   } as any)
-const AuthenticatedAdminInquiriesRoute =
-  AuthenticatedAdminInquiriesRouteImport.update({
+const AuthenticatedAdminiInquiriesRoute =
+  AuthenticatedAdminiInquiriesRouteImport.update({
     id: '/inquiries',
     path: '/inquiries',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
   } as any)
-const AuthenticatedAdminContentRoute =
-  AuthenticatedAdminContentRouteImport.update({
+const AuthenticatedAdminiContentRoute =
+  AuthenticatedAdminiContentRouteImport.update({
     id: '/content',
     path: '/content',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
   } as any)
-const AuthenticatedAdminCollectionsRoute =
-  AuthenticatedAdminCollectionsRouteImport.update({
+const AuthenticatedAdminiCollectionsRoute =
+  AuthenticatedAdminiCollectionsRouteImport.update({
     id: '/collections',
     path: '/collections',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
   } as any)
-const AuthenticatedAdminProductsIndexRoute =
-  AuthenticatedAdminProductsIndexRouteImport.update({
+const AuthenticatedAdminiProductsIndexRoute =
+  AuthenticatedAdminiProductsIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AuthenticatedAdminProductsRoute,
+    getParentRoute: () => AuthenticatedAdminiProductsRoute,
   } as any)
 const ApiPublicTranslateTickRoute = ApiPublicTranslateTickRouteImport.update({
   id: '/api/public/translate/tick',
@@ -176,11 +186,11 @@ const ApiPublicTelegramWebhookRoute =
     path: '/api/public/telegram/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedAdminProductsSkuRoute =
-  AuthenticatedAdminProductsSkuRouteImport.update({
+const AuthenticatedAdminiProductsSkuRoute =
+  AuthenticatedAdminiProductsSkuRouteImport.update({
     id: '/$sku',
     path: '/$sku',
-    getParentRoute: () => AuthenticatedAdminProductsRoute,
+    getParentRoute: () => AuthenticatedAdminiProductsRoute,
   } as any)
 const ApiPublicEmailQueueProcessRoute =
   ApiPublicEmailQueueProcessRouteImport.update({
@@ -197,25 +207,26 @@ export interface FileRoutesByFullPath {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/admini': typeof AuthenticatedAdminiRouteRouteWithChildren
+  '/admin/{-$splat}': typeof AdminChar123SplatChar125Route
   '/collection/$slug': typeof CollectionSlugRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$sku': typeof ProductSkuRoute
-  '/admin/collections': typeof AuthenticatedAdminCollectionsRoute
-  '/admin/content': typeof AuthenticatedAdminContentRoute
-  '/admin/inquiries': typeof AuthenticatedAdminInquiriesRoute
-  '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
-  '/admin/orders': typeof AuthenticatedAdminOrdersRoute
-  '/admin/partners': typeof AuthenticatedAdminPartnersRoute
-  '/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
-  '/admin/team': typeof AuthenticatedAdminTeamRoute
-  '/admin/tools': typeof AuthenticatedAdminToolsRoute
+  '/admini/collections': typeof AuthenticatedAdminiCollectionsRoute
+  '/admini/content': typeof AuthenticatedAdminiContentRoute
+  '/admini/inquiries': typeof AuthenticatedAdminiInquiriesRoute
+  '/admini/notifications': typeof AuthenticatedAdminiNotificationsRoute
+  '/admini/orders': typeof AuthenticatedAdminiOrdersRoute
+  '/admini/partners': typeof AuthenticatedAdminiPartnersRoute
+  '/admini/products': typeof AuthenticatedAdminiProductsRouteWithChildren
+  '/admini/team': typeof AuthenticatedAdminiTeamRoute
+  '/admini/tools': typeof AuthenticatedAdminiToolsRoute
   '/payment/converse/return': typeof PaymentConverseReturnRoute
-  '/admin/': typeof AuthenticatedAdminIndexRoute
-  '/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
+  '/admini/': typeof AuthenticatedAdminiIndexRoute
+  '/admini/products/$sku': typeof AuthenticatedAdminiProductsSkuRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/api/public/translate/tick': typeof ApiPublicTranslateTickRoute
-  '/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
+  '/admini/products/': typeof AuthenticatedAdminiProductsIndexRoute
   '/api/public/email/queue/process': typeof ApiPublicEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
@@ -226,23 +237,24 @@ export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/{-$splat}': typeof AdminChar123SplatChar125Route
   '/collection/$slug': typeof CollectionSlugRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$sku': typeof ProductSkuRoute
-  '/admin/collections': typeof AuthenticatedAdminCollectionsRoute
-  '/admin/content': typeof AuthenticatedAdminContentRoute
-  '/admin/inquiries': typeof AuthenticatedAdminInquiriesRoute
-  '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
-  '/admin/orders': typeof AuthenticatedAdminOrdersRoute
-  '/admin/partners': typeof AuthenticatedAdminPartnersRoute
-  '/admin/team': typeof AuthenticatedAdminTeamRoute
-  '/admin/tools': typeof AuthenticatedAdminToolsRoute
+  '/admini/collections': typeof AuthenticatedAdminiCollectionsRoute
+  '/admini/content': typeof AuthenticatedAdminiContentRoute
+  '/admini/inquiries': typeof AuthenticatedAdminiInquiriesRoute
+  '/admini/notifications': typeof AuthenticatedAdminiNotificationsRoute
+  '/admini/orders': typeof AuthenticatedAdminiOrdersRoute
+  '/admini/partners': typeof AuthenticatedAdminiPartnersRoute
+  '/admini/team': typeof AuthenticatedAdminiTeamRoute
+  '/admini/tools': typeof AuthenticatedAdminiToolsRoute
   '/payment/converse/return': typeof PaymentConverseReturnRoute
-  '/admin': typeof AuthenticatedAdminIndexRoute
-  '/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
+  '/admini': typeof AuthenticatedAdminiIndexRoute
+  '/admini/products/$sku': typeof AuthenticatedAdminiProductsSkuRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/api/public/translate/tick': typeof ApiPublicTranslateTickRoute
-  '/admin/products': typeof AuthenticatedAdminProductsIndexRoute
+  '/admini/products': typeof AuthenticatedAdminiProductsIndexRoute
   '/api/public/email/queue/process': typeof ApiPublicEmailQueueProcessRoute
 }
 export interface FileRoutesById {
@@ -255,25 +267,26 @@ export interface FileRoutesById {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/_authenticated/admini': typeof AuthenticatedAdminiRouteRouteWithChildren
+  '/admin/{-$splat}': typeof AdminChar123SplatChar125Route
   '/collection/$slug': typeof CollectionSlugRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$sku': typeof ProductSkuRoute
-  '/_authenticated/admin/collections': typeof AuthenticatedAdminCollectionsRoute
-  '/_authenticated/admin/content': typeof AuthenticatedAdminContentRoute
-  '/_authenticated/admin/inquiries': typeof AuthenticatedAdminInquiriesRoute
-  '/_authenticated/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
-  '/_authenticated/admin/orders': typeof AuthenticatedAdminOrdersRoute
-  '/_authenticated/admin/partners': typeof AuthenticatedAdminPartnersRoute
-  '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRouteWithChildren
-  '/_authenticated/admin/team': typeof AuthenticatedAdminTeamRoute
-  '/_authenticated/admin/tools': typeof AuthenticatedAdminToolsRoute
+  '/_authenticated/admini/collections': typeof AuthenticatedAdminiCollectionsRoute
+  '/_authenticated/admini/content': typeof AuthenticatedAdminiContentRoute
+  '/_authenticated/admini/inquiries': typeof AuthenticatedAdminiInquiriesRoute
+  '/_authenticated/admini/notifications': typeof AuthenticatedAdminiNotificationsRoute
+  '/_authenticated/admini/orders': typeof AuthenticatedAdminiOrdersRoute
+  '/_authenticated/admini/partners': typeof AuthenticatedAdminiPartnersRoute
+  '/_authenticated/admini/products': typeof AuthenticatedAdminiProductsRouteWithChildren
+  '/_authenticated/admini/team': typeof AuthenticatedAdminiTeamRoute
+  '/_authenticated/admini/tools': typeof AuthenticatedAdminiToolsRoute
   '/payment/converse/return': typeof PaymentConverseReturnRoute
-  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
-  '/_authenticated/admin/products/$sku': typeof AuthenticatedAdminProductsSkuRoute
+  '/_authenticated/admini/': typeof AuthenticatedAdminiIndexRoute
+  '/_authenticated/admini/products/$sku': typeof AuthenticatedAdminiProductsSkuRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/api/public/translate/tick': typeof ApiPublicTranslateTickRoute
-  '/_authenticated/admin/products/': typeof AuthenticatedAdminProductsIndexRoute
+  '/_authenticated/admini/products/': typeof AuthenticatedAdminiProductsIndexRoute
   '/api/public/email/queue/process': typeof ApiPublicEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
@@ -286,25 +299,26 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sale'
     | '/sitemap.xml'
-    | '/admin'
+    | '/admini'
+    | '/admin/{-$splat}'
     | '/collection/$slug'
     | '/order/$id'
     | '/product/$sku'
-    | '/admin/collections'
-    | '/admin/content'
-    | '/admin/inquiries'
-    | '/admin/notifications'
-    | '/admin/orders'
-    | '/admin/partners'
-    | '/admin/products'
-    | '/admin/team'
-    | '/admin/tools'
+    | '/admini/collections'
+    | '/admini/content'
+    | '/admini/inquiries'
+    | '/admini/notifications'
+    | '/admini/orders'
+    | '/admini/partners'
+    | '/admini/products'
+    | '/admini/team'
+    | '/admini/tools'
     | '/payment/converse/return'
-    | '/admin/'
-    | '/admin/products/$sku'
+    | '/admini/'
+    | '/admini/products/$sku'
     | '/api/public/telegram/webhook'
     | '/api/public/translate/tick'
-    | '/admin/products/'
+    | '/admini/products/'
     | '/api/public/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -315,23 +329,24 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sale'
     | '/sitemap.xml'
+    | '/admin/{-$splat}'
     | '/collection/$slug'
     | '/order/$id'
     | '/product/$sku'
-    | '/admin/collections'
-    | '/admin/content'
-    | '/admin/inquiries'
-    | '/admin/notifications'
-    | '/admin/orders'
-    | '/admin/partners'
-    | '/admin/team'
-    | '/admin/tools'
+    | '/admini/collections'
+    | '/admini/content'
+    | '/admini/inquiries'
+    | '/admini/notifications'
+    | '/admini/orders'
+    | '/admini/partners'
+    | '/admini/team'
+    | '/admini/tools'
     | '/payment/converse/return'
-    | '/admin'
-    | '/admin/products/$sku'
+    | '/admini'
+    | '/admini/products/$sku'
     | '/api/public/telegram/webhook'
     | '/api/public/translate/tick'
-    | '/admin/products'
+    | '/admini/products'
     | '/api/public/email/queue/process'
   id:
     | '__root__'
@@ -343,25 +358,26 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sale'
     | '/sitemap.xml'
-    | '/_authenticated/admin'
+    | '/_authenticated/admini'
+    | '/admin/{-$splat}'
     | '/collection/$slug'
     | '/order/$id'
     | '/product/$sku'
-    | '/_authenticated/admin/collections'
-    | '/_authenticated/admin/content'
-    | '/_authenticated/admin/inquiries'
-    | '/_authenticated/admin/notifications'
-    | '/_authenticated/admin/orders'
-    | '/_authenticated/admin/partners'
-    | '/_authenticated/admin/products'
-    | '/_authenticated/admin/team'
-    | '/_authenticated/admin/tools'
+    | '/_authenticated/admini/collections'
+    | '/_authenticated/admini/content'
+    | '/_authenticated/admini/inquiries'
+    | '/_authenticated/admini/notifications'
+    | '/_authenticated/admini/orders'
+    | '/_authenticated/admini/partners'
+    | '/_authenticated/admini/products'
+    | '/_authenticated/admini/team'
+    | '/_authenticated/admini/tools'
     | '/payment/converse/return'
-    | '/_authenticated/admin/'
-    | '/_authenticated/admin/products/$sku'
+    | '/_authenticated/admini/'
+    | '/_authenticated/admini/products/$sku'
     | '/api/public/telegram/webhook'
     | '/api/public/translate/tick'
-    | '/_authenticated/admin/products/'
+    | '/_authenticated/admini/products/'
     | '/api/public/email/queue/process'
   fileRoutesById: FileRoutesById
 }
@@ -374,6 +390,7 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SaleRoute: typeof SaleRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  AdminChar123SplatChar125Route: typeof AdminChar123SplatChar125Route
   CollectionSlugRoute: typeof CollectionSlugRoute
   OrderIdRoute: typeof OrderIdRoute
   ProductSkuRoute: typeof ProductSkuRoute
@@ -462,19 +479,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+    '/admin/{-$splat}': {
+      id: '/admin/{-$splat}'
+      path: '/admin/{-$splat}'
+      fullPath: '/admin/{-$splat}'
+      preLoaderRoute: typeof AdminChar123SplatChar125RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admini': {
+      id: '/_authenticated/admini'
+      path: '/admini'
+      fullPath: '/admini'
+      preLoaderRoute: typeof AuthenticatedAdminiRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/': {
-      id: '/_authenticated/admin/'
+    '/_authenticated/admini/': {
+      id: '/_authenticated/admini/'
       path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
+      fullPath: '/admini/'
+      preLoaderRoute: typeof AuthenticatedAdminiIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
     }
     '/payment/converse/return': {
       id: '/payment/converse/return'
@@ -483,75 +507,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PaymentConverseReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/tools': {
-      id: '/_authenticated/admin/tools'
+    '/_authenticated/admini/tools': {
+      id: '/_authenticated/admini/tools'
       path: '/tools'
-      fullPath: '/admin/tools'
-      preLoaderRoute: typeof AuthenticatedAdminToolsRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
+      fullPath: '/admini/tools'
+      preLoaderRoute: typeof AuthenticatedAdminiToolsRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
     }
-    '/_authenticated/admin/team': {
-      id: '/_authenticated/admin/team'
+    '/_authenticated/admini/team': {
+      id: '/_authenticated/admini/team'
       path: '/team'
-      fullPath: '/admin/team'
-      preLoaderRoute: typeof AuthenticatedAdminTeamRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
+      fullPath: '/admini/team'
+      preLoaderRoute: typeof AuthenticatedAdminiTeamRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
     }
-    '/_authenticated/admin/products': {
-      id: '/_authenticated/admin/products'
+    '/_authenticated/admini/products': {
+      id: '/_authenticated/admini/products'
       path: '/products'
-      fullPath: '/admin/products'
-      preLoaderRoute: typeof AuthenticatedAdminProductsRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
+      fullPath: '/admini/products'
+      preLoaderRoute: typeof AuthenticatedAdminiProductsRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
     }
-    '/_authenticated/admin/partners': {
-      id: '/_authenticated/admin/partners'
+    '/_authenticated/admini/partners': {
+      id: '/_authenticated/admini/partners'
       path: '/partners'
-      fullPath: '/admin/partners'
-      preLoaderRoute: typeof AuthenticatedAdminPartnersRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
+      fullPath: '/admini/partners'
+      preLoaderRoute: typeof AuthenticatedAdminiPartnersRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
     }
-    '/_authenticated/admin/orders': {
-      id: '/_authenticated/admin/orders'
+    '/_authenticated/admini/orders': {
+      id: '/_authenticated/admini/orders'
       path: '/orders'
-      fullPath: '/admin/orders'
-      preLoaderRoute: typeof AuthenticatedAdminOrdersRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
+      fullPath: '/admini/orders'
+      preLoaderRoute: typeof AuthenticatedAdminiOrdersRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
     }
-    '/_authenticated/admin/notifications': {
-      id: '/_authenticated/admin/notifications'
+    '/_authenticated/admini/notifications': {
+      id: '/_authenticated/admini/notifications'
       path: '/notifications'
-      fullPath: '/admin/notifications'
-      preLoaderRoute: typeof AuthenticatedAdminNotificationsRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
+      fullPath: '/admini/notifications'
+      preLoaderRoute: typeof AuthenticatedAdminiNotificationsRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
     }
-    '/_authenticated/admin/inquiries': {
-      id: '/_authenticated/admin/inquiries'
+    '/_authenticated/admini/inquiries': {
+      id: '/_authenticated/admini/inquiries'
       path: '/inquiries'
-      fullPath: '/admin/inquiries'
-      preLoaderRoute: typeof AuthenticatedAdminInquiriesRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
+      fullPath: '/admini/inquiries'
+      preLoaderRoute: typeof AuthenticatedAdminiInquiriesRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
     }
-    '/_authenticated/admin/content': {
-      id: '/_authenticated/admin/content'
+    '/_authenticated/admini/content': {
+      id: '/_authenticated/admini/content'
       path: '/content'
-      fullPath: '/admin/content'
-      preLoaderRoute: typeof AuthenticatedAdminContentRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
+      fullPath: '/admini/content'
+      preLoaderRoute: typeof AuthenticatedAdminiContentRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
     }
-    '/_authenticated/admin/collections': {
-      id: '/_authenticated/admin/collections'
+    '/_authenticated/admini/collections': {
+      id: '/_authenticated/admini/collections'
       path: '/collections'
-      fullPath: '/admin/collections'
-      preLoaderRoute: typeof AuthenticatedAdminCollectionsRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
+      fullPath: '/admini/collections'
+      preLoaderRoute: typeof AuthenticatedAdminiCollectionsRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
     }
-    '/_authenticated/admin/products/': {
-      id: '/_authenticated/admin/products/'
+    '/_authenticated/admini/products/': {
+      id: '/_authenticated/admini/products/'
       path: '/'
-      fullPath: '/admin/products/'
-      preLoaderRoute: typeof AuthenticatedAdminProductsIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminProductsRoute
+      fullPath: '/admini/products/'
+      preLoaderRoute: typeof AuthenticatedAdminiProductsIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminiProductsRoute
     }
     '/api/public/translate/tick': {
       id: '/api/public/translate/tick'
@@ -567,12 +591,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/products/$sku': {
-      id: '/_authenticated/admin/products/$sku'
+    '/_authenticated/admini/products/$sku': {
+      id: '/_authenticated/admini/products/$sku'
       path: '/$sku'
-      fullPath: '/admin/products/$sku'
-      preLoaderRoute: typeof AuthenticatedAdminProductsSkuRouteImport
-      parentRoute: typeof AuthenticatedAdminProductsRoute
+      fullPath: '/admini/products/$sku'
+      preLoaderRoute: typeof AuthenticatedAdminiProductsSkuRouteImport
+      parentRoute: typeof AuthenticatedAdminiProductsRoute
     }
     '/api/public/email/queue/process': {
       id: '/api/public/email/queue/process'
@@ -584,61 +608,63 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedAdminProductsRouteChildren {
-  AuthenticatedAdminProductsSkuRoute: typeof AuthenticatedAdminProductsSkuRoute
-  AuthenticatedAdminProductsIndexRoute: typeof AuthenticatedAdminProductsIndexRoute
+interface AuthenticatedAdminiProductsRouteChildren {
+  AuthenticatedAdminiProductsSkuRoute: typeof AuthenticatedAdminiProductsSkuRoute
+  AuthenticatedAdminiProductsIndexRoute: typeof AuthenticatedAdminiProductsIndexRoute
 }
 
-const AuthenticatedAdminProductsRouteChildren: AuthenticatedAdminProductsRouteChildren =
+const AuthenticatedAdminiProductsRouteChildren: AuthenticatedAdminiProductsRouteChildren =
   {
-    AuthenticatedAdminProductsSkuRoute: AuthenticatedAdminProductsSkuRoute,
-    AuthenticatedAdminProductsIndexRoute: AuthenticatedAdminProductsIndexRoute,
+    AuthenticatedAdminiProductsSkuRoute: AuthenticatedAdminiProductsSkuRoute,
+    AuthenticatedAdminiProductsIndexRoute:
+      AuthenticatedAdminiProductsIndexRoute,
   }
 
-const AuthenticatedAdminProductsRouteWithChildren =
-  AuthenticatedAdminProductsRoute._addFileChildren(
-    AuthenticatedAdminProductsRouteChildren,
+const AuthenticatedAdminiProductsRouteWithChildren =
+  AuthenticatedAdminiProductsRoute._addFileChildren(
+    AuthenticatedAdminiProductsRouteChildren,
   )
 
-interface AuthenticatedAdminRouteRouteChildren {
-  AuthenticatedAdminCollectionsRoute: typeof AuthenticatedAdminCollectionsRoute
-  AuthenticatedAdminContentRoute: typeof AuthenticatedAdminContentRoute
-  AuthenticatedAdminInquiriesRoute: typeof AuthenticatedAdminInquiriesRoute
-  AuthenticatedAdminNotificationsRoute: typeof AuthenticatedAdminNotificationsRoute
-  AuthenticatedAdminOrdersRoute: typeof AuthenticatedAdminOrdersRoute
-  AuthenticatedAdminPartnersRoute: typeof AuthenticatedAdminPartnersRoute
-  AuthenticatedAdminProductsRoute: typeof AuthenticatedAdminProductsRouteWithChildren
-  AuthenticatedAdminTeamRoute: typeof AuthenticatedAdminTeamRoute
-  AuthenticatedAdminToolsRoute: typeof AuthenticatedAdminToolsRoute
-  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+interface AuthenticatedAdminiRouteRouteChildren {
+  AuthenticatedAdminiCollectionsRoute: typeof AuthenticatedAdminiCollectionsRoute
+  AuthenticatedAdminiContentRoute: typeof AuthenticatedAdminiContentRoute
+  AuthenticatedAdminiInquiriesRoute: typeof AuthenticatedAdminiInquiriesRoute
+  AuthenticatedAdminiNotificationsRoute: typeof AuthenticatedAdminiNotificationsRoute
+  AuthenticatedAdminiOrdersRoute: typeof AuthenticatedAdminiOrdersRoute
+  AuthenticatedAdminiPartnersRoute: typeof AuthenticatedAdminiPartnersRoute
+  AuthenticatedAdminiProductsRoute: typeof AuthenticatedAdminiProductsRouteWithChildren
+  AuthenticatedAdminiTeamRoute: typeof AuthenticatedAdminiTeamRoute
+  AuthenticatedAdminiToolsRoute: typeof AuthenticatedAdminiToolsRoute
+  AuthenticatedAdminiIndexRoute: typeof AuthenticatedAdminiIndexRoute
 }
 
-const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
+const AuthenticatedAdminiRouteRouteChildren: AuthenticatedAdminiRouteRouteChildren =
   {
-    AuthenticatedAdminCollectionsRoute: AuthenticatedAdminCollectionsRoute,
-    AuthenticatedAdminContentRoute: AuthenticatedAdminContentRoute,
-    AuthenticatedAdminInquiriesRoute: AuthenticatedAdminInquiriesRoute,
-    AuthenticatedAdminNotificationsRoute: AuthenticatedAdminNotificationsRoute,
-    AuthenticatedAdminOrdersRoute: AuthenticatedAdminOrdersRoute,
-    AuthenticatedAdminPartnersRoute: AuthenticatedAdminPartnersRoute,
-    AuthenticatedAdminProductsRoute:
-      AuthenticatedAdminProductsRouteWithChildren,
-    AuthenticatedAdminTeamRoute: AuthenticatedAdminTeamRoute,
-    AuthenticatedAdminToolsRoute: AuthenticatedAdminToolsRoute,
-    AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+    AuthenticatedAdminiCollectionsRoute: AuthenticatedAdminiCollectionsRoute,
+    AuthenticatedAdminiContentRoute: AuthenticatedAdminiContentRoute,
+    AuthenticatedAdminiInquiriesRoute: AuthenticatedAdminiInquiriesRoute,
+    AuthenticatedAdminiNotificationsRoute:
+      AuthenticatedAdminiNotificationsRoute,
+    AuthenticatedAdminiOrdersRoute: AuthenticatedAdminiOrdersRoute,
+    AuthenticatedAdminiPartnersRoute: AuthenticatedAdminiPartnersRoute,
+    AuthenticatedAdminiProductsRoute:
+      AuthenticatedAdminiProductsRouteWithChildren,
+    AuthenticatedAdminiTeamRoute: AuthenticatedAdminiTeamRoute,
+    AuthenticatedAdminiToolsRoute: AuthenticatedAdminiToolsRoute,
+    AuthenticatedAdminiIndexRoute: AuthenticatedAdminiIndexRoute,
   }
 
-const AuthenticatedAdminRouteRouteWithChildren =
-  AuthenticatedAdminRouteRoute._addFileChildren(
-    AuthenticatedAdminRouteRouteChildren,
+const AuthenticatedAdminiRouteRouteWithChildren =
+  AuthenticatedAdminiRouteRoute._addFileChildren(
+    AuthenticatedAdminiRouteRouteChildren,
   )
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+  AuthenticatedAdminiRouteRoute: typeof AuthenticatedAdminiRouteRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
+  AuthenticatedAdminiRouteRoute: AuthenticatedAdminiRouteRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -653,6 +679,7 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SaleRoute: SaleRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  AdminChar123SplatChar125Route: AdminChar123SplatChar125Route,
   CollectionSlugRoute: CollectionSlugRoute,
   OrderIdRoute: OrderIdRoute,
   ProductSkuRoute: ProductSkuRoute,

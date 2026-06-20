@@ -15,7 +15,7 @@ export function Story() {
   const { t } = useI18n();
   return (
     <section id="story" className="relative overflow-hidden bg-foreground text-background">
-      <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-12 px-6 py-28 md:grid-cols-2 md:gap-20 md:px-10 md:py-40">
+      <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-8 px-4 py-14 md:grid-cols-2 md:gap-20 md:px-10 md:py-24">
         <Reveal>
           <div className="aspect-[4/5] overflow-hidden rounded-sm">
             <img src={storyImg} alt="" loading="lazy" width={1600} height={1024} className="h-full w-full object-cover" />
@@ -35,9 +35,6 @@ export function Story() {
               <Stat n="50+" label={t("section.story.stat.countries")} labelKey="section.story.stat.countries" />
               <Stat n="11" label={t("section.story.stat.colours")} labelKey="section.story.stat.colours" />
             </div>
-            <a href="#" data-ck="section.story.cta" className="mt-10 inline-flex w-fit items-center gap-3 text-sm uppercase tracking-[0.2em] text-background smeg-underline">
-              {t("section.story.cta")} →
-            </a>
           </Reveal>
         </div>
       </div>

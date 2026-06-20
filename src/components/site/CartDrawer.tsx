@@ -1,10 +1,12 @@
 import { useCart } from "@/lib/cart";
+import { useI18n } from "@/lib/i18n";
 import { Link } from "@tanstack/react-router";
 import { X, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useEffect } from "react";
 
 export function CartDrawer() {
   const { items, count, total, setQty, remove, open, setOpen } = useCart();
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!open) return;
@@ -30,10 +32,10 @@ export function CartDrawer() {
           <div className="flex items-center gap-3">
             <ShoppingBag className="h-5 w-5" />
             <h2 className="font-serif text-xl">
-              Корзина {count > 0 && <span className="text-muted-foreground">({count})</span>}
+              {t("cart.title")} {count > 0 && <span className="text-muted-foreground">({count})</span>}
             </h2>
           </div>
-          <button onClick={() => setOpen(false)} aria-label="Закрыть">
+          <button onClick={() => setOpen(false)} aria-label={t("cart.close")}>
             <X className="h-5 w-5" />
           </button>
         </header>
@@ -41,13 +43,13 @@ export function CartDrawer() {
         {items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
             <ShoppingBag className="h-12 w-12 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground">Корзина пуста</p>
+            <p className="text-sm text-muted-foreground">{t("cart.empty")}</p>
             <Link
               to="/catalog"
               onClick={() => setOpen(false)}
               className="rounded-full bg-foreground px-5 py-2.5 text-xs uppercase tracking-[0.15em] text-background"
             >
-              В каталог
+              {t("common.shop")}
             </Link>
           </div>
         ) : (
@@ -74,7 +76,7 @@ export function CartDrawer() {
                         <button
                           onClick={() => remove(it.sku)}
                           className="text-muted-foreground hover:text-foreground"
-                          aria-label="Удалить"
+                          aria-label={t("cart.remove")}
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -103,7 +105,7 @@ export function CartDrawer() {
                         <p className="font-medium">
                           {it.price != null
                             ? ((it.price * it.qty).toLocaleString("ru-RU") + " ֏")
-                            : "по запросу"}
+                            : t("cart.onRequest")}
                         </p>
                       </div>
                     </div>
@@ -113,7 +115,7 @@ export function CartDrawer() {
             </div>
             <footer className="border-t border-border bg-secondary/30 px-6 py-5">
               <div className="mb-4 flex justify-between text-base">
-                <span className="text-muted-foreground">Итого</span>
+                <span className="text-muted-foreground">{t("cart.total")}</span>
                 <span className="font-serif text-2xl">{total.toLocaleString("ru-RU")} ֏</span>
               </div>
               <Link
@@ -121,7 +123,7 @@ export function CartDrawer() {
                 onClick={() => setOpen(false)}
                 className="block rounded-full bg-foreground py-3 text-center text-xs uppercase tracking-[0.2em] text-background hover:opacity-90"
               >
-                Оформить заказ
+                {t("cart.checkout")}
               </Link>
             </footer>
           </>
@@ -133,11 +135,12 @@ export function CartDrawer() {
 
 export function CartButton() {
   const { count, setOpen } = useCart();
+  const { t } = useI18n();
   return (
     <button
       onClick={() => setOpen(true)}
       className="relative flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/50 backdrop-blur hover:bg-background"
-      aria-label="Открыть корзину"
+      aria-label={t("cart.open")}
     >
       <ShoppingBag className="h-4 w-4" />
       {count > 0 && (

@@ -34,8 +34,8 @@ export function SectionHeader({
 }) {
   return (
     <Reveal className={cn(align === "center" && "text-center", className)}>
-      <p data-ck={eyebrowKey} className="eyebrow text-accent">{eyebrow}</p>
-      <h2 data-ck={titleKey} className="mt-4 display-xl text-[clamp(2rem,5vw,4.5rem)] text-foreground whitespace-pre-line">
+      <p data-ck={eyebrowKey} className="eyebrow text-accent after:mt-3 after:block after:h-px after:w-8 after:bg-accent/70">{eyebrow}</p>
+      <h2 data-ck={titleKey} className="mt-3 display-xl text-[clamp(1.65rem,7vw,4.5rem)] text-foreground whitespace-pre-line md:mt-4">
         {title}
       </h2>
     </Reveal>

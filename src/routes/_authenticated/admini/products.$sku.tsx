@@ -3,11 +3,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Upload, X } from "lucide-react";
+import { ArrowLeft, Copy, Upload, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { translateProduct } from "@/lib/translate.functions";
+import { useI18n } from "@/lib/i18n";
 
-export const Route = createFileRoute("/_authenticated/admin/products/$sku")({
+export const Route = createFileRoute("/_authenticated/admini/products/$sku")({
   component: EditProduct,
 });
 
@@ -33,13 +34,45 @@ type FormState = {
   seo_description: string;
   main_image: string;
   images: string;
+  specs: string;
+  specs_en: string;
+  specs_hy: string;
 };
 
+function specsToText(v: Record<string, string> | null | undefined): string {
+  if (!v || !Object.keys(v).length) return "";
+  return JSON.stringify(v, null, 2);
+}
+
+function parseSpecsText(raw: string): Record<string, string> {
+  const t = raw.trim();
+  if (!t) return {};
+  try {
+    const parsed = JSON.parse(t) as unknown;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return Object.fromEntries(
+        Object.entries(parsed as Record<string, unknown>).map(([k, v]) => [k, String(v ?? "")]),
+      );
+    }
+  } catch {
+    /* line format fallback */
+  }
+  const out: Record<string, string> = {};
+  for (const line of t.split("\n")) {
+    const idx = line.indexOf(":");
+    if (idx > 0) out[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
+  }
+  return out;
+}
+
 function EditProduct() {
+  const { t } = useI18n();
   const { sku } = Route.useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [form, setForm] = useState<FormState | null>(null);
+  const [dupOpen, setDupOpen] = useState(false);
+  const [dupSku, setDupSku] = useState("");
 
   const q = useQuery({
     queryKey: ["admin-product", sku],
@@ -74,6 +107,9 @@ function EditProduct() {
         seo_description: q.data.seo_description ?? "",
         main_image: q.data.main_image ?? "",
         images: (q.data.images ?? []).join("\n"),
+        specs: specsToText(q.data.specs as Record<string, string> | null),
+        specs_en: specsToText(q.data.specs_en as Record<string, string> | null),
+        specs_hy: specsToText(q.data.specs_hy as Record<string, string> | null),
       });
     }
   }, [q.data, form]);
@@ -83,7 +119,7 @@ function EditProduct() {
       const price = f.price_amd.trim() ? parseInt(f.price_amd, 10) : null;
       const priceOld = f.price_old.trim() ? parseInt(f.price_old, 10) : null;
       const disc = Math.max(0, Math.min(90, parseInt(f.discount_percent, 10) || 0));
-      if (price !== null && (isNaN(price) || price < 0)) throw new Error("Цена должна быть числом");
+      if (price !== null && (isNaN(price) || price < 0)) throw new Error(t("admin.product.priceInvalid"));
       const images = f.images
         .split("\n")
         .map((s) => s.trim())
@@ -115,6 +151,9 @@ function EditProduct() {
           seo_description: f.seo_description.trim().slice(0, 320) || null,
           main_image: f.main_image.trim() || null,
           images,
+          specs: parseSpecsText(f.specs),
+          specs_en: parseSpecsText(f.specs_en),
+          specs_hy: parseSpecsText(f.specs_hy),
         })
         .eq("sku", sku);
       if (error) throw error;
@@ -123,21 +162,54 @@ function EditProduct() {
       qc.invalidateQueries({ queryKey: ["admin-product", sku] });
       qc.invalidateQueries({ queryKey: ["admin-products"] });
       qc.invalidateQueries({ queryKey: ["product", sku] });
-      toast.success("Сохранено");
+      toast.success(t("admin.saved"));
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Ошибка"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
 
-  if (q.isLoading || !form) return <div className="text-sm text-muted-foreground">Загрузка…</div>;
-  if (!q.data) return <div>Не найдено</div>;
+  const duplicateProduct = useMutation({
+    mutationFn: async (newSku: string) => {
+      const src = q.data;
+      if (!src) throw new Error(t("admin.notFound"));
+      const skuNew = newSku.trim().toUpperCase();
+      if (!skuNew) throw new Error(t("admin.products.skuRequired"));
+      const {
+        sku: _sku,
+        created_at: _c,
+        updated_at: _u,
+        stock_reserved: _r,
+        ...rest
+      } = src as Record<string, unknown> & { sku: string };
+      const { error } = await supabase.from("products").insert({
+        ...rest,
+        sku: skuNew,
+        is_published: false,
+        stock_qty: 0,
+        stock_reserved: 0,
+      });
+      if (error) throw error;
+      return skuNew;
+    },
+    onSuccess: (newSku) => {
+      qc.invalidateQueries({ queryKey: ["admin-products"] });
+      setDupOpen(false);
+      setDupSku("");
+      toast.success(t("admin.product.duplicateDone"));
+      navigate({ to: "/admini/products/$sku", params: { sku: newSku } });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
+  });
+
+  if (q.isLoading || !form) return <div className="text-sm text-muted-foreground">{t("admin.loading")}</div>;
+  if (!q.data) return <div>{t("admin.notFound")}</div>;
 
   return (
     <div>
       <Link
-        to="/admin/products"
+        to="/admini/products"
         className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-3 w-3" /> К списку
+        <ArrowLeft className="h-3 w-3" /> {t("admin.backToList")}
       </Link>
       <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
         <div>
@@ -151,9 +223,59 @@ function EditProduct() {
           target="_blank"
           className="text-xs uppercase tracking-[0.18em] text-foreground/60 hover:text-foreground"
         >
-          Открыть на сайте ↗
+          {t("admin.openOnSite")}
         </Link>
+        <button
+          type="button"
+          onClick={() => setDupOpen(true)}
+          className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] text-foreground/60 hover:text-foreground"
+        >
+          <Copy className="h-3.5 w-3.5" /> {t("admin.product.duplicate")}
+        </button>
       </div>
+
+      {dupOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-sm border border-border bg-background p-6">
+            <h2 className="font-serif text-2xl">{t("admin.product.duplicate")}</h2>
+            <p className="mt-1 text-xs text-muted-foreground">{t("admin.product.duplicateDesc")}</p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                duplicateProduct.mutate(dupSku);
+              }}
+              className="mt-5 space-y-4"
+            >
+              <label className="block">
+                <span className="eyebrow mb-1.5 block text-muted-foreground">{t("admin.products.skuLabel")}</span>
+                <input
+                  value={dupSku}
+                  onChange={(e) => setDupSku(e.target.value.toUpperCase())}
+                  autoFocus
+                  required
+                  className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-foreground"
+                />
+              </label>
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDupOpen(false)}
+                  className="rounded-sm border border-border px-4 py-2 text-xs uppercase tracking-[0.18em] hover:border-foreground"
+                >
+                  {t("admin.cancel")}
+                </button>
+                <button
+                  type="submit"
+                  disabled={duplicateProduct.isPending}
+                  className="rounded-sm bg-foreground px-4 py-2 text-xs uppercase tracking-[0.18em] text-background disabled:opacity-50"
+                >
+                  {duplicateProduct.isPending ? "..." : t("admin.create")}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <form
         onSubmit={(e) => {
@@ -164,7 +286,7 @@ function EditProduct() {
       >
         <div className="space-y-6">
           <I18nContent sku={sku} form={form} setForm={setForm} />
-          <Field label="Главное фото (URL)">
+          <Field label={t("admin.product.mainPhoto")}>
             <input
               value={form.main_image}
               onChange={(e) => setForm({ ...form, main_image: e.target.value })}
@@ -173,7 +295,7 @@ function EditProduct() {
             <ImageUploader
               sku={sku}
               onUploaded={(url) => setForm((f) => (f ? { ...f, main_image: url } : f))}
-              label="Загрузить главное фото"
+              label={t("admin.product.uploadMain")}
             />
             {form.main_image && (
               <img
@@ -183,7 +305,7 @@ function EditProduct() {
               />
             )}
           </Field>
-          <Field label="Галерея — по одному URL на строку">
+          <Field label={t("admin.product.galleryHint")}>
             <textarea
               value={form.images}
               onChange={(e) => setForm({ ...form, images: e.target.value })}
@@ -198,7 +320,7 @@ function EditProduct() {
                   f ? { ...f, images: (f.images ? f.images + "\n" : "") + url } : f,
                 )
               }
-              label="Добавить фото в галерею"
+              label={t("admin.product.addGallery")}
             />
             {form.images.trim() && (
               <div className="mt-3 flex flex-wrap gap-2">
@@ -231,7 +353,7 @@ function EditProduct() {
                           )
                         }
                         className="absolute -right-1 -top-1 hidden rounded-full bg-foreground p-0.5 text-background group-hover:block"
-                        title="Убрать"
+                        title={t("admin.product.remove")}
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -257,10 +379,11 @@ function EditProduct() {
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
           </Field>
+          <SpecsFields form={form} setForm={setForm} />
         </div>
 
         <aside className="space-y-6 rounded-sm border border-border p-6">
-          <Field label="Цена, ֏ (AMD)">
+          <Field label={`${t("admin.product.price")}, ${t("admin.product.priceAmd")}`}>
             <input
               inputMode="numeric"
               value={form.price_amd}
@@ -268,7 +391,7 @@ function EditProduct() {
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
           </Field>
-          <Field label="Старая цена, ֏ (зачёркнутая)">
+          <Field label={`${t("admin.product.oldPrice")}, ${t("admin.product.oldPriceHint")}`}>
             <input
               inputMode="numeric"
               value={form.price_old}
@@ -276,7 +399,7 @@ function EditProduct() {
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
           </Field>
-          <Field label="Скидка, %">
+          <Field label={`${t("admin.product.discount")}, %`}>
             <input
               inputMode="numeric"
               value={form.discount_percent}
@@ -285,8 +408,8 @@ function EditProduct() {
             />
           </Field>
           <div className="space-y-3 rounded-sm border border-border/60 bg-secondary/30 p-3">
-            <p className="eyebrow text-muted-foreground">Склад в Армении</p>
-            <Field label="Остаток, шт.">
+            <p className="eyebrow text-muted-foreground">{t("admin.product.stockTitle")}</p>
+            <Field label={t("admin.product.stockQty")}>
               <input
                 inputMode="numeric"
                 value={form.stock_qty}
@@ -295,47 +418,49 @@ function EditProduct() {
               />
             </Field>
             <p className="text-xs text-muted-foreground">
-              В резерве: {q.data.stock_reserved ?? 0} шт. · Доступно:{" "}
-              {Math.max(0, (Number(form.stock_qty) || 0) - (q.data.stock_reserved ?? 0))} шт.
+              {t("admin.product.stockReserved", {
+                r: q.data.stock_reserved ?? 0,
+                a: Math.max(0, (Number(form.stock_qty) || 0) - (q.data.stock_reserved ?? 0)),
+              })}
             </p>
-            <Field label="Срок доставки на склад, дней (если нет в наличии)">
+            <Field label={t("admin.product.leadTime")}>
               <input
                 inputMode="numeric"
-                placeholder="напр. 14"
+                placeholder={t("admin.product.leadExample")}
                 value={form.lead_time_days}
                 onChange={(e) => setForm({ ...form, lead_time_days: e.target.value.replace(/[^0-9]/g, "") })}
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
               />
             </Field>
             <p className="text-xs text-muted-foreground">
-              Статус наличия пересчитывается автоматически:{" "}
+              {t("admin.product.availAuto")}{" "}
               <span className="font-medium text-foreground">
                 {(Number(form.stock_qty) || 0) - (q.data.stock_reserved ?? 0) > 0
-                  ? "В наличии"
+                  ? t("admin.product.availInStock")
                   : form.lead_time_days.trim()
-                  ? `Под заказ (~${form.lead_time_days} дн.)`
-                  : "По запросу"}
+                  ? t("admin.product.availPreOrder", { n: form.lead_time_days })
+                  : t("admin.product.availOnRequest")}
               </span>
             </p>
           </div>
-          <Field label="Текст бейджа (плашка)">
+          <Field label={t("admin.product.badgeText")}>
             <input
               value={form.badge_text}
               maxLength={60}
-              placeholder="напр. -20%, Premium"
+              placeholder={t("admin.product.badgeExample")}
               onChange={(e) => setForm({ ...form, badge_text: e.target.value })}
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
           </Field>
           <div className="space-y-2 rounded-sm border border-border/60 bg-secondary/30 p-3">
-            <p className="eyebrow text-muted-foreground">Витрина</p>
+            <p className="eyebrow text-muted-foreground">{t("admin.product.showcase")}</p>
             {([
-              ["is_published", "Показывать на сайте"],
-              ["is_bestseller", "Хит продаж"],
-              ["is_new", "Новинка"],
-              ["is_special_offer", "Спецпредложение"],
-              ["is_featured", "На главную (Featured)"],
-            ] as const).map(([k, label]) => (
+              ["is_published", "admin.product.showOnSite"],
+              ["is_bestseller", "admin.products.bestseller"],
+              ["is_new", "admin.products.newItem"],
+              ["is_special_offer", "admin.products.special"],
+              ["is_featured", "admin.product.featuredFull"],
+            ] as const).map(([k, labelKey]) => (
               <label key={k} className="flex items-center gap-3 text-sm">
                 <input
                   type="checkbox"
@@ -343,7 +468,7 @@ function EditProduct() {
                   onChange={(e) => setForm({ ...form, [k]: e.target.checked })}
                   className="h-4 w-4"
                 />
-                {label}
+                {t(labelKey)}
               </label>
             ))}
           </div>
@@ -353,17 +478,49 @@ function EditProduct() {
             disabled={save.isPending}
             className="w-full rounded-sm bg-foreground px-4 py-3 text-xs uppercase tracking-[0.2em] text-background hover:opacity-90 disabled:opacity-50"
           >
-            {save.isPending ? "..." : "Сохранить"}
+            {save.isPending ? "..." : t("admin.save")}
           </button>
           <button
             type="button"
-            onClick={() => navigate({ to: "/admin/products" })}
+            onClick={() => navigate({ to: "/admini/products" })}
             className="w-full text-xs uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground"
           >
-            Отмена
+            {t("admin.cancel")}
           </button>
         </aside>
       </form>
+    </div>
+  );
+}
+
+function SpecsFields({ form, setForm }: { form: FormState; setForm: (f: FormState) => void }) {
+  const { t } = useI18n();
+  const [tab, setTab] = useState<"ru" | "en" | "hy">("ru");
+  const key = tab === "ru" ? "specs" : tab === "en" ? "specs_en" : "specs_hy";
+  return (
+    <div className="rounded-sm border border-border p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="eyebrow text-muted-foreground">{t("admin.product.specsTitle")}</p>
+        <div className="flex gap-1 rounded-sm bg-secondary p-1 text-xs">
+          {(["ru", "en", "hy"] as const).map((l) => (
+            <button
+              key={l}
+              type="button"
+              onClick={() => setTab(l)}
+              className={`rounded-sm px-3 py-1.5 uppercase tracking-[0.14em] ${tab === l ? "bg-background text-foreground shadow" : "text-muted-foreground"}`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+      </div>
+      <p className="mb-2 text-xs text-muted-foreground">{t("admin.product.specsHint")}</p>
+      <textarea
+        value={form[key]}
+        onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+        rows={12}
+        className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-foreground"
+      />
     </div>
   );
 }
@@ -386,21 +543,22 @@ function I18nContent({
   form: FormState;
   setForm: (f: FormState) => void;
 }) {
+  const { t } = useI18n();
   const [tab, setTab] = useState<"ru" | "en" | "hy">("ru");
   const translate = useServerFn(translateProduct);
   const [busy, setBusy] = useState(false);
 
-  const fields: Record<"ru" | "en" | "hy", { nameKey: keyof FormState; descKey: keyof FormState; label: string }> = {
-    ru: { nameKey: "name", descKey: "description", label: "Русский" },
-    en: { nameKey: "name_en", descKey: "description_en", label: "English" },
-    hy: { nameKey: "name_hy", descKey: "description_hy", label: "Հայերեն" },
+  const fields: Record<"ru" | "en" | "hy", { nameKey: keyof FormState; descKey: keyof FormState; labelKey: string }> = {
+    ru: { nameKey: "name", descKey: "description", labelKey: "admin.content.langRu" },
+    en: { nameKey: "name_en", descKey: "description_en", labelKey: "admin.content.langEn" },
+    hy: { nameKey: "name_hy", descKey: "description_hy", labelKey: "admin.content.langHy" },
   };
 
   async function runAI() {
     setBusy(true);
     try {
       await translate({ data: { sku, overwrite: true } });
-      toast.success("Перевод готов. Обновите страницу, чтобы увидеть.");
+      toast.success(t("admin.product.translateDone"));
       // Reload form values from server
       const { data } = await supabase.from("products").select("name_en,description_en,name_hy,description_hy").eq("sku", sku).maybeSingle();
       if (data) {
@@ -413,7 +571,7 @@ function I18nContent({
         });
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Ошибка перевода");
+      toast.error(e instanceof Error ? e.message : t("admin.product.translateError"));
     } finally {
       setBusy(false);
     }
@@ -434,7 +592,7 @@ function I18nContent({
                 tab === k ? "bg-background text-foreground shadow" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {fields[k].label}
+              {t(fields[k].labelKey)}
             </button>
           ))}
         </div>
@@ -444,10 +602,10 @@ function I18nContent({
           disabled={busy}
           className="rounded-sm border border-border px-3 py-1.5 text-xs uppercase tracking-[0.14em] hover:border-foreground disabled:opacity-50"
         >
-          {busy ? "AI…" : "✦ Перевести через AI (EN+HY)"}
+          {busy ? "AI…" : t("admin.product.translateAi")}
         </button>
       </div>
-      <Field label={`Название (${f.label})`}>
+      <Field label={t("admin.product.nameLang", { lang: t(f.labelKey) })}>
         <input
           value={form[f.nameKey] as string}
           maxLength={500}
@@ -456,7 +614,7 @@ function I18nContent({
         />
       </Field>
       <div className="mt-4" />
-      <Field label={`Описание (${f.label}, HTML)`}>
+      <Field label={t("admin.product.descLang", { lang: t(f.labelKey) })}>
         <textarea
           value={form[f.descKey] as string}
           onChange={(e) => setForm({ ...form, [f.descKey]: e.target.value })}
@@ -467,7 +625,7 @@ function I18nContent({
       </Field>
       {tab !== "ru" && !(form[f.nameKey] as string) && (
         <p className="mt-2 text-xs text-muted-foreground">
-          Поля пустые — на сайте будет показано русское значение.
+          {t("admin.product.i18nFallback")}
         </p>
       )}
     </div>
@@ -485,6 +643,7 @@ function ImageUploader({
   label: string;
   multiple?: boolean;
 }) {
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -492,11 +651,11 @@ function ImageUploader({
     try {
       for (const file of Array.from(files)) {
         if (!file.type.startsWith("image/")) {
-          toast.error(`${file.name}: не картинка`);
+          toast.error(t("admin.product.notImageFile", { name: file.name }));
           continue;
         }
         if (file.size > 10 * 1024 * 1024) {
-          toast.error(`${file.name}: больше 10 МБ`);
+          toast.error(t("admin.product.fileTooBig", { name: file.name }));
           continue;
         }
         const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -508,12 +667,12 @@ function ImageUploader({
         const { data: signed, error: sErr } = await supabase.storage
           .from("product-media")
           .createSignedUrl(path, 60 * 60 * 24 * 365);
-        if (sErr || !signed?.signedUrl) throw sErr ?? new Error("Не удалось получить URL");
+        if (sErr || !signed?.signedUrl) throw sErr ?? new Error(t("admin.product.uploadUrlError"));
         onUploaded(signed.signedUrl);
       }
-      toast.success("Загружено");
+      toast.success(t("admin.product.uploaded"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Ошибка загрузки");
+      toast.error(e instanceof Error ? e.message : t("admin.product.uploadError"));
     } finally {
       setBusy(false);
     }
@@ -521,7 +680,7 @@ function ImageUploader({
   return (
     <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-sm border border-dashed border-border px-3 py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground hover:border-foreground hover:text-foreground">
       <Upload className="h-3 w-3" />
-      {busy ? "Загрузка…" : label}
+      {busy ? t("admin.loading") : label}
       <input
         type="file"
         accept="image/*"

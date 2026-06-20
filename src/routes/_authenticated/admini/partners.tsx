@@ -4,8 +4,9 @@ import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Eye, EyeOff, Trash2, Upload, ArrowUp, ArrowDown } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
-export const Route = createFileRoute("/_authenticated/admin/partners")({
+export const Route = createFileRoute("/_authenticated/admini/partners")({
   component: AdminPartners,
 });
 
@@ -23,9 +24,12 @@ type Partner = {
   is_published: boolean;
 };
 
-async function uploadLogo(file: File): Promise<string> {
-  if (!file.type.startsWith("image/")) throw new Error("Не картинка");
-  if (file.size > 5 * 1024 * 1024) throw new Error("Больше 5 МБ");
+async function uploadLogo(
+  file: File,
+  t: (key: string, vars?: Record<string, string | number>) => string,
+): Promise<string> {
+  if (!file.type.startsWith("image/")) throw new Error(t("admin.notImage"));
+  if (file.size > 5 * 1024 * 1024) throw new Error(t("admin.tooLarge5mb"));
   const ext = file.name.split(".").pop()?.toLowerCase() || "png";
   const path = `partners/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
   const { error: upErr } = await supabase.storage
@@ -35,11 +39,12 @@ async function uploadLogo(file: File): Promise<string> {
   const { data: signed, error: sErr } = await supabase.storage
     .from("product-media")
     .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
-  if (sErr || !signed?.signedUrl) throw sErr ?? new Error("Не удалось получить URL");
+  if (sErr || !signed?.signedUrl) throw sErr ?? new Error(t("admin.urlFailed"));
   return signed.signedUrl;
 }
 
 function AdminPartners() {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [newName, setNewName] = useState("");
 
@@ -59,7 +64,7 @@ function AdminPartners() {
   const create = useMutation({
     mutationFn: async (name: string) => {
       const trimmed = name.trim();
-      if (!trimmed) throw new Error("Введите название");
+      if (!trimmed) throw new Error(t("admin.enterName"));
       const next = (list.data?.length ?? 0) * 10;
       const { error } = await supabase.from("partners").insert({ name: trimmed, sort_order: next });
       if (error) throw error;
@@ -67,9 +72,9 @@ function AdminPartners() {
     onSuccess: () => {
       setNewName("");
       qc.invalidateQueries({ queryKey: ["admin-partners"] });
-      toast.success("Партнёр добавлен");
+      toast.success(t("admin.partners.added"));
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Ошибка"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
 
   const update = useMutation({
@@ -78,7 +83,7 @@ function AdminPartners() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-partners"] }),
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Ошибка"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
 
   const remove = useMutation({
@@ -88,9 +93,9 @@ function AdminPartners() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-partners"] });
-      toast.success("Удалён");
+      toast.success(t("admin.removed"));
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Ошибка"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
 
   const move = (p: Partner, dir: -1 | 1) => {
@@ -104,10 +109,9 @@ function AdminPartners() {
 
   return (
     <div>
-      <h1 className="font-serif text-4xl">Партнёры</h1>
+      <h1 className="font-serif text-4xl">{t("admin.partners.title")}</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Блок партнёров на главной странице. Заполните название и описание на нужных языках,
-        загрузите логотип. Пустые языки автоматически подменяются русским.
+        {t("admin.partners.desc")}
       </p>
 
       <form
@@ -120,7 +124,7 @@ function AdminPartners() {
         <input
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
-          placeholder="Название нового партнёра"
+          placeholder={t("admin.partners.newPlaceholder")}
           maxLength={120}
           className="flex-1 rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
         />
@@ -129,7 +133,7 @@ function AdminPartners() {
           disabled={create.isPending}
           className="rounded-sm bg-foreground px-5 py-2 text-xs uppercase tracking-[0.2em] text-background disabled:opacity-50"
         >
-          Добавить
+          {t("admin.add")}
         </button>
       </form>
 
@@ -141,14 +145,14 @@ function AdminPartners() {
             isFirst={i === 0}
             isLast={i === (list.data?.length ?? 0) - 1}
             onUpdate={(patch) => update.mutate({ id: p.id, patch })}
-            onRemove={() => confirm(`Удалить "${p.name}"?`) && remove.mutate(p.id)}
+            onRemove={() => confirm(t("admin.deleteConfirm", { name: p.name })) && remove.mutate(p.id)}
             onMoveUp={() => move(p, -1)}
             onMoveDown={() => move(p, 1)}
           />
         ))}
-        {list.isLoading && <p className="text-sm text-muted-foreground">Загрузка…</p>}
+        {list.isLoading && <p className="text-sm text-muted-foreground">{t("admin.loading")}</p>}
         {list.data && list.data.length === 0 && (
-          <p className="text-sm text-muted-foreground">Пока нет партнёров.</p>
+          <p className="text-sm text-muted-foreground">{t("admin.partners.empty")}</p>
         )}
       </div>
     </div>
@@ -172,6 +176,7 @@ function PartnerRow({
   onMoveUp: () => void;
   onMoveDown: () => void;
 }) {
+  const { t } = useI18n();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -179,11 +184,11 @@ function PartnerRow({
     if (!file) return;
     setUploading(true);
     try {
-      const url = await uploadLogo(file);
+      const url = await uploadLogo(file, t);
       onUpdate({ logo_url: url });
-      toast.success("Логотип загружен");
+      toast.success(t("admin.partners.logoUploaded"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Ошибка");
+      toast.error(e instanceof Error ? e.message : t("admin.error"));
     } finally {
       setUploading(false);
     }
@@ -197,7 +202,7 @@ function PartnerRow({
             {p.logo_url ? (
               <img src={p.logo_url} alt={p.name} className="max-h-24 max-w-full object-contain" />
             ) : (
-              <span className="text-xs text-muted-foreground">нет логотипа</span>
+              <span className="text-xs text-muted-foreground">{t("admin.partners.noLogo")}</span>
             )}
           </div>
           <button
@@ -206,14 +211,14 @@ function PartnerRow({
             className="inline-flex items-center gap-2 rounded-sm border border-dashed border-border px-3 py-1.5 text-xs uppercase tracking-[0.18em] text-muted-foreground hover:border-foreground hover:text-foreground disabled:opacity-50"
           >
             <Upload className="h-3 w-3" />
-            {uploading ? "Загрузка…" : p.logo_url ? "Заменить" : "Загрузить"}
+            {uploading ? t("admin.loading") : p.logo_url ? t("admin.partners.replace") : t("admin.partners.upload")}
           </button>
           {p.logo_url && (
             <button
               onClick={() => onUpdate({ logo_url: null })}
               className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground hover:text-rose-600"
             >
-              Удалить логотип
+              {t("admin.partners.removeLogo")}
             </button>
           )}
           <input
@@ -230,14 +235,14 @@ function PartnerRow({
 
         <div className="flex-1 space-y-3">
           <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-            <Field label="Название · RU">
+            <Field label={t("admin.partners.nameRu")}>
               <input
                 defaultValue={p.name}
                 onBlur={(e) => e.target.value !== p.name && onUpdate({ name: e.target.value })}
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
               />
             </Field>
-            <Field label="Name · EN">
+            <Field label={t("admin.partners.nameEn")}>
               <input
                 defaultValue={p.name_en ?? ""}
                 onBlur={(e) =>
@@ -246,7 +251,7 @@ function PartnerRow({
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
               />
             </Field>
-            <Field label="Անվանում · HY">
+            <Field label={t("admin.partners.nameHy")}>
               <input
                 defaultValue={p.name_hy ?? ""}
                 onBlur={(e) =>
@@ -257,7 +262,7 @@ function PartnerRow({
             </Field>
           </div>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-            <Field label="Описание · RU">
+            <Field label={t("admin.partners.descRu")}>
               <textarea
                 rows={3}
                 defaultValue={p.description ?? ""}
@@ -268,7 +273,7 @@ function PartnerRow({
                 className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
               />
             </Field>
-            <Field label="Description · EN">
+            <Field label={t("admin.partners.descEn")}>
               <textarea
                 rows={3}
                 defaultValue={p.description_en ?? ""}
@@ -279,7 +284,7 @@ function PartnerRow({
                 className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
               />
             </Field>
-            <Field label="Նկարագրություն · HY">
+            <Field label={t("admin.partners.descHy")}>
               <textarea
                 rows={3}
                 defaultValue={p.description_hy ?? ""}
@@ -291,7 +296,7 @@ function PartnerRow({
               />
             </Field>
           </div>
-          <Field label="Ссылка (опционально)">
+          <Field label={t("admin.partners.linkOptional")}>
             <input
               defaultValue={p.link_url ?? ""}
               placeholder="https://example.com"
@@ -307,7 +312,7 @@ function PartnerRow({
           <button
             onClick={() => onUpdate({ is_published: !p.is_published })}
             className="text-foreground/70 hover:text-foreground"
-            title="Видимость"
+            title={t("admin.visibility")}
           >
             {p.is_published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
           </button>

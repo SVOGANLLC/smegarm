@@ -22,131 +22,182 @@ const PALETTE: PaletteItem[] = [
   { id: "black", name: "Black", hex: "#1a1a1a", src: heroBlack },
 ];
 
+function HeroImages({ activeId }: { activeId: string }) {
+  return PALETTE.map((p, i) => (
+    <img
+      key={p.id}
+      src={p.src}
+      alt={`Smeg FAB retro refrigerator in ${p.name}`}
+      width={1920}
+      height={822}
+      fetchPriority={i === 0 ? "high" : "low"}
+      loading={i === 0 ? "eager" : "lazy"}
+      className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-out ${
+        p.id === activeId ? "opacity-100 animate-hero-zoom" : "opacity-0"
+      } object-[70%_center] md:object-center`}
+    />
+  ));
+}
+
+function ColorSwatches({ activeId, onSelect }: { activeId: string; onSelect: (id: string) => void }) {
+  const { t } = useI18n();
+  return (
+    <div>
+      <p className="eyebrow mb-3 text-[10px] tracking-[0.2em] text-muted-foreground">{t("hero.colours")}</p>
+      <div
+        role="radiogroup"
+        aria-label={t("hero.colours")}
+        className="flex flex-wrap items-center gap-3 py-1 md:flex-nowrap md:gap-2.5 md:py-0"
+      >
+        {PALETTE.map((c) => {
+          const isActive = c.id === activeId;
+          return (
+            <button
+              key={c.id}
+              type="button"
+              role="radio"
+              aria-checked={isActive}
+              aria-label={c.name}
+              onClick={() => onSelect(c.id)}
+              className={`relative h-9 w-9 shrink-0 rounded-full transition-transform duration-300 md:h-7 md:w-7 ${
+                isActive ? "scale-105 ring-2 ring-foreground ring-offset-2 ring-offset-background md:scale-110" : ""
+              }`}
+              style={{
+                backgroundColor: c.hex,
+                boxShadow: !isActive ? `inset 0 0 0 1px ${c.ring ?? "rgba(0,0,0,0.18)"}` : undefined,
+              }}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function Hero() {
   const { t } = useI18n();
   const title = t("hero.title");
   const [activeId, setActiveId] = useState<string>(PALETTE[0].id);
-  const active = PALETTE.find((p) => p.id === activeId) ?? PALETTE[0];
+
+  const titleLines = title.split("\n");
+
+  const headline = (
+    <h1
+      data-ck="hero.title"
+      className="font-sans font-bold uppercase leading-[1.08] tracking-tight text-foreground md:max-w-[18ch] md:text-[clamp(1.5rem,4.5vw,3.5rem)] md:leading-[1.05] md:tracking-tighter"
+    >
+      {titleLines.map((line, i) => (
+        <span key={i} className="block text-[clamp(1.5rem,8.5vw,2rem)] md:animate-hero-rise md:text-inherit" style={{ animationDelay: `${250 + i * 120}ms` }}>
+          {line}
+        </span>
+      ))}
+    </h1>
+  );
+
+  const ctas = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 md:gap-5">
+      <Link
+        to="/catalog"
+        data-ck="hero.cta"
+        className="group flex w-full items-center justify-center gap-2 rounded-full bg-foreground px-6 py-3.5 text-[11px] uppercase tracking-[0.18em] text-background sm:w-auto md:tracking-[0.22em] md:px-8 md:py-4 md:text-xs"
+      >
+        {t("hero.cta")}
+        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+      </Link>
+      <a
+        href="#story"
+        data-ck="hero.cta2"
+        className="smeg-underline text-center text-xs uppercase tracking-[0.18em] text-foreground/80 sm:text-left md:tracking-[0.22em]"
+      >
+        {t("hero.cta2")}
+      </a>
+    </div>
+  );
 
   return (
-    <section className="relative h-[100svh] min-h-[680px] w-full overflow-hidden bg-background">
-      {/* Full-bleed photo stack — crossfade between colors */}
-      {PALETTE.map((p, i) => (
-        <img
-          key={p.id}
-          src={p.src}
-          alt={`Smeg FAB retro refrigerator in ${p.name}`}
-          width={1920}
-          height={822}
-          fetchPriority={i === 0 ? "high" : "low"}
-          loading={i === 0 ? "eager" : "lazy"}
-          className={`absolute inset-0 h-full w-full object-cover object-[62%_center] transition-opacity duration-700 ease-out md:object-center ${
-            p.id === activeId ? "opacity-100 animate-hero-zoom" : "opacity-0"
-          }`}
-        />
-      ))}
-      {/* Soft gradients for legibility — heavier on mobile to keep text readable */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/40 to-background/85 md:hidden" />
-      <div className="absolute inset-0 hidden bg-gradient-to-r from-background/95 via-background/55 to-transparent md:block" />
-      <div className="absolute inset-0 hidden bg-gradient-to-t from-background/40 via-transparent to-background/20 md:block" />
-
-      {/* Headline block */}
-      <div className="relative z-10 mx-auto flex h-full max-w-[1480px] flex-col justify-center px-5 pt-24 pb-24 md:px-10 md:pt-32 md:pb-36">
-        <div className="flex items-center gap-3 animate-hero-rise" style={{ animationDelay: "100ms" }}>
-          <span className="inline-block h-2 w-2 rounded-full bg-[color:var(--brand)]" />
-          <span data-ck="hero.eyebrow" className="eyebrow text-foreground/70">{t("hero.eyebrow")}</span>
+    <>
+      {/* Mobile: image on top, content in solid panel — not a shrunk desktop overlay */}
+      <section className="md:hidden">
+        <div className="relative h-[46svh] min-h-[280px] max-h-[420px] overflow-hidden bg-secondary">
+          <HeroImages activeId={activeId} />
         </div>
-
-        <h1 data-ck="hero.title" className="mt-4 max-w-[18ch] font-sans font-bold uppercase text-[clamp(1.5rem,4.5vw,3.5rem)] leading-[1.05] tracking-tighter text-foreground">
-          {title.split("\n").map((line, i) => (
-            <span
-              key={i}
-              className="block animate-hero-rise"
-              style={{ animationDelay: `${250 + i * 120}ms` }}
-            >
-              {line}
+        <div className="relative z-10 -mt-5 rounded-t-[1.25rem] bg-background px-4 pb-8 pt-7">
+          <div className="flex items-center gap-2">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--brand)]" />
+            <span data-ck="hero.eyebrow" className="eyebrow text-foreground/70">
+              {t("hero.eyebrow")}
             </span>
-          ))}
-        </h1>
-
-        <p
-          data-ck="hero.subtitle"
-          className="mt-6 max-w-md animate-hero-rise text-base leading-relaxed text-foreground/80 md:text-lg"
-          style={{ animationDelay: "700ms" }}
-        >
-          {t("hero.subtitle")}
-        </p>
-
-        <div
-          className="mt-8 flex animate-hero-rise flex-wrap items-center gap-4 md:gap-5"
-          style={{ animationDelay: "850ms" }}
-        >
-          <Link
-            to="/catalog"
-            data-ck="hero.cta"
-            className="group inline-flex items-center gap-3 rounded-full bg-foreground px-6 py-3.5 text-[11px] uppercase tracking-[0.22em] text-background transition-transform hover:-translate-y-0.5 md:px-8 md:py-4 md:text-xs"
+          </div>
+          <div className="mt-3">{headline}</div>
+          <div className="mt-5">
+            <ColorSwatches activeId={activeId} onSelect={setActiveId} />
+          </div>
+          <p data-ck="hero.subtitle" className="mt-5 text-[15px] leading-relaxed text-foreground/75">
+            {t("hero.subtitle")}
+          </p>
+          <div className="mt-6">{ctas}</div>
+          <a
+            href="#featured"
+            data-ck="hero.scroll"
+            className="mt-8 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.24em] text-muted-foreground"
           >
-            {t("hero.cta")}
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Link>
-          <a href="#story" data-ck="hero.cta2" className="smeg-underline text-xs uppercase tracking-[0.22em] text-foreground/80">
-            {t("hero.cta2")}
+            <ArrowDown className="h-3.5 w-3.5" />
+            {t("hero.scroll")}
           </a>
         </div>
+      </section>
 
-        <div
-          className="mt-10 flex animate-hero-rise flex-col gap-3 sm:flex-row sm:items-center sm:gap-5"
-          style={{ animationDelay: "1050ms" }}
-        >
-          <div
-            role="radiogroup"
-            aria-label="Choose appliance color"
-            className="flex items-center gap-2.5"
+      {/* Desktop: full-bleed cinematic hero */}
+      <section className="relative hidden min-h-[100svh] w-full overflow-hidden bg-background md:block">
+        <HeroImages activeId={activeId} />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/55 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-background/20" />
+
+        <div className="relative z-10 mx-auto flex h-full max-w-[1480px] flex-col justify-center px-10 pb-36 pt-32">
+          <div className="flex items-center gap-3 animate-hero-rise" style={{ animationDelay: "100ms" }}>
+            <span className="inline-block h-2 w-2 rounded-full bg-[color:var(--brand)]" />
+            <span data-ck="hero.eyebrow" className="eyebrow text-foreground/70">
+              {t("hero.eyebrow")}
+            </span>
+          </div>
+          <div className="mt-4 animate-hero-rise">{headline}</div>
+          <p
+            data-ck="hero.subtitle"
+            className="mt-6 max-w-md animate-hero-rise text-lg leading-relaxed text-foreground/80"
+            style={{ animationDelay: "700ms" }}
           >
-            {PALETTE.map((c) => {
-              const isActive = c.id === activeId;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={isActive}
-                  onClick={() => setActiveId(c.id)}
-                  className={`relative h-6 w-6 rounded-full transition-transform duration-300 hover:scale-110 ${
-                    isActive ? "scale-110" : ""
-                  }`}
-                  style={{
-                    backgroundColor: c.hex,
-                    boxShadow: isActive
-                      ? `0 0 0 2px var(--background), 0 0 0 3px ${c.ring ?? c.hex}`
-                      : `inset 0 0 0 1px ${c.ring ?? "rgba(0,0,0,0.15)"}`,
-                  }}
-                />
-              );
-            })}
+            {t("hero.subtitle")}
+          </p>
+          <div className="mt-8 animate-hero-rise" style={{ animationDelay: "850ms" }}>
+            {ctas}
+          </div>
+          <div className="mt-10 animate-hero-rise" style={{ animationDelay: "1050ms" }}>
+            <ColorSwatches activeId={activeId} onSelect={setActiveId} />
           </div>
         </div>
-      </div>
 
-      {/* Bottom row */}
-      <div className="absolute inset-x-0 bottom-8 z-10 mx-auto flex max-w-[1480px] items-end justify-between gap-6 px-6 md:bottom-10 md:px-10">
-        <a
-          href="#featured"
-          data-ck="hero.scroll"
-          className="group inline-flex animate-hero-rise items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-foreground/70"
-          style={{ animationDelay: "1250ms" }}
-        >
-          <span className="inline-flex h-9 w-9 animate-hero-bounce items-center justify-center rounded-full border border-foreground/40 group-hover:border-foreground">
-            <ArrowDown className="h-3.5 w-3.5" />
-          </span>
-          {t("hero.scroll")}
-        </a>
-
-        <div className="hidden animate-hero-rise text-right md:block" style={{ animationDelay: "1250ms" }}>
-          <p data-ck="hero.quote" className="font-serif text-base italic text-foreground/85">{t("hero.quote")}</p>
-          <p data-ck="hero.quoteCaption" className="mt-1 text-[10px] uppercase tracking-[0.3em] text-foreground/55">{t("hero.quoteCaption")}</p>
+        <div className="absolute inset-x-0 bottom-10 z-10 mx-auto flex max-w-[1480px] items-end justify-between gap-6 px-10">
+          <a
+            href="#featured"
+            data-ck="hero.scroll"
+            className="group inline-flex animate-hero-rise items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-foreground/70"
+            style={{ animationDelay: "1250ms" }}
+          >
+            <span className="inline-flex h-9 w-9 animate-hero-bounce items-center justify-center rounded-full border border-foreground/40 group-hover:border-foreground">
+              <ArrowDown className="h-3.5 w-3.5" />
+            </span>
+            {t("hero.scroll")}
+          </a>
+          <div className="animate-hero-rise text-right" style={{ animationDelay: "1250ms" }}>
+            <p data-ck="hero.quote" className="font-serif text-base italic text-foreground/85">
+              {t("hero.quote")}
+            </p>
+            <p data-ck="hero.quoteCaption" className="mt-1 text-[10px] uppercase tracking-[0.3em] text-foreground/55">
+              {t("hero.quoteCaption")}
+            </p>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

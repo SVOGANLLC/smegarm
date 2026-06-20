@@ -2,19 +2,21 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n";
 
-export const Route = createFileRoute("/_authenticated/admin/inquiries")({
+export const Route = createFileRoute("/_authenticated/admini/inquiries")({
   component: InquiriesPage,
 });
 
-const STATUSES = [
-  { v: "new", l: "Новая" },
-  { v: "in_progress", l: "В работе" },
-  { v: "done", l: "Готово" },
-  { v: "spam", l: "Спам" },
-];
+const STATUS_KEYS = [
+  { v: "new", key: "admin.inquiry.status.new" },
+  { v: "in_progress", key: "admin.inquiry.status.in_progress" },
+  { v: "done", key: "admin.inquiry.status.done" },
+  { v: "spam", key: "admin.inquiry.status.spam" },
+] as const;
 
 function InquiriesPage() {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const list = useQuery({
     queryKey: ["admin-inquiries"],
@@ -37,16 +39,14 @@ function InquiriesPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-inquiries"] });
       qc.invalidateQueries({ queryKey: ["admin-stats"] });
-      toast.success("Обновлено");
+      toast.success(t("admin.updated"));
     },
   });
 
   return (
     <div>
-      <h1 className="font-serif text-4xl">Заявки</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        {list.data?.length ?? 0} обращений
-      </p>
+      <h1 className="font-serif text-4xl">{t("admin.inquiry.title")}</h1>
+      <p className="mt-2 text-sm text-muted-foreground">{t("admin.inquiry.count", { n: list.data?.length ?? 0 })}</p>
 
       <div className="mt-8 space-y-3">
         {list.data?.map((i) => (
@@ -66,21 +66,15 @@ function InquiriesPage() {
                 onChange={(e) => update.mutate({ id: i.id, status: e.target.value })}
                 className="rounded-sm border border-border bg-background px-3 py-1.5 text-xs"
               >
-                {STATUSES.map((s) => (
-                  <option key={s.v} value={s.v}>
-                    {s.l}
-                  </option>
+                {STATUS_KEYS.map((s) => (
+                  <option key={s.v} value={s.v}>{t(s.key)}</option>
                 ))}
               </select>
             </div>
-            {i.message && (
-              <p className="mt-3 whitespace-pre-wrap text-sm text-foreground/80">{i.message}</p>
-            )}
+            {i.message && <p className="mt-3 whitespace-pre-wrap text-sm text-foreground/80">{i.message}</p>}
           </div>
         ))}
-        {list.data?.length === 0 && (
-          <p className="text-sm text-muted-foreground">Пока нет заявок.</p>
-        )}
+        {list.data?.length === 0 && <p className="text-sm text-muted-foreground">{t("admin.inquiry.empty")}</p>}
       </div>
     </div>
   );

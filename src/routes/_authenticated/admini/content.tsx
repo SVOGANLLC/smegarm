@@ -3,95 +3,128 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getI18nDefaults, type Lang } from "@/lib/i18n";
+import { getI18nDefaults, useI18n, type Lang } from "@/lib/i18n";
 import { FONT_OPTIONS, type ContentStyle, type ContentStylesMap } from "@/lib/content-styles";
+import { CategoriesContentEditor } from "@/components/admin/CategoriesContentEditor";
+import { HomepageProductsEditor } from "@/components/admin/HomepageProductsEditor";
 
-export const Route = createFileRoute("/_authenticated/admin/content")({
+export const Route = createFileRoute("/_authenticated/admini/content")({
   beforeLoad: ({ context }) => {
     const role = (context as { role?: string }).role;
-    if (role !== "admin") throw redirect({ to: "/admin" });
+    if (role !== "admin") throw redirect({ to: "/admini" });
   },
   component: ContentPage,
 });
 
-type Field = { i18nKey: string; label: string; multiline?: boolean };
-type Block = { key: string; label: string; fields: Field[] };
+type Field = { i18nKey: string; labelKey: string; multiline?: boolean; labelVars?: Record<string, string | number> };
+type Block = { key: string; labelKey: string; fields: Field[] };
 
 const BLOCKS: Block[] = [
   {
     key: "hero",
-    label: "Hero (главный экран)",
+    labelKey: "admin.content.block.hero",
     fields: [
-      { i18nKey: "hero.eyebrow", label: "Надстрочник" },
-      { i18nKey: "hero.title", label: "Заголовок (\\n для переноса строки)", multiline: true },
-      { i18nKey: "hero.subtitle", label: "Подзаголовок", multiline: true },
-      { i18nKey: "hero.cta", label: "Кнопка 1" },
-      { i18nKey: "hero.cta2", label: "Кнопка 2" },
-      { i18nKey: "hero.scroll", label: "Подпись «Scroll»" },
-      { i18nKey: "hero.quote", label: "Цитата" },
-      { i18nKey: "hero.quoteCaption", label: "Подпись цитаты" },
+      { i18nKey: "hero.eyebrow", labelKey: "admin.content.field.eyebrow" },
+      { i18nKey: "hero.title", labelKey: "admin.content.field.title", multiline: true },
+      { i18nKey: "hero.subtitle", labelKey: "admin.content.field.subtitle", multiline: true },
+      { i18nKey: "hero.cta", labelKey: "admin.content.field.cta1" },
+      { i18nKey: "hero.cta2", labelKey: "admin.content.field.cta2" },
+      { i18nKey: "hero.scroll", labelKey: "admin.content.field.scroll" },
+      { i18nKey: "hero.quote", labelKey: "admin.content.field.quote" },
+      { i18nKey: "hero.quoteCaption", labelKey: "admin.content.field.quoteCaption" },
     ],
   },
   {
     key: "story",
-    label: "Блок «История бренда»",
+    labelKey: "admin.content.block.story",
     fields: [
-      { i18nKey: "section.story.eyebrow", label: "Надстрочник" },
-      { i18nKey: "section.story.title", label: "Заголовок (\\n для переноса)", multiline: true },
-      { i18nKey: "section.story.body", label: "Текст", multiline: true },
-      { i18nKey: "section.story.cta", label: "Кнопка" },
-      { i18nKey: "section.story.stat.years", label: "Подпись: Лет" },
-      { i18nKey: "section.story.stat.countries", label: "Подпись: Стран" },
-      { i18nKey: "section.story.stat.colours", label: "Подпись: Цветов" },
+      { i18nKey: "section.story.eyebrow", labelKey: "admin.content.field.eyebrow" },
+      { i18nKey: "section.story.title", labelKey: "admin.content.field.titleShort", multiline: true },
+      { i18nKey: "section.story.body", labelKey: "admin.content.field.body", multiline: true },
+      { i18nKey: "section.story.stat.years", labelKey: "admin.content.field.statYears" },
+      { i18nKey: "section.story.stat.countries", labelKey: "admin.content.field.statCountries" },
+      { i18nKey: "section.story.stat.colours", labelKey: "admin.content.field.statColours" },
     ],
   },
   {
     key: "dealer",
-    label: "Блок «Шоурум / Дилер»",
+    labelKey: "admin.content.block.dealer",
     fields: [
-      { i18nKey: "section.dealer.eyebrow", label: "Надстрочник" },
-      { i18nKey: "section.dealer.title", label: "Заголовок" },
-      { i18nKey: "section.dealer.body", label: "Текст", multiline: true },
-      { i18nKey: "section.dealer.cta", label: "Кнопка" },
-      { i18nKey: "section.dealer.address", label: "Адрес" },
+      { i18nKey: "section.dealer.eyebrow", labelKey: "admin.content.field.eyebrow" },
+      { i18nKey: "section.dealer.title", labelKey: "admin.content.field.titlePlain" },
+      { i18nKey: "section.dealer.body", labelKey: "admin.content.field.body", multiline: true },
+      { i18nKey: "section.dealer.cta", labelKey: "admin.content.field.cta" },
+      { i18nKey: "section.dealer.address", labelKey: "admin.content.field.address" },
     ],
   },
   {
     key: "benefits",
-    label: "Блок «Почему Smeg»",
+    labelKey: "admin.content.block.benefits",
     fields: [
-      { i18nKey: "section.benefits.eyebrow", label: "Надстрочник" },
-      { i18nKey: "section.benefits.title", label: "Заголовок (\\n для переноса)", multiline: true },
-      { i18nKey: "section.benefits.1.t", label: "Пункт 1 — заголовок" },
-      { i18nKey: "section.benefits.1.d", label: "Пункт 1 — описание", multiline: true },
-      { i18nKey: "section.benefits.2.t", label: "Пункт 2 — заголовок" },
-      { i18nKey: "section.benefits.2.d", label: "Пункт 2 — описание", multiline: true },
-      { i18nKey: "section.benefits.3.t", label: "Пункт 3 — заголовок" },
-      { i18nKey: "section.benefits.3.d", label: "Пункт 3 — описание", multiline: true },
-      { i18nKey: "section.benefits.4.t", label: "Пункт 4 — заголовок" },
-      { i18nKey: "section.benefits.4.d", label: "Пункт 4 — описание", multiline: true },
+      { i18nKey: "section.benefits.eyebrow", labelKey: "admin.content.field.eyebrow" },
+      { i18nKey: "section.benefits.title", labelKey: "admin.content.field.titleShort", multiline: true },
+      { i18nKey: "section.benefits.1.t", labelKey: "admin.content.field.benefitTitle", labelVars: { n: 1 } },
+      { i18nKey: "section.benefits.1.d", labelKey: "admin.content.field.benefitDesc", labelVars: { n: 1 }, multiline: true },
+      { i18nKey: "section.benefits.2.t", labelKey: "admin.content.field.benefitTitle", labelVars: { n: 2 } },
+      { i18nKey: "section.benefits.2.d", labelKey: "admin.content.field.benefitDesc", labelVars: { n: 2 }, multiline: true },
+      { i18nKey: "section.benefits.3.t", labelKey: "admin.content.field.benefitTitle", labelVars: { n: 3 } },
+      { i18nKey: "section.benefits.3.d", labelKey: "admin.content.field.benefitDesc", labelVars: { n: 3 }, multiline: true },
+      { i18nKey: "section.benefits.4.t", labelKey: "admin.content.field.benefitTitle", labelVars: { n: 4 } },
+      { i18nKey: "section.benefits.4.d", labelKey: "admin.content.field.benefitDesc", labelVars: { n: 4 }, multiline: true },
+    ],
+  },
+  {
+    key: "categories",
+    labelKey: "admin.content.block.categories",
+    fields: [
+      { i18nKey: "section.categories.eyebrow", labelKey: "admin.content.field.eyebrow" },
+      { i18nKey: "section.categories.title", labelKey: "admin.content.field.titleShort", multiline: true },
+      { i18nKey: "section.categories.small", labelKey: "admin.content.categories.smallLabel" },
+      { i18nKey: "section.categories.refrigerators", labelKey: "admin.content.categories.refrigerators" },
+      { i18nKey: "section.categories.ovens", labelKey: "admin.content.categories.ovens" },
+      { i18nKey: "section.categories.hobs", labelKey: "admin.content.categories.hobs" },
+    ],
+  },
+  {
+    key: "homepage",
+    labelKey: "admin.content.block.homepage",
+    fields: [
+      { i18nKey: "section.featured.eyebrow", labelKey: "admin.content.field.eyebrow" },
+      { i18nKey: "section.featured.title", labelKey: "admin.content.field.titleShort", multiline: true },
+    ],
+  },
+  {
+    key: "marquee",
+    labelKey: "admin.content.block.marquee",
+    fields: [
+      {
+        i18nKey: "marquee.text",
+        labelKey: "admin.content.field.marquee",
+        multiline: true,
+      },
     ],
   },
   {
     key: "footer",
-    label: "Подвал",
+    labelKey: "admin.content.block.footer",
     fields: [
-      { i18nKey: "footer.tagline", label: "Описание", multiline: true },
-      { i18nKey: "footer.address.line1", label: "Адрес — строка 1" },
-      { i18nKey: "footer.address.line2", label: "Адрес — строка 2" },
+      { i18nKey: "footer.tagline", labelKey: "admin.content.field.desc", multiline: true },
+      { i18nKey: "footer.address.line1", labelKey: "admin.content.field.address1" },
+      { i18nKey: "footer.address.line2", labelKey: "admin.content.field.address2" },
     ],
   },
 ];
 
-const LANGS: { code: Lang; label: string }[] = [
-  { code: "ru", label: "Русский" },
-  { code: "en", label: "English" },
-  { code: "hy", label: "Հայերեն" },
+const LANGS: { code: Lang; labelKey: string }[] = [
+  { code: "ru", labelKey: "admin.content.langRu" },
+  { code: "en", labelKey: "admin.content.langEn" },
+  { code: "hy", labelKey: "admin.content.langHy" },
 ];
 
 type BlockValue = Record<string, Partial<Record<Lang, string>>>;
 
 function ContentPage() {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const defaults = getI18nDefaults();
   const q = useQuery({
@@ -132,9 +165,9 @@ function ContentPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["site-content"] });
-      toast.success("Сохранено. Обновите страницу сайта, чтобы увидеть изменения.");
+      toast.success(t("admin.content.savedRefresh"));
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Ошибка"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
 
   const updateField = (block: string, i18nKey: string, lang: Lang, value: string) => {
@@ -165,23 +198,20 @@ function ContentPage() {
 
   return (
     <div>
-      <h1 className="font-serif text-4xl">Контент сайта</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Тексты разделов главной страницы во всех трёх языках. В каждом поле показан текущий
-        текст по умолчанию — оставьте пустым, чтобы использовать его, или впишите свой вариант.
-      </p>
+      <h1 className="font-serif text-4xl">{t("admin.content.title")}</h1>
+      <p className="mt-2 text-sm text-muted-foreground">{t("admin.content.desc")}</p>
 
       <div className="mt-10 space-y-8">
         {BLOCKS.map((b) => {
           const v = state[b.key] ?? {};
           return (
             <div key={b.key} className="rounded-sm border border-border p-6">
-              <h2 className="font-serif text-2xl">{b.label}</h2>
+              <h2 className="font-serif text-2xl">{t(b.labelKey)}</h2>
               <div className="mt-4 space-y-6">
                 {b.fields.map((f) => (
                   <div key={f.i18nKey} className="rounded-sm bg-secondary/40 p-4">
                     <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-sm font-medium text-foreground">{f.label}</span>
+                      <span className="text-sm font-medium text-foreground">{t(f.labelKey, f.labelVars)}</span>
                       <code className="text-[10px] text-muted-foreground">{f.i18nKey}</code>
                     </div>
                     <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -190,7 +220,7 @@ function ContentPage() {
                         const fieldVal = v[f.i18nKey]?.[l.code] ?? "";
                         return (
                           <label key={l.code} className="block">
-                            <span className="eyebrow mb-1 block text-muted-foreground">{l.label}</span>
+                            <span className="eyebrow mb-1 block text-muted-foreground">{t(l.labelKey)}</span>
                             <textarea
                               rows={f.multiline ? 3 : 2}
                               value={fieldVal}
@@ -212,12 +242,24 @@ function ContentPage() {
                     />
                   </div>
                 ))}
+                {b.key === "categories" && (
+                  <CategoriesContentEditor
+                    value={v}
+                    onChange={(next) => setState((prev) => ({ ...prev, [b.key]: next }))}
+                  />
+                )}
+                {b.key === "homepage" && (
+                  <HomepageProductsEditor
+                    value={v}
+                    onChange={(next) => setState((prev) => ({ ...prev, [b.key]: next }))}
+                  />
+                )}
               </div>
               <button
                 onClick={() => save.mutate({ key: b.key, value: v, styles })}
                 className="mt-4 rounded-sm bg-foreground px-5 py-2 text-xs uppercase tracking-[0.2em] text-background hover:opacity-90"
               >
-                Сохранить блок
+                {t("admin.content.saveBlock")}
               </button>
             </div>
           );
@@ -240,6 +282,7 @@ function StyleEditor({
   onToggle: () => void;
   onChange: (patch: Partial<ContentStyle>) => void;
 }) {
+  const { t } = useI18n();
   const styled = Object.keys(value).length > 0;
   return (
     <div className="mt-4 rounded-sm border border-border bg-background">
@@ -248,12 +291,12 @@ function StyleEditor({
         onClick={onToggle}
         className="flex w-full items-center justify-between px-3 py-2 text-left text-xs uppercase tracking-[0.18em] text-foreground/70 hover:text-foreground"
       >
-        <span>Стиль отображения {styled && <span className="ml-2 inline-block h-1.5 w-1.5 rounded-full bg-accent" />}</span>
+        <span>{t("admin.content.styleTitle")} {styled && <span className="ml-2 inline-block h-1.5 w-1.5 rounded-full bg-accent" />}</span>
         <span>{open ? "−" : "+"}</span>
       </button>
       {open && (
         <div className="grid grid-cols-1 gap-3 border-t border-border p-3 md:grid-cols-3">
-          <Field label="Шрифт">
+          <Field label={t("admin.content.styleFont")}>
             <select
               value={value.fontFamily ?? ""}
               onChange={(e) => onChange({ fontFamily: e.target.value })}
@@ -264,7 +307,7 @@ function StyleEditor({
               ))}
             </select>
           </Field>
-          <Field label="Размер (напр. 18px, 2.5rem, clamp(...))">
+          <Field label={t("admin.content.styleSize")}>
             <input
               value={value.fontSize ?? ""}
               onChange={(e) => onChange({ fontSize: e.target.value })}
@@ -272,7 +315,7 @@ function StyleEditor({
               className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
             />
           </Field>
-          <Field label="Жирность">
+          <Field label={t("admin.content.styleWeight")}>
             <select
               value={value.fontWeight ?? ""}
               onChange={(e) => onChange({ fontWeight: e.target.value })}
@@ -284,7 +327,7 @@ function StyleEditor({
               ))}
             </select>
           </Field>
-          <Field label="Цвет">
+          <Field label={t("admin.content.styleColor")}>
             <div className="flex gap-2">
               <input
                 type="color"
@@ -300,36 +343,36 @@ function StyleEditor({
               />
             </div>
           </Field>
-          <Field label="Межбуквенный интервал">
+          <Field label={t("admin.content.styleLetterSpacing")}>
             <input
               value={value.letterSpacing ?? ""}
               onChange={(e) => onChange({ letterSpacing: e.target.value })}
-              placeholder="напр. 0.02em"
+              placeholder={t("admin.content.styleLetterEx")}
               className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
             />
           </Field>
-          <Field label="Межстрочный интервал">
+          <Field label={t("admin.content.styleLineHeight")}>
             <input
               value={value.lineHeight ?? ""}
               onChange={(e) => onChange({ lineHeight: e.target.value })}
-              placeholder="напр. 1.4"
+              placeholder={t("admin.content.styleLineEx")}
               className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
             />
           </Field>
-          <Field label="Регистр">
+          <Field label={t("admin.content.styleCase")}>
             <select
               value={value.textTransform ?? ""}
               onChange={(e) => onChange({ textTransform: (e.target.value || undefined) as ContentStyle["textTransform"] })}
               className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
             >
               <option value="">auto</option>
-              <option value="none">обычный</option>
+              <option value="none">{t("admin.content.styleNormal")}</option>
               <option value="uppercase">UPPERCASE</option>
               <option value="lowercase">lowercase</option>
               <option value="capitalize">Capitalize</option>
             </select>
           </Field>
-          <Field label="Начертание">
+          <Field label={t("admin.content.styleStyle")}>
             <select
               value={value.fontStyle ?? ""}
               onChange={(e) => onChange({ fontStyle: (e.target.value || undefined) as ContentStyle["fontStyle"] })}
@@ -346,11 +389,11 @@ function StyleEditor({
               onClick={() => onChange({ fontFamily: "", fontSize: "", fontWeight: "", color: "", letterSpacing: "", lineHeight: "", textTransform: undefined, fontStyle: undefined })}
               className="text-xs uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground"
             >
-              Сбросить стиль
+              {t("admin.content.resetStyle")}
             </button>
           </div>
           <p className="md:col-span-3 text-[10px] text-muted-foreground">
-            Применяется глобально к элементу <code>[data-ck="{i18nKey}"]</code> с !important.
+            {t("admin.content.styleNote", { key: i18nKey })}
           </p>
         </div>
       )}

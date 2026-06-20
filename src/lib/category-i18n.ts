@@ -46,7 +46,33 @@ export const CATEGORY_LABELS: Record<string, { ru: string; en: string; hy: strin
   "Kitchen scales": { ru: "Кухонные весы", en: "Kitchen scales", hy: "Խոհանոցային կշեռքներ" },
 };
 
-export function categoryLabel(canonical: string, lang: Lang): string {
+/** Normalize DB category values to a single English canonical key for grouping/filtering. */
+export function canonicalCategoryKey(
+  raw: string,
+  category_en?: string | null,
+  category_hy?: string | null,
+): string {
+  const en = category_en?.trim();
+  if (en) return en;
+  const r = raw.trim();
+  if (!r) return r;
+  if (CATEGORY_LABELS[r]) return r;
+  const hy = category_hy?.trim();
+  for (const [key, labels] of Object.entries(CATEGORY_LABELS)) {
+    if (labels.hy === r || labels.ru === r || labels.en === r) return key;
+    if (hy && labels.hy === hy) return key;
+  }
+  return r;
+}
+
+export function categoryLabel(
+  canonical: string,
+  lang: Lang,
+  opts?: { hy?: string | null; en?: string | null; ru?: string | null },
+): string {
+  if (lang === "hy" && opts?.hy?.trim()) return opts.hy.trim();
+  if (lang === "en" && opts?.en?.trim()) return opts.en.trim();
+  if (lang === "ru" && opts?.ru?.trim()) return opts.ru.trim();
   const m = CATEGORY_LABELS[canonical];
   if (m) return m[lang] ?? canonical;
   return canonical;

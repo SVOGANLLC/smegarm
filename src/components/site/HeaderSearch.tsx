@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Search, X } from "lucide-react";
 import { searchProductsRpc } from "@/lib/products";
+import { useI18n } from "@/lib/i18n";
 
 function formatAmd(n: number | null) {
   if (n == null) return null;
@@ -10,6 +11,7 @@ function formatAmd(n: number | null) {
 }
 
 export function HeaderSearch() {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -47,16 +49,20 @@ export function HeaderSearch() {
   const submit = () => {
     if (!trimmed) return;
     setOpen(false);
-    navigate({ to: "/catalog", search: { q: trimmed, page: 1 } });
+    navigate({
+      to: "/catalog",
+      search: { q: trimmed, page: 1 },
+      replace: false,
+    });
   };
 
   return (
     <>
       <button
         type="button"
-        aria-label="Поиск"
+        aria-label={t("search.label")}
         onClick={() => setOpen(true)}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/50 text-foreground/80 backdrop-blur transition hover:text-foreground"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-background/50 text-foreground/80 backdrop-blur transition hover:text-foreground sm:h-9 sm:w-9"
       >
         <Search className="h-4 w-4" />
       </button>
@@ -67,7 +73,7 @@ export function HeaderSearch() {
             className="absolute inset-0 bg-foreground/40 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           />
-          <div className="relative mx-auto mt-24 max-w-2xl px-4">
+          <div className="relative mx-auto mt-16 max-w-2xl px-4 sm:mt-24">
             <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
               <div className="flex items-center gap-3 border-b border-border px-5 py-4">
                 <Search className="h-4 w-4 text-muted-foreground" />
@@ -79,12 +85,12 @@ export function HeaderSearch() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") submit();
                   }}
-                  placeholder="Поиск: артикул, название, коллекция…"
+                  placeholder={t("search.placeholder")}
                   className="flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground"
                 />
                 <button
                   type="button"
-                  aria-label="Закрыть"
+                  aria-label={t("header.close")}
                   onClick={() => setOpen(false)}
                   className="rounded-full p-1.5 text-muted-foreground hover:text-foreground"
                 >
@@ -95,13 +101,13 @@ export function HeaderSearch() {
               <div className="max-h-[60vh] overflow-y-auto">
                 {trimmed.length < 2 ? (
                   <p className="px-5 py-6 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    Введите минимум 2 символа
+                    {t("search.minChars")}
                   </p>
                 ) : suggestions.isLoading ? (
-                  <p className="px-5 py-6 text-sm text-muted-foreground">Ищу…</p>
+                  <p className="px-5 py-6 text-sm text-muted-foreground">{t("search.searching")}</p>
                 ) : !suggestions.data?.length ? (
                   <p className="px-5 py-6 text-sm text-muted-foreground">
-                    По «{trimmed}» ничего не найдено
+                    {t("search.noResults", { query: trimmed })}
                   </p>
                 ) : (
                   <ul className="divide-y divide-border">
@@ -146,7 +152,7 @@ export function HeaderSearch() {
                     onClick={submit}
                     className="block w-full border-t border-border bg-secondary/40 px-5 py-3 text-center text-xs uppercase tracking-[0.18em] text-foreground transition hover:bg-secondary"
                   >
-                    Все результаты по «{trimmed}» →
+                    {t("search.allResults", { query: trimmed })}
                   </button>
                 )}
               </div>

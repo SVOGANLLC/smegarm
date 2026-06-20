@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { canonicalCategoryKey } from "@/lib/category-i18n";
 
 export type Product = {
   sku: string;
@@ -86,7 +87,7 @@ export async function fetchCategories(): Promise<CategoryStat[]> {
     const r = row as { category: string | null; category_en: string | null; category_hy: string | null };
     const raw = r.category?.trim();
     if (!raw) continue;
-    const canonical = (r.category_en?.trim() || raw).trim();
+    const canonical = canonicalCategoryKey(raw, r.category_en, r.category_hy);
     const cur = groups.get(canonical) ?? { count: 0, raw: new Set<string>() };
     cur.count += 1;
     cur.raw.add(raw);
@@ -147,14 +148,16 @@ export async function fetchProductBySku(sku: string): Promise<Product | null> {
 export async function fetchFeatured(skus: string[]): Promise<Product[]> {
   const { data, error } = await supabase
     .from("products")
-    .select("sku,name,category,aesthetic,colour,main_image,images")
+    .select(
+      "sku,name,name_en,name_hy,category,category_en,category_hy,aesthetic,colour,colour_en,colour_hy,main_image,images,price_amd,price_old,discount_percent,availability,stock_qty,stock_reserved,lead_time_days",
+    )
     .in("sku", skus);
   if (error) throw error;
   return (data ?? []) as Product[];
 }
 
 const CARD_COLS =
-  "sku,name,category,colour,main_image,price_amd,price_old,discount_percent,availability,is_published,is_featured,is_new,is_bestseller,is_special_offer,badge_text";
+  "sku,name,name_en,name_hy,category,category_en,category_hy,colour,colour_en,colour_hy,main_image,price_amd,price_old,discount_percent,availability,stock_qty,stock_reserved,lead_time_days,is_published,is_featured,is_new,is_bestseller,is_special_offer,badge_text";
 
 export async function fetchProductsByFlag(
   flag: "is_featured" | "is_new" | "is_bestseller" | "is_special_offer",
@@ -172,6 +175,8 @@ export async function fetchProductsByFlag(
   return (data ?? []) as unknown as ProductCard[];
 }
 
+export type CollectionSection = "design" | "timeless" | "special";
+
 export type Collection = {
   id: string;
   slug: string;
@@ -180,6 +185,7 @@ export type Collection = {
   cover_image: string | null;
   is_published: boolean;
   sort_weight: number;
+  section?: CollectionSection | null;
   name_en?: string | null;
   name_hy?: string | null;
   description_en?: string | null;
@@ -311,43 +317,113 @@ export type CatalogFilters = {
   colours?: string[];
   theme?: string;
   flag?: "is_featured" | "is_new" | "is_bestseller" | "is_special_offer" | "sale";
+  inStock?: boolean;
   sort?: "name" | "price-asc" | "price-desc";
+  shuffleSeed?: number;
   limit?: number;
   offset?: number;
 };
 
-export async function fetchCatalog(f: CatalogFilters): Promise<{ items: Product[]; total: number }> {
-  let q = supabase
-    .from("products")
-    .select(
-      "sku,name,name_en,name_hy,category,category_en,category_hy,brand,aesthetic,colour,colour_en,colour_hy,family,ean,description,description_en,description_hy,specs,specs_en,specs_hy,main_image,images,pdf,energy_label,url,price_amd,price_old,availability,stock_qty,stock_reserved,lead_time_days",
-      { count: "exact" },
-    );
+function shuffleArray<T>(items: T[], seed?: number): T[] {
+  const arr = [...items];
+  let state = seed ?? Math.floor(Math.random() * 0xffffffff);
+  const rand = () => {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 0xffffffff;
+  };
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+type CatalogQuery = ReturnType<ReturnType<typeof supabase.from>["select"]>;
+
+function applyCatalogFilters(q: CatalogQuery, f: CatalogFilters): CatalogQuery {
+  q = q.eq("is_published", true);
   if (f.categoryIn?.length) q = q.in("category", f.categoryIn);
   else if (f.category) q = q.eq("category", f.category);
+  if (f.families?.length) q = q.in("family", f.families);
+  if (f.aesthetics?.length) q = q.in("aesthetic", f.aesthetics);
+  if (f.colours?.length) q = q.in("colour", f.colours);
+  if (f.theme) q = q.eq("theme_key", f.theme);
+  if (f.inStock) q = q.eq("availability", "in_stock");
+  if (f.flag === "sale") q = q.not("price_old", "is", null);
+  else if (f.flag) q = q.eq(f.flag, true);
+  return q;
+}
+
+const PRODUCT_COLS =
+  "sku,name,name_en,name_hy,category,category_en,category_hy,brand,aesthetic,colour,colour_en,colour_hy,family,ean,description,description_en,description_hy,specs,specs_en,specs_hy,main_image,images,pdf,energy_label,url,price_amd,price_old,discount_percent,availability,stock_qty,stock_reserved,lead_time_days,is_featured,is_new,is_bestseller,is_special_offer,badge_text";
+
+export async function fetchCatalog(f: CatalogFilters): Promise<{ items: Product[]; total: number }> {
+  const limit = f.limit ?? 36;
+  const offset = f.offset ?? 0;
+
+  // Text search: global, ranked by RPC — do not intersect with category sidebar filter.
   if (f.search) {
-    // Use the search RPC for matching SKUs, then constrain by them; keeps other filters working.
     const { data: rows, error: e } = await supabase.rpc("search_products", {
       q: f.search,
       only_published: true,
       max_rows: 500,
     });
     if (e) throw e;
-    const skus = (rows ?? []).map((r: { sku: string }) => r.sku);
-    if (!skus.length) return { items: [], total: 0 };
-    q = q.in("sku", skus);
+    const ranked = (rows ?? []) as Array<{ sku: string }>;
+    if (!ranked.length) return { items: [], total: 0 };
+
+    const pageSkus = ranked.slice(offset, offset + limit).map((r) => r.sku);
+    if (!pageSkus.length) return { items: [], total: ranked.length };
+
+    let pq = supabase.from("products").select(PRODUCT_COLS).in("sku", pageSkus).eq("is_published", true);
+    if (f.colours?.length) pq = pq.in("colour", f.colours);
+    if (f.aesthetics?.length) pq = pq.in("aesthetic", f.aesthetics);
+    if (f.theme) pq = pq.eq("theme_key", f.theme);
+    if (f.inStock) pq = pq.eq("availability", "in_stock");
+    if (f.flag === "sale") pq = pq.not("price_old", "is", null);
+    else if (f.flag) pq = pq.eq(f.flag, true);
+
+    const { data, error } = await pq;
+    if (error) throw error;
+    const bySku = new Map(((data ?? []) as Product[]).map((p) => [p.sku, p]));
+    let items = pageSkus.map((sku) => bySku.get(sku)).filter((p): p is Product => !!p);
+
+    if (f.sort === "price-asc") items.sort((a, b) => (a.price_amd ?? 0) - (b.price_amd ?? 0));
+    else if (f.sort === "price-desc") items.sort((a, b) => (b.price_amd ?? 0) - (a.price_amd ?? 0));
+    else items = shuffleArray(items, f.shuffleSeed);
+
+    return { items, total: ranked.length };
   }
-  if (f.families?.length) q = q.in("family", f.families);
-  if (f.aesthetics?.length) q = q.in("aesthetic", f.aesthetics);
-  if (f.colours?.length) q = q.in("colour", f.colours);
-  if (f.theme) q = q.eq("theme_key", f.theme);
-  if (f.flag === "sale") q = q.not("price_old", "is", null);
-  else if (f.flag) q = q.eq(f.flag, true);
+
+  if (!f.sort) {
+    let sq = supabase.from("products").select("sku");
+    sq = applyCatalogFilters(sq, f);
+    const { data: skuRows, error: skuErr } = await sq;
+    if (skuErr) throw skuErr;
+    const skus = shuffleArray(
+      (skuRows ?? []).map((r) => r.sku as string),
+      f.shuffleSeed,
+    );
+    const total = skus.length;
+    const pageSkus = skus.slice(offset, offset + limit);
+    if (!pageSkus.length) return { items: [], total };
+
+    const { data, error } = await supabase
+      .from("products")
+      .select(PRODUCT_COLS)
+      .in("sku", pageSkus)
+      .eq("is_published", true);
+    if (error) throw error;
+    const bySku = new Map(((data ?? []) as Product[]).map((p) => [p.sku, p]));
+    const items = pageSkus.map((sku) => bySku.get(sku)).filter((p): p is Product => !!p);
+    return { items, total };
+  }
+
+  let q = supabase.from("products").select(PRODUCT_COLS, { count: "exact" });
+  q = applyCatalogFilters(q, f);
   if (f.sort === "price-asc") q = q.order("price_amd", { ascending: true, nullsFirst: false });
   else if (f.sort === "price-desc") q = q.order("price_amd", { ascending: false, nullsFirst: false });
   else q = q.order("name", { ascending: true });
-  const limit = f.limit ?? 36;
-  const offset = f.offset ?? 0;
   q = q.range(offset, offset + limit - 1);
   const { data, error, count } = await q;
   if (error) throw error;
@@ -357,7 +433,7 @@ export async function fetchCatalog(f: CatalogFilters): Promise<{ items: Product[
 export async function fetchCollections(): Promise<Collection[]> {
   const { data, error } = await supabase
     .from("collections")
-    .select("id,slug,name,name_en,name_hy,description,description_en,description_hy,cover_image,is_published,sort_weight")
+    .select("id,slug,name,name_en,name_hy,description,description_en,description_hy,cover_image,is_published,sort_weight,section")
     .eq("is_published", true)
     .order("sort_weight", { ascending: false })
     .order("name");
@@ -368,7 +444,7 @@ export async function fetchCollections(): Promise<Collection[]> {
 export async function fetchCollectionWithProducts(slug: string) {
   const { data: col, error: e1 } = await supabase
     .from("collections")
-    .select("id,slug,name,name_en,name_hy,description,description_en,description_hy,cover_image,is_published,sort_weight")
+    .select("id,slug,name,name_en,name_hy,description,description_en,description_hy,cover_image,is_published,sort_weight,section")
     .eq("slug", slug)
     .maybeSingle();
   if (e1) throw e1;
@@ -382,5 +458,11 @@ export async function fetchCollectionWithProducts(slug: string) {
   const products = ((links ?? []) as unknown as Array<{ products: ProductCard | ProductCard[] | null }>)
     .map((l) => (Array.isArray(l.products) ? l.products[0] : l.products))
     .filter((p): p is ProductCard => !!p && p.is_published);
-  return { collection: col as Collection, products };
+  const seen = new Set<string>();
+  const unique = products.filter((p) => {
+    if (seen.has(p.sku)) return false;
+    seen.add(p.sku);
+    return true;
+  });
+  return { collection: col as Collection, products: unique };
 }

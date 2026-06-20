@@ -5,12 +5,14 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Loader2, Send, Save, MessageCircle, Copy, Check } from "lucide-react";
 import { getMyTelegram, saveMyTelegram, sendMyTelegramTest } from "@/lib/telegram.functions";
+import { useI18n } from "@/lib/i18n";
 
-export const Route = createFileRoute("/_authenticated/admin/notifications")({
+export const Route = createFileRoute("/_authenticated/admini/notifications")({
   component: NotificationsPage,
 });
 
 function NotificationsPage() {
+  const { t } = useI18n();
   const get = useServerFn(getMyTelegram);
   const save = useServerFn(saveMyTelegram);
   const test = useServerFn(sendMyTelegramTest);
@@ -27,15 +29,15 @@ function NotificationsPage() {
     mutationFn: () => save({ data: { chat_id: val.trim() || null } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["my-telegram"] });
-      toast.success("Сохранено");
+      toast.success(t("admin.saved"));
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Ошибка"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
 
   const testM = useMutation({
     mutationFn: () => test(),
-    onSuccess: () => toast.success("Тестовое сообщение отправлено"),
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Ошибка"),
+    onSuccess: () => toast.success(t("admin.notify.testSent")),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
 
   const bot = me.data?.bot ?? "smegarmbot";
@@ -44,54 +46,37 @@ function NotificationsPage() {
   return (
     <div className="space-y-8 max-w-3xl">
       <header>
-        <h1 className="font-serif text-4xl">Уведомления</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Получайте новые заказы и заявки прямо в Telegram. Настраивается индивидуально для каждого сотрудника.
-        </p>
+        <h1 className="font-serif text-4xl">{t("admin.notify.title")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("admin.notify.desc")}</p>
       </header>
 
       <section className="rounded-sm border border-border p-6 bg-secondary/20">
         <h2 className="font-medium text-lg flex items-center gap-2">
-          <MessageCircle className="h-5 w-5" /> Как подключить Telegram-бота
+          <MessageCircle className="h-5 w-5" /> {t("admin.notify.howTo")}
         </h2>
         <ol className="mt-4 space-y-3 text-sm">
           <li>
-            <span className="font-medium">1.</span> Откройте бота{" "}
-            <a
-              href={botLink}
-              target="_blank"
-              rel="noreferrer"
-              className="underline underline-offset-2 hover:text-primary"
-            >
-              @{bot}
-            </a>{" "}
-            в Telegram.
+            <span className="font-medium">1.</span> {t("admin.notify.step1")}{" "}
+            <a href={botLink} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-primary">@{bot}</a>{" "}
+            {t("admin.notify.step1b")}
           </li>
           <li>
-            <span className="font-medium">2.</span> Нажмите кнопку <b>Start</b> (или отправьте команду{" "}
+            <span className="font-medium">2.</span> {t("admin.notify.step2")} <b>Start</b> {t("admin.notify.step2b")}{" "}
             <code className="rounded bg-muted px-1.5 py-0.5">/start</code>).
           </li>
           <li>
-            <span className="font-medium">3.</span> Бот пришлёт вам ваш <b>Chat ID</b> — это число вида{" "}
+            <span className="font-medium">3.</span> {t("admin.notify.step3")} <b>Chat ID</b> {t("admin.notify.step3b")}{" "}
             <code className="rounded bg-muted px-1.5 py-0.5">123456789</code>.
           </li>
-          <li>
-            <span className="font-medium">4.</span> Скопируйте Chat ID и вставьте его в поле ниже.
-            Нажмите «Сохранить», затем «Отправить тест».
-          </li>
+          <li><span className="font-medium">4.</span> {t("admin.notify.step4")}</li>
         </ol>
-        <a
-          href={botLink}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-5 inline-flex items-center gap-2 rounded-sm bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
-        >
-          <MessageCircle className="h-4 w-4" /> Открыть @{bot}
+        <a href={botLink} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 rounded-sm bg-foreground px-4 py-2 text-sm text-background hover:opacity-90">
+          <MessageCircle className="h-4 w-4" /> {t("admin.notify.openBot", { bot })}
         </a>
       </section>
 
       <section className="rounded-sm border border-border p-6 space-y-4">
-        <h2 className="font-medium text-lg">Ваш Chat ID</h2>
+        <h2 className="font-medium text-lg">{t("admin.notify.chatId")}</h2>
         {me.isLoading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
@@ -101,7 +86,7 @@ function NotificationsPage() {
                 inputMode="numeric"
                 value={val}
                 onChange={(e) => setVal(e.target.value)}
-                placeholder="например, 123456789"
+                placeholder={t("admin.notify.chatIdPlaceholder")}
                 className="flex-1 rounded-sm border border-border bg-background px-3 py-2 font-mono text-sm"
               />
               {me.data?.chat_id && val === me.data.chat_id && (
@@ -124,7 +109,7 @@ function NotificationsPage() {
                 className="inline-flex items-center gap-2 rounded-sm bg-foreground px-4 py-2 text-sm text-background disabled:opacity-40"
               >
                 {saveM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Сохранить
+                {t("admin.save")}
               </button>
               <button
                 onClick={() => testM.mutate()}
@@ -132,24 +117,18 @@ function NotificationsPage() {
                 className="inline-flex items-center gap-2 rounded-sm border border-border px-4 py-2 text-sm hover:bg-secondary disabled:opacity-40"
               >
                 {testM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                Отправить тест
+                {t("admin.notify.sendTest")}
               </button>
               {val && (
                 <button
-                  onClick={() => {
-                    setVal("");
-                    saveM.mutate();
-                  }}
+                  onClick={() => { setVal(""); saveM.mutate(); }}
                   className="ml-auto inline-flex items-center gap-2 rounded-sm border border-border px-3 py-2 text-xs text-muted-foreground hover:bg-secondary"
                 >
-                  Отключить
+                  {t("admin.notify.disconnect")}
                 </button>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Уведомления получают все сотрудники с сохранённым Chat ID.
-              Если тест не приходит — убедитесь, что вы написали боту хотя бы один раз (Telegram запрещает писать первым).
-            </p>
+            <p className="text-xs text-muted-foreground">{t("admin.notify.footer")}</p>
           </>
         )}
       </section>

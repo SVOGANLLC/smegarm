@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { getI18nDefaults } from "@/lib/i18n";
 import { Header } from "@/components/site/Header";
 import { Hero } from "@/components/site/Hero";
 import { Featured } from "@/components/site/Featured";
@@ -11,31 +13,45 @@ import { Dealer } from "@/components/site/Dealer";
 import { Footer } from "@/components/site/Footer";
 import { ShowcaseStrip } from "@/components/site/ShowcaseStrip";
 import { Partners } from "@/components/site/Partners";
+import { canonicalLink, hreflangLinks, localBusinessJsonLd, organizationJsonLd, seoMeta, websiteJsonLd } from "@/lib/seo";
+
+const hyMeta = getI18nDefaults().hy;
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: [
-      { title: "Smeg Armenia — Official SMEG Italian appliances in Yerevan" },
-      {
-        name: "description",
-        content:
-          "Premium Italian Smeg appliances in Armenia. Refrigerators, ovens, coffee machines and iconic 50's style — official representative in Yerevan.",
-      },
-      { property: "og:title", content: "Smeg Armenia — Italian appliances since 1948" },
-      {
-        property: "og:description",
-        content:
-          "Discover the official Smeg collection in Armenia. Visit our Yerevan showroom at Nar-Dos 2.",
-      },
-      { property: "og:type", content: "website" },
+    meta: seoMeta({
+      title: hyMeta["home.metaTitle"],
+      description: hyMeta["home.metaDesc"],
+      path: "/",
+      keywords: hyMeta["home.metaKeywords"],
+      locale: "hy_AM",
+    }),
+    links: [...hreflangLinks("/"), ...canonicalLink("/")],
+    scripts: [
+      { type: "application/ld+json", children: JSON.stringify(organizationJsonLd()) },
+      { type: "application/ld+json", children: JSON.stringify(websiteJsonLd()) },
+      { type: "application/ld+json", children: JSON.stringify(localBusinessJsonLd()) },
     ],
   }),
   component: Index,
 });
 
+function HashScrollOnLoad() {
+  useEffect(() => {
+    const hash = window.location.hash.replace(/^#/, "");
+    if (!hash) return;
+    const t = window.setTimeout(() => {
+      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, []);
+  return null;
+}
+
 function Index() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <HashScrollOnLoad />
       <Header />
       <main>
         <Hero />

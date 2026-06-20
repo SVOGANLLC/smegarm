@@ -6,11 +6,12 @@ import { Footer } from "@/components/site/Footer";
 import { checkConversePayment } from "@/lib/converse.functions";
 import { Check, Loader2, X, ArrowRight, ShieldCheck } from "lucide-react";
 import { z } from "zod";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/payment/converse/return")({
   validateSearch: (s: Record<string, unknown>) =>
     z.object({ order: z.string().uuid().optional(), demo: z.enum(["loading", "paid", "failed", "pending"]).optional() }).parse(s),
-  head: () => ({ meta: [{ title: "Оплата — Smeg Armenia" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Payment — Smeg Armenia" }, { name: "robots", content: "noindex" }] }),
   component: ReturnPage,
 });
 
@@ -18,8 +19,13 @@ function ReturnPage() {
   const { order, demo } = Route.useSearch();
   const check = useServerFn(checkConversePayment);
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [state, setState] = useState<"loading" | "paid" | "failed" | "pending">("loading");
   const [orderNo, setOrderNo] = useState<number | null>(null);
+
+  useEffect(() => {
+    document.title = t("payment.metaTitle");
+  }, [t]);
 
   useEffect(() => {
     if (demo) {
@@ -40,7 +46,10 @@ function ReturnPage() {
           setTimeout(() => navigate({ to: "/order/$id", params: { id: String(r.order_no) }, replace: true }), 1500);
           return;
         }
-        if (r.payment_status === "failed" || r.payment_status === "cancelled") { setState("failed"); return; }
+        if (r.payment_status === "failed" || r.payment_status === "cancelled") {
+          setState("failed");
+          return;
+        }
         if (++tries < 6) setTimeout(poll, 1500);
         else setState("pending");
       } catch {
@@ -51,11 +60,12 @@ function ReturnPage() {
     return () => { cancelled = true; };
   }, [order, check, navigate, demo]);
 
+  const no = orderNo ?? "—";
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       <main className="relative overflow-hidden pt-32 pb-32">
-        {/* Decorative SMEG-style backdrop */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-[0.07]"
@@ -67,42 +77,47 @@ function ReturnPage() {
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-24 mx-auto h-px max-w-5xl bg-gradient-to-r from-transparent via-white/15 to-transparent" />
 
         <div className="relative mx-auto max-w-2xl px-6 md:px-10">
-          {state === "loading" && <LoadingCard title="Проверяем оплату" subtitle="Соединяемся с Converse Bank. Это займёт несколько секунд." />}
+          {state === "loading" && (
+            <LoadingCard title={t("payment.loading.title")} subtitle={t("payment.loading.subtitle")} />
+          )}
 
           {state === "paid" && (
             <StatusCard
-              eyebrow="Подтверждено"
+              eyebrow={t("payment.paid.eyebrow")}
               accent="#10b981"
               icon={<Check className="h-10 w-10" strokeWidth={2.4} />}
-              title="Спасибо за&nbsp;покупку"
-              lead={`Заказ №${orderNo ?? "—"} оплачен. Менеджер свяжется с вами в течение рабочего дня.`}
-              note="Перенаправляем на страницу заказа…"
-              cta={orderNo ? { href: `/order/${orderNo}`, label: `К заказу №${orderNo}` } : undefined}
+              title={t("payment.paid.title")}
+              lead={t("payment.paid.lead", { no })}
+              note={t("payment.paid.note")}
+              secure={t("payment.secure")}
+              cta={orderNo ? { href: `/order/${orderNo}`, label: t("payment.paid.cta", { no }) } : undefined}
             />
           )}
 
           {state === "failed" && (
             <StatusCard
-              eyebrow="Платёж не выполнен"
+              eyebrow={t("payment.failed.eyebrow")}
               accent="#E30613"
               icon={<X className="h-10 w-10" strokeWidth={2.4} />}
-              title="Оплата не&nbsp;прошла"
-              lead="Средства не списаны. Попробуйте оплатить заново или выберите другой способ оплаты при оформлении."
-              note="Если ошибка повторяется — свяжитесь с нами, мы поможем оформить заказ вручную."
-              cta={orderNo ? { href: `/order/${orderNo}`, label: `Открыть заказ №${orderNo}` } : { href: "/catalog", label: "Вернуться в каталог" }}
-              secondaryCta={{ href: "/contacts", label: "Связаться с нами" }}
+              title={t("payment.failed.title")}
+              lead={t("payment.failed.lead")}
+              note={t("payment.failed.note")}
+              secure={t("payment.secure")}
+              cta={orderNo && order ? { href: `/order/${orderNo}?oid=${order}&pay=error`, label: t("payment.failed.cta", { no }) } : { href: "/catalog", label: t("payment.failed.catalog") }}
+              secondaryCta={{ href: "/#contact", label: t("payment.contact") }}
             />
           )}
 
           {state === "pending" && (
             <StatusCard
-              eyebrow="В обработке"
+              eyebrow={t("payment.pending.eyebrow")}
               accent="#d4a52a"
               icon={<Loader2 className="h-10 w-10 animate-spin" strokeWidth={2.2} />}
-              title="Платёж обрабатывается"
-              lead="Банк ещё подтверждает транзакцию. Если деньги списались — статус заказа обновится автоматически."
-              note="Эту страницу можно закрыть, мы напишем вам, как только получим подтверждение."
-              cta={orderNo ? { href: `/order/${orderNo}`, label: `К заказу №${orderNo}` } : undefined}
+              title={t("payment.pending.title")}
+              lead={t("payment.pending.lead")}
+              note={t("payment.pending.note")}
+              secure={t("payment.secure")}
+              cta={orderNo && order ? { href: `/order/${orderNo}?oid=${order}&pay=pending`, label: t("payment.paid.cta", { no }) } : undefined}
             />
           )}
         </div>
@@ -134,6 +149,7 @@ function StatusCard({
   title,
   lead,
   note,
+  secure,
   cta,
   secondaryCta,
 }: {
@@ -143,12 +159,12 @@ function StatusCard({
   title: string;
   lead: string;
   note?: string;
+  secure: string;
   cta?: Cta;
   secondaryCta?: Cta;
 }) {
   return (
     <div className="relative overflow-hidden rounded-3xl border border-border bg-card/70 backdrop-blur-sm">
-      {/* Top accent bar */}
       <div className="h-[3px] w-full" style={{ background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }} />
 
       <div className="px-8 py-14 text-center md:px-14 md:py-16">
@@ -164,10 +180,7 @@ function StatusCard({
         <p className="mt-8 text-[11px] uppercase tracking-[0.32em]" style={{ color: accent }}>
           {eyebrow}
         </p>
-        <h1
-          className="mt-3 font-serif text-4xl leading-[1.05] tracking-tight md:text-5xl"
-          dangerouslySetInnerHTML={{ __html: title }}
-        />
+        <h1 className="mt-3 font-serif text-4xl leading-[1.05] tracking-tight md:text-5xl">{title}</h1>
         <p className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-muted-foreground">{lead}</p>
 
         {(cta || secondaryCta) && (
@@ -198,7 +211,7 @@ function StatusCard({
 
         <div className="mt-12 flex items-center justify-center gap-2 text-[10px] uppercase tracking-[0.32em] text-muted-foreground/70">
           <ShieldCheck className="h-3.5 w-3.5" />
-          Защищённое соединение · Converse Bank
+          {secure}
         </div>
       </div>
     </div>

@@ -5,18 +5,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChevronDown, Loader2, Phone, MessageCircle, LayoutGrid, List, History, Save, Download } from "lucide-react";
 import * as XLSX from "xlsx";
+import { useI18n } from "@/lib/i18n";
 
-export const Route = createFileRoute("/_authenticated/admin/orders")({
+export const Route = createFileRoute("/_authenticated/admini/orders")({
   component: AdminOrders,
 });
 
-const STATUS: Array<{ value: string; label: string; cls: string }> = [
-  { value: "new", label: "Новый", cls: "bg-blue-100 text-blue-800" },
-  { value: "in_progress", label: "В работе", cls: "bg-amber-100 text-amber-800" },
-  { value: "confirmed", label: "Подтверждён", cls: "bg-purple-100 text-purple-800" },
-  { value: "shipped", label: "Отправлен", cls: "bg-indigo-100 text-indigo-800" },
-  { value: "done", label: "Выполнен", cls: "bg-emerald-100 text-emerald-800" },
-  { value: "cancelled", label: "Отменён", cls: "bg-rose-100 text-rose-800" },
+const STATUS: Array<{ value: string; key: string; cls: string }> = [
+  { value: "new", key: "admin.orders.status.new", cls: "bg-blue-100 text-blue-800" },
+  { value: "in_progress", key: "admin.orders.status.in_progress", cls: "bg-amber-100 text-amber-800" },
+  { value: "confirmed", key: "admin.orders.status.confirmed", cls: "bg-purple-100 text-purple-800" },
+  { value: "shipped", key: "admin.orders.status.shipped", cls: "bg-indigo-100 text-indigo-800" },
+  { value: "done", key: "admin.orders.status.done", cls: "bg-emerald-100 text-emerald-800" },
+  { value: "cancelled", key: "admin.orders.status.cancelled", cls: "bg-rose-100 text-rose-800" },
 ];
 
 type Order = {
@@ -29,6 +30,8 @@ type Order = {
   address: string | null;
   delivery_method: string;
   payment_method: string;
+  payment_status: string | null;
+  px_number: string | null;
   comment: string | null;
   status: string;
   admin_notes: string | null;
@@ -50,7 +53,35 @@ type Item = {
   subtotal_amd: number;
 };
 
+function statusLabel(value: string, t: (key: string) => string) {
+  return t(STATUS.find((s) => s.value === value)?.key ?? value);
+}
+
+function deliveryLabel(v: string, t: (key: string) => string) {
+  if (v === "pickup") return t("admin.orders.delivery.pickup");
+  if (v === "courier_yerevan") return t("admin.orders.delivery.yerevan");
+  return t("admin.orders.delivery.armenia");
+}
+
+function paymentLabel(v: string, t: (key: string) => string) {
+  if (v === "cash") return t("admin.orders.payment.cash");
+  if (v === "card_online") return t("admin.orders.payment.cardOnline");
+  if (v === "card_transfer") return t("admin.orders.payment.card");
+  return v;
+}
+
+function paymentStatusLabel(v: string | null | undefined, t: (key: string) => string) {
+  if (!v || v === "unknown") return t("admin.orders.paymentStatus.unknown");
+  if (v === "paid") return t("admin.orders.paymentStatus.paid");
+  if (v === "pending") return t("admin.orders.paymentStatus.pending");
+  if (v === "failed") return t("admin.orders.paymentStatus.failed");
+  if (v === "cancelled") return t("admin.orders.paymentStatus.cancelled");
+  if (v === "refunded") return t("admin.orders.paymentStatus.refunded");
+  return v;
+}
+
 function AdminOrders() {
+  const { t } = useI18n();
   const [filter, setFilter] = useState<string>("");
   const [view, setView] = useState<"list" | "kanban">("list");
   const [search, setSearch] = useState("");
@@ -81,15 +112,15 @@ function AdminOrders() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-orders"] });
-      toast.success("Статус обновлён");
+      toast.success(t("admin.orders.statusUpdated"));
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Ошибка"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
 
   const exportXlsx = useMutation({
     mutationFn: async () => {
       const list = orders.data ?? [];
-      if (!list.length) throw new Error("Нет заказов для экспорта");
+      if (!list.length) throw new Error(t("admin.orders.noExport"));
       const ids = list.map((o) => o.id);
       const { data: itemsAll, error } = await supabase
         .from("order_items")
@@ -97,31 +128,31 @@ function AdminOrders() {
         .in("order_id", ids);
       if (error) throw error;
       const byOrder = new Map<string, Item[]>();
-      (itemsAll ?? []).forEach((it: any) => {
+      (itemsAll ?? []).forEach((it: Item & { order_id: string }) => {
         const arr = byOrder.get(it.order_id) ?? [];
         arr.push(it);
         byOrder.set(it.order_id, arr);
       });
       const rows = list.map((o) => {
         const its = byOrder.get(o.id) ?? [];
-        const positions = its.map((it: any) => `${it.product_sku ?? ""} ${it.name} ×${it.qty} = ${it.subtotal_amd} ֏`).join("\n");
+        const positions = its.map((it) => `${it.product_sku ?? ""} ${it.name} ×${it.qty} = ${it.subtotal_amd} ֏`).join("\n");
         return {
-          "№": o.order_no,
-          "Дата": new Date(o.created_at).toLocaleString("ru-RU"),
-          "Статус": STATUS.find((s) => s.value === o.status)?.label ?? o.status,
-          "Клиент": o.customer_name,
-          "Телефон": o.customer_phone,
-          "Email": o.customer_email ?? "",
-          "Город": o.city ?? "",
-          "Адрес": o.address ?? "",
-          "Доставка": deliveryLabel(o.delivery_method),
-          "Оплата": paymentLabel(o.payment_method),
-          "Позиции": positions,
-          "Кол-во": its.reduce((s: number, it: any) => s + (it.qty ?? 0), 0),
-          "Сумма, ֏": o.total_amd,
-          "Комментарий клиента": o.comment ?? "",
-          "Внутренние заметки": o.internal_notes ?? "",
-          "Язык": o.lang ?? "",
+          [t("admin.orders.colNo")]: o.order_no,
+          [t("admin.orders.colDate")]: new Date(o.created_at).toLocaleString("ru-RU"),
+          [t("admin.orders.colStatus")]: statusLabel(o.status, t),
+          [t("admin.orders.colClient")]: o.customer_name,
+          [t("admin.orders.colPhone")]: o.customer_phone,
+          [t("admin.orders.colEmail")]: o.customer_email ?? "",
+          [t("admin.orders.colCity")]: o.city ?? "",
+          [t("admin.orders.colAddress")]: o.address ?? "",
+          [t("admin.orders.delivery")]: deliveryLabel(o.delivery_method, t),
+          [t("admin.orders.payment")]: paymentLabel(o.payment_method, t),
+          [t("admin.orders.items")]: positions,
+          [t("admin.orders.colQty")]: its.reduce((s: number, it) => s + (it.qty ?? 0), 0),
+          [t("admin.orders.colTotal")]: o.total_amd,
+          [t("admin.orders.clientComment")]: o.comment ?? "",
+          [t("admin.orders.internalNotes")]: o.internal_notes ?? "",
+          [t("admin.orders.colLang")]: o.lang ?? "",
         };
       });
       const ws = XLSX.utils.json_to_sheet(rows);
@@ -135,15 +166,15 @@ function AdminOrders() {
       const date = new Date().toISOString().slice(0, 10);
       XLSX.writeFile(wb, `smeg-orders-${date}.xlsx`);
     },
-    onSuccess: () => toast.success("Экспорт готов"),
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Ошибка экспорта"),
+    onSuccess: () => toast.success(t("admin.orders.exportReady")),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.orders.exportError")),
   });
 
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-serif text-4xl">Заказы</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Все заказы из корзины.</p>
+        <h1 className="font-serif text-4xl">{t("admin.orders.title")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("admin.orders.desc")}</p>
       </header>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -151,7 +182,7 @@ function AdminOrders() {
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Поиск: имя, телефон, №"
+          placeholder={t("admin.orders.search")}
           className="w-full rounded-sm border border-border bg-background px-3 py-1.5 text-sm sm:w-auto"
         />
         <button
@@ -160,7 +191,7 @@ function AdminOrders() {
             filter === "" ? "bg-foreground text-background" : "border border-border hover:bg-secondary"
           }`}
         >
-          Все
+          {t("admin.all")}
         </button>
         {STATUS.map((s) => (
           <button
@@ -170,7 +201,7 @@ function AdminOrders() {
               filter === s.value ? "bg-foreground text-background" : "border border-border hover:bg-secondary"
             }`}
           >
-            {s.label}
+            {t(s.key)}
           </button>
         ))}
         <div className="inline-flex rounded-sm border border-border p-0.5 sm:ml-auto">
@@ -178,13 +209,13 @@ function AdminOrders() {
             onClick={() => setView("list")}
             className={`flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-xs ${view === "list" ? "bg-foreground text-background" : "text-foreground/70"}`}
           >
-            <List className="h-3.5 w-3.5" /> Список
+            <List className="h-3.5 w-3.5" /> {t("admin.orders.list")}
           </button>
           <button
             onClick={() => setView("kanban")}
             className={`flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-xs ${view === "kanban" ? "bg-foreground text-background" : "text-foreground/70"}`}
           >
-            <LayoutGrid className="h-3.5 w-3.5" /> Доска
+            <LayoutGrid className="h-3.5 w-3.5" /> {t("admin.orders.kanban")}
           </button>
         </div>
         <button
@@ -200,13 +231,13 @@ function AdminOrders() {
       {orders.isLoading && (
         <p className="text-sm text-muted-foreground">
           <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
-          Загрузка…
+          {t("admin.loading")}
         </p>
       )}
 
       {orders.data?.length === 0 && (
         <p className="rounded-sm border border-border p-12 text-center text-muted-foreground">
-          Пока нет заказов
+          {t("admin.orders.empty")}
         </p>
       )}
 
@@ -233,6 +264,7 @@ function KanbanView({
   orders: Order[];
   onStatusChange: (id: string, status: string) => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 md:grid md:grid-cols-3 md:overflow-visible xl:grid-cols-6">
       {STATUS.map((col) => {
@@ -240,7 +272,7 @@ function KanbanView({
         return (
           <div key={col.value} className="w-[80vw] min-w-[260px] flex-shrink-0 snap-start rounded-sm border border-border bg-secondary/20 sm:w-72 md:w-auto">
             <div className="flex items-center justify-between border-b border-border px-3 py-2">
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] ${col.cls}`}>{col.label}</span>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] ${col.cls}`}>{t(col.key)}</span>
               <span className="text-xs text-muted-foreground">{items.length}</span>
             </div>
             <div className="space-y-2 p-2">
@@ -264,7 +296,7 @@ function KanbanView({
                     className="mt-2 w-full rounded-sm border border-border bg-background px-1.5 py-1 text-[11px]"
                   >
                     {STATUS.map((s) => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
+                      <option key={s.value} value={s.value}>{t(s.key)}</option>
                     ))}
                   </select>
                 </div>
@@ -278,7 +310,7 @@ function KanbanView({
                 }}
                 className="rounded-sm border border-dashed border-border/60 p-3 text-center text-[11px] text-muted-foreground/60"
               >
-                Перетащить сюда
+                {t("admin.orders.dropHere")}
               </div>
             </div>
           </div>
@@ -289,12 +321,13 @@ function KanbanView({
 }
 
 function OrderRow({ order, onStatusChange }: { order: Order; onStatusChange: (s: string) => void }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState(order.internal_notes ?? "");
   const qc = useQueryClient();
   useEffect(() => setNotes(order.internal_notes ?? ""), [order.id, order.internal_notes]);
   const status = STATUS.find((s) => s.value === order.status) ?? STATUS[0];
-  const wa = `https://wa.me/${order.customer_phone.replace(/\D/g, "")}?text=${encodeURIComponent("Здравствуйте! По вашему заказу №" + order.order_no)}`;
+  const wa = `https://wa.me/${order.customer_phone.replace(/\D/g, "")}?text=${encodeURIComponent(t("admin.orders.waPrefill") + order.order_no)}`;
 
   const items = useQuery({
     queryKey: ["admin-order-items", order.id],
@@ -313,9 +346,9 @@ function OrderRow({ order, onStatusChange }: { order: Order; onStatusChange: (s:
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-orders"] });
-      toast.success("Заметки сохранены");
+      toast.success(t("admin.orders.notesSaved"));
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Ошибка"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
 
   return (
@@ -328,7 +361,7 @@ function OrderRow({ order, onStatusChange }: { order: Order; onStatusChange: (s:
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-sm">#{order.order_no}</span>
             <span className={`rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] ${status.cls}`}>
-              {status.label}
+              {t(status.key)}
             </span>
           </div>
           <div className="min-w-0">
@@ -345,36 +378,42 @@ function OrderRow({ order, onStatusChange }: { order: Order; onStatusChange: (s:
       {open && (
         <div className="border-t border-border bg-secondary/20 p-4 sm:p-5 space-y-4 text-sm">
           <div className="grid gap-4 md:grid-cols-3">
-            <Info label="Контакт">
+            <Info label={t("admin.orders.contact")}>
               <p>{order.customer_name}</p>
               <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
               {order.customer_email && <p className="text-xs text-muted-foreground">{order.customer_email}</p>}
               <div className="mt-2 flex gap-2">
                 <a href={`tel:${order.customer_phone}`} className="flex items-center gap-1 rounded-sm border border-border px-2 py-1 text-xs hover:bg-background">
-                  <Phone className="h-3 w-3" /> Позвонить
+                  <Phone className="h-3 w-3" /> {t("admin.orders.call")}
                 </a>
                 <a href={wa} target="_blank" rel="noreferrer" className="flex items-center gap-1 rounded-sm border border-border px-2 py-1 text-xs hover:bg-background">
                   <MessageCircle className="h-3 w-3" /> WhatsApp
                 </a>
               </div>
             </Info>
-            <Info label="Доставка">
-              <p>{deliveryLabel(order.delivery_method)}</p>
+            <Info label={t("admin.orders.delivery")}>
+              <p>{deliveryLabel(order.delivery_method, t)}</p>
               {order.city && <p className="text-xs text-muted-foreground">{order.city}</p>}
               {order.address && <p className="text-xs text-muted-foreground">{order.address}</p>}
             </Info>
-            <Info label="Оплата">
-              <p>{paymentLabel(order.payment_method)}</p>
+            <Info label={t("admin.orders.payment")}>
+              <p>{paymentLabel(order.payment_method, t)}</p>
+              {order.payment_method === "card_online" && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {paymentStatusLabel(order.payment_status, t)}
+                  {order.px_number ? ` · px ${order.px_number}` : ""}
+                </p>
+              )}
             </Info>
           </div>
           {order.comment && (
-            <Info label="Комментарий клиента">
+            <Info label={t("admin.orders.clientComment")}>
               <p className="whitespace-pre-line text-muted-foreground">{order.comment}</p>
             </Info>
           )}
 
           <div>
-            <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Позиции</p>
+            <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground">{t("admin.orders.items")}</p>
             {items.isLoading ? (
               <Loader2 className="mt-2 inline h-4 w-4 animate-spin" />
             ) : (
@@ -403,27 +442,27 @@ function OrderRow({ order, onStatusChange }: { order: Order; onStatusChange: (s:
           </div>
 
           <div>
-            <label className="block text-xs uppercase tracking-[0.15em] text-muted-foreground">Изменить статус</label>
+            <label className="block text-xs uppercase tracking-[0.15em] text-muted-foreground">{t("admin.orders.changeStatus")}</label>
             <select
               value={order.status}
               onChange={(e) => onStatusChange(e.target.value)}
               className="mt-1 rounded-sm border border-border bg-background px-3 py-2 text-sm"
             >
               {STATUS.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
+                <option key={s.value} value={s.value}>{t(s.key)}</option>
               ))}
             </select>
           </div>
 
           <div>
             <label className="block text-xs uppercase tracking-[0.15em] text-muted-foreground">
-              Внутренние заметки (видны только команде)
+              {t("admin.orders.internalNotes")}
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              placeholder="Договорённости, нюансы, контакты курьера…"
+              placeholder={t("admin.orders.notesPlaceholder")}
               className="mt-1 w-full rounded-sm border border-border bg-background px-3 py-2 text-sm"
             />
             <button
@@ -432,22 +471,22 @@ function OrderRow({ order, onStatusChange }: { order: Order; onStatusChange: (s:
               className="mt-2 inline-flex items-center gap-2 rounded-sm bg-foreground px-3 py-1.5 text-xs text-background disabled:opacity-40"
             >
               {saveNotes.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-              Сохранить
+              {t("admin.save")}
             </button>
           </div>
 
           {order.status_history && order.status_history.length > 0 && (
             <div>
               <p className="text-xs uppercase tracking-[0.15em] text-muted-foreground flex items-center gap-1.5">
-                <History className="h-3 w-3" /> История статусов
+                <History className="h-3 w-3" /> {t("admin.orders.history")}
               </p>
               <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                 {order.status_history.map((h, i) => (
                   <li key={i}>
                     {new Date(h.at).toLocaleString("ru-RU")} ·{" "}
-                    {STATUS.find((s) => s.value === h.from)?.label ?? h.from} →{" "}
+                    {statusLabel(h.from, t)} →{" "}
                     <span className="text-foreground">
-                      {STATUS.find((s) => s.value === h.to)?.label ?? h.to}
+                      {statusLabel(h.to, t)}
                     </span>
                   </li>
                 ))}
@@ -467,15 +506,4 @@ function Info({ label, children }: { label: string; children: React.ReactNode })
       <div className="mt-1">{children}</div>
     </div>
   );
-}
-
-function deliveryLabel(v: string) {
-  if (v === "pickup") return "Самовывоз";
-  if (v === "courier_yerevan") return "Курьер по Еревану";
-  return "Доставка по Армении";
-}
-function paymentLabel(v: string) {
-  if (v === "cash") return "Наличные при получении";
-  if (v === "card_transfer") return "Перевод на карту";
-  return "Idram";
 }

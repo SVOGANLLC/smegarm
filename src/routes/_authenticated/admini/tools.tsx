@@ -7,11 +7,12 @@ import { toast } from "sonner";
 import { Download, Upload, Percent, Loader2, Languages } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { countUntranslated, translateBatch } from "@/lib/translate.functions";
+import { useI18n } from "@/lib/i18n";
 
-export const Route = createFileRoute("/_authenticated/admin/tools")({
+export const Route = createFileRoute("/_authenticated/admini/tools")({
   beforeLoad: ({ context }) => {
     const role = (context as { role?: string }).role;
-    if (role !== "admin") throw redirect({ to: "/admin" });
+    if (role !== "admin") throw redirect({ to: "/admini" });
   },
   component: AdminTools,
 });
@@ -69,12 +70,13 @@ const NUM_FIELDS = new Set(["price_amd", "price_old", "sort_weight"]);
 type Row = Record<string, unknown> & { sku?: unknown };
 
 function AdminTools() {
+  const { t } = useI18n();
   return (
     <div className="space-y-12">
       <header>
-        <h1 className="font-serif text-4xl">Инструменты</h1>
+        <h1 className="font-serif text-4xl">{t("admin.tools.title")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Массовые операции с каталогом: экспорт, импорт, пересчёт цен.
+          {t("admin.tools.desc")}
         </p>
       </header>
       <ExportSection />
@@ -99,6 +101,7 @@ function Card({ title, icon: Icon, children }: { title: string; icon: React.Comp
 
 // ---------- EXPORT ----------
 function ExportSection() {
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
 
   async function run() {
@@ -125,18 +128,18 @@ function ExportSection() {
       XLSX.utils.book_append_sheet(wb, ws, "products");
       const stamp = new Date().toISOString().slice(0, 10);
       XLSX.writeFile(wb, `smeg-catalog-${stamp}.xlsx`);
-      toast.success(`Экспортировано ${all.length} товаров`);
+      toast.success(t("admin.tools.exported", { n: all.length }));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Ошибка экспорта");
+      toast.error(e instanceof Error ? e.message : t("admin.orders.exportError"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <Card title="Экспорт каталога" icon={Download}>
+    <Card title={t("admin.tools.exportTitle")} icon={Download}>
       <p className="text-sm text-muted-foreground">
-        Скачать весь каталог в XLSX — для бухгалтерии, маркетплейсов или редактирования.
+        {t("admin.tools.exportDesc")}
       </p>
       <button
         onClick={run}
@@ -144,7 +147,7 @@ function ExportSection() {
         className="inline-flex items-center gap-2 rounded-sm bg-foreground px-5 py-2.5 text-sm uppercase tracking-[0.15em] text-background disabled:opacity-50"
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-        Скачать XLSX
+        {t("admin.tools.downloadXlsx")}
       </button>
     </Card>
   );
@@ -169,6 +172,7 @@ function normalizeValue(field: string, raw: unknown): unknown {
 }
 
 function ImportSection() {
+  const { t } = useI18n();
   const fileRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<Row[] | null>(null);
   const [diff, setDiff] = useState<DiffRow[] | null>(null);
@@ -189,7 +193,7 @@ function ImportSection() {
       setRows(json);
       await analyze(json);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Не удалось прочитать файл");
+      toast.error(err instanceof Error ? err.message : t("admin.tools.readError"));
     } finally {
       setAnalyzing(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -199,7 +203,7 @@ function ImportSection() {
   async function analyze(input: Row[]) {
     const skus = input.map((r) => String(r.sku ?? "").trim()).filter(Boolean);
     if (!skus.length) {
-      toast.error("В файле не найдены SKU");
+      toast.error(t("admin.tools.noSku"));
       return;
     }
     const { data, error } = await supabase
@@ -256,12 +260,12 @@ function ImportSection() {
         if (error) throw new Error(`${d.sku}: ${error.message}`);
         ok++;
       }
-      toast.success(`Обновлено ${ok} товаров`);
+      toast.success(t("admin.tools.updatedProducts", { n: ok }));
       setRows(null);
       setDiff(null);
       qc.invalidateQueries({ queryKey: ["admin-products"] });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Ошибка применения");
+      toast.error(e instanceof Error ? e.message : t("admin.tools.applyError"));
     } finally {
       setApplying(false);
     }
@@ -271,10 +275,10 @@ function ImportSection() {
   const missingCount = diff?.filter((d) => d.changes.__missing__).length ?? 0;
 
   return (
-    <Card title="Импорт XLSX (dry-run)" icon={Upload}>
+    <Card title={t("admin.tools.importTitle")} icon={Upload}>
       <p className="text-sm text-muted-foreground">
-        Загрузите XLSX с колонкой <code className="font-mono">sku</code> + любыми из:{" "}
-        <span className="font-mono text-xs">{Array.from(UPDATABLE).join(", ")}</span>. Пустые ячейки игнорируются.
+        {t("admin.tools.importDesc")}{" "}
+        <span className="font-mono text-xs">{Array.from(UPDATABLE).join(", ")}</span>
       </p>
       <div>
         <input
@@ -288,16 +292,16 @@ function ImportSection() {
       {analyzing && (
         <p className="text-sm text-muted-foreground">
           <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
-          Анализ…
+          {t("admin.tools.analyzing")}
         </p>
       )}
       {diff && (
         <div className="space-y-3">
           <div className="text-sm">
-            Готово к применению: <b>{changedCount}</b>. Без изменений:{" "}
+            {t("admin.tools.readyApply")} <b>{changedCount}</b>. {t("admin.tools.unchanged")}{" "}
             <b>{(rows?.length ?? 0) - changedCount - missingCount}</b>.{" "}
             {missingCount > 0 && (
-              <span className="text-amber-600">Не найдено SKU: <b>{missingCount}</b> (будут пропущены).</span>
+              <span className="text-amber-600">{t("admin.tools.missingSku", { n: missingCount })}</span>
             )}
           </div>
           {diff.length > 0 && (
@@ -306,7 +310,7 @@ function ImportSection() {
                 <thead className="bg-secondary/50 text-left">
                   <tr>
                     <th className="p-2">SKU</th>
-                    <th className="p-2">Изменения</th>
+                    <th className="p-2">{t("admin.tools.changes")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -328,7 +332,7 @@ function ImportSection() {
               </table>
               {diff.length > 200 && (
                 <div className="border-t border-border p-2 text-center text-xs text-muted-foreground">
-                  …ещё {diff.length - 200} строк
+                  {t("admin.tools.moreRows", { n: diff.length - 200 })}
                 </div>
               )}
             </div>
@@ -339,7 +343,7 @@ function ImportSection() {
             className="inline-flex items-center gap-2 rounded-sm bg-foreground px-5 py-2.5 text-sm uppercase tracking-[0.15em] text-background disabled:opacity-50"
           >
             {applying ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Применить ({changedCount})
+            {t("admin.tools.applyCount", { n: changedCount })}
           </button>
         </div>
       )}
@@ -349,6 +353,7 @@ function ImportSection() {
 
 // ---------- BULK PRICE ----------
 function BulkPriceSection() {
+  const { t } = useI18n();
   const [scope, setScope] = useState<"all" | "category" | "family">("category");
   const [value, setValue] = useState("");
   const [percent, setPercent] = useState("5");
@@ -407,10 +412,10 @@ function BulkPriceSection() {
   async function apply() {
     const items = preview.data;
     if (!items?.length) {
-      toast.error("Сначала нажмите «Посмотреть»");
+      toast.error(t("admin.tools.previewFirst"));
       return;
     }
-    if (!confirm(`Применить к ${items.length} товарам?`)) return;
+    if (!confirm(t("admin.tools.applyConfirm", { n: items.length }))) return;
     setBusy(true);
     try {
       let ok = 0;
@@ -423,21 +428,21 @@ function BulkPriceSection() {
         if (error) throw error;
         ok++;
       }
-      toast.success(`Обновлено ${ok} цен`);
+      toast.success(t("admin.tools.pricesUpdated", { n: ok }));
       qc.invalidateQueries({ queryKey: ["admin-products"] });
       preview.reset();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Ошибка");
+      toast.error(e instanceof Error ? e.message : t("admin.error"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <Card title="Массовое изменение цен" icon={Percent}>
+    <Card title={t("admin.tools.pricesTitle")} icon={Percent}>
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block text-sm">
-          <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Область</span>
+          <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">{t("admin.tools.scope")}</span>
           <select
             value={scope}
             onChange={(e) => {
@@ -446,20 +451,20 @@ function BulkPriceSection() {
             }}
             className="mt-1 w-full rounded-sm border border-border bg-background px-3 py-2"
           >
-            <option value="category">По категории</option>
-            <option value="family">По линейке</option>
-            <option value="all">Все товары</option>
+            <option value="category">{t("admin.tools.scopeCategory")}</option>
+            <option value="family">{t("admin.tools.scopeFamily")}</option>
+            <option value="all">{t("admin.tools.scopeAll")}</option>
           </select>
         </label>
         {scope !== "all" && (
           <label className="block text-sm">
-            <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Значение</span>
+            <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">{t("admin.tools.value")}</span>
             <select
               value={value}
               onChange={(e) => setValue(e.target.value)}
               className="mt-1 w-full rounded-sm border border-border bg-background px-3 py-2"
             >
-              <option value="">— выбрать —</option>
+              <option value="">{t("admin.tools.select")}</option>
               {(scope === "category" ? cats.data?.categories : cats.data?.families)?.map((v) => (
                 <option key={v} value={v}>
                   {v}
@@ -469,19 +474,19 @@ function BulkPriceSection() {
           </label>
         )}
         <label className="block text-sm">
-          <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Операция</span>
+          <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">{t("admin.tools.operation")}</span>
           <select
             value={mode}
             onChange={(e) => setMode(e.target.value as typeof mode)}
             className="mt-1 w-full rounded-sm border border-border bg-background px-3 py-2"
           >
-            <option value="increase">Поднять на %</option>
-            <option value="decrease">Снизить на %</option>
-            <option value="set_discount">Сделать акцию (старая цена → было)</option>
+            <option value="increase">{t("admin.tools.increase")}</option>
+            <option value="decrease">{t("admin.tools.decrease")}</option>
+            <option value="set_discount">{t("admin.tools.setDiscount")}</option>
           </select>
         </label>
         <label className="block text-sm">
-          <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Процент</span>
+          <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">{t("admin.tools.percent")}</span>
           <input
             type="number"
             value={percent}
@@ -490,7 +495,7 @@ function BulkPriceSection() {
           />
         </label>
         <label className="block text-sm">
-          <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Округлять до, ֏</span>
+          <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">{t("admin.tools.roundTo")}</span>
           <input
             type="number"
             value={roundTo}
@@ -505,7 +510,7 @@ function BulkPriceSection() {
           disabled={preview.isPending || (scope !== "all" && !value)}
           className="rounded-sm border border-border px-5 py-2.5 text-sm uppercase tracking-[0.15em] hover:bg-secondary disabled:opacity-50"
         >
-          Посмотреть
+          {t("admin.tools.preview")}
         </button>
         <button
           onClick={apply}
@@ -513,7 +518,7 @@ function BulkPriceSection() {
           className="inline-flex items-center gap-2 rounded-sm bg-foreground px-5 py-2.5 text-sm uppercase tracking-[0.15em] text-background disabled:opacity-50"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Применить
+          {t("admin.tools.apply")}
         </button>
       </div>
       {preview.data && (
@@ -522,9 +527,9 @@ function BulkPriceSection() {
             <thead className="bg-secondary/50 text-left">
               <tr>
                 <th className="p-2">SKU</th>
-                <th className="p-2">Название</th>
-                <th className="p-2 text-right">Было</th>
-                <th className="p-2 text-right">Станет</th>
+                <th className="p-2">{t("admin.products.nameLabel")}</th>
+                <th className="p-2 text-right">{t("admin.tools.colWas")}</th>
+                <th className="p-2 text-right">{t("admin.tools.colWill")}</th>
               </tr>
             </thead>
             <tbody>
@@ -547,7 +552,7 @@ function BulkPriceSection() {
           </table>
           {preview.data.length > 200 && (
             <div className="border-t border-border p-2 text-center text-xs text-muted-foreground">
-              …ещё {preview.data.length - 200} строк
+              {t("admin.tools.moreRows", { n: preview.data.length - 200 })}
             </div>
           )}
         </div>
@@ -557,6 +562,7 @@ function BulkPriceSection() {
 }
 
 function BulkTranslateSection() {
+  const { t } = useI18n();
   const countFn = useServerFn(countUntranslated);
   const batchFn = useServerFn(translateBatch);
   const [stats, setStats] = useState<{ total: number; needs_en: number; needs_hy: number } | null>(null);
@@ -569,7 +575,7 @@ function BulkTranslateSection() {
       const s = await countFn({});
       setStats(s);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Ошибка");
+      toast.error(e instanceof Error ? e.message : t("admin.error"));
     }
   }
 
@@ -583,7 +589,7 @@ function BulkTranslateSection() {
         if (stopFlag) break;
         const r = await batchFn({ data: { limit: 5 } });
         if (r.processed === 0) {
-          setLog((l) => [...l, "✓ Готово — нечего переводить"]);
+          setLog((l) => [...l, t("admin.tools.nothingToTranslate")]);
           break;
         }
         for (const it of r.results) {
@@ -591,20 +597,18 @@ function BulkTranslateSection() {
         }
         await refresh();
       }
-      toast.success("Перевод завершён");
+      toast.success(t("admin.tools.translateDone"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Ошибка");
+      toast.error(e instanceof Error ? e.message : t("admin.error"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <Card title="AI-перевод каталога (RU → EN + HY)" icon={Languages}>
+    <Card title={t("admin.tools.translateTitle")} icon={Languages}>
       <p className="text-sm text-muted-foreground">
-        Перевод названий, описаний, категорий, цветов и характеристик через ИИ. Бренды
-        (Smeg, Dolce&nbsp;&amp;&nbsp;Gabbana, Blu&nbsp;Mediterraneo, Porsche, Coca-Cola и т.д.) и
-        модельные коды не переводятся.
+        {t("admin.tools.translateDesc")}
       </p>
       <div className="flex flex-wrap gap-3">
         <button
@@ -612,7 +616,7 @@ function BulkTranslateSection() {
           onClick={refresh}
           className="rounded-sm border border-border px-4 py-2 text-xs uppercase tracking-[0.14em] hover:border-foreground"
         >
-          Обновить статистику
+          {t("admin.tools.refreshStats")}
         </button>
         {!busy ? (
           <button
@@ -620,7 +624,7 @@ function BulkTranslateSection() {
             onClick={run}
             className="inline-flex items-center gap-2 rounded-sm bg-foreground px-4 py-2 text-xs uppercase tracking-[0.14em] text-background"
           >
-            ✦ Перевести всё, что не переведено
+            {t("admin.tools.translateAll")}
           </button>
         ) : (
           <button
@@ -628,15 +632,15 @@ function BulkTranslateSection() {
             onClick={() => setStopFlag(true)}
             className="inline-flex items-center gap-2 rounded-sm border border-border px-4 py-2 text-xs uppercase tracking-[0.14em]"
           >
-            <Loader2 className="h-3 w-3 animate-spin" /> Остановить
+            <Loader2 className="h-3 w-3 animate-spin" /> {t("admin.tools.stop")}
           </button>
         )}
       </div>
       {stats && (
         <div className="grid grid-cols-3 gap-3 text-sm">
-          <Stat label="Всего товаров" value={stats.total} />
-          <Stat label="Без английского" value={stats.needs_en} warn={stats.needs_en > 0} />
-          <Stat label="Без армянского" value={stats.needs_hy} warn={stats.needs_hy > 0} />
+          <Stat label={t("admin.tools.statTotal")} value={stats.total} />
+          <Stat label={t("admin.tools.statNoEn")} value={stats.needs_en} warn={stats.needs_en > 0} />
+          <Stat label={t("admin.tools.statNoHy")} value={stats.needs_hy} warn={stats.needs_hy > 0} />
         </div>
       )}
       {log.length > 0 && (
@@ -647,7 +651,7 @@ function BulkTranslateSection() {
         </div>
       )}
       <p className="text-xs text-muted-foreground">
-        Совет: запустите фоном — переводы идут пачками по 5 SKU, каждая ~10–20 секунд.
+        {t("admin.tools.translateTip")}
       </p>
     </Card>
   );

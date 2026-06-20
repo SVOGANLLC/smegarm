@@ -5,58 +5,64 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { ProductGrid } from "@/components/site/ProductCard";
 import type { ProductCard as ProductCardType } from "@/lib/products";
+import { useI18n, getI18nDefaults } from "@/lib/i18n";
+import { canonicalLink, hreflangLinks, seoMeta } from "@/lib/seo";
+
+const hyMeta = getI18nDefaults().hy;
 
 export const Route = createFileRoute("/sale")({
   head: () => ({
-    meta: [
-      { title: "Акции и скидки — Smeg Armenia" },
-      { name: "description", content: "Все актуальные акции и спецпредложения на технику Smeg в Армении." },
-      { property: "og:title", content: "Акции Smeg Armenia" },
-      { property: "og:description", content: "Скидки и спецпредложения на итальянскую технику Smeg." },
-      { name: "robots", content: "index,follow" },
-    ],
-    links: [{ rel: "canonical", href: "/sale" }],
+    meta: seoMeta({
+      title: hyMeta["sale.metaTitle"],
+      description: hyMeta["sale.metaDesc"],
+      path: "/sale",
+      keywords: "Smeg sale Armenia, SMEG discount, special offers Yerevan",
+      locale: "hy_AM",
+    }),
+    links: [...hreflangLinks("/sale"), ...canonicalLink("/sale")],
   }),
   component: Sale,
 });
 
 function Sale() {
+  const { t } = useI18n();
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["sale-page"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "sku,name,category,colour,main_image,price_amd,price_old,discount_percent,availability,is_published,is_featured,is_new,is_bestseller,is_special_offer,badge_text",
+          "sku,name,category,colour,main_image,price_amd,price_old,discount_percent,availability,stock_qty,stock_reserved,lead_time_days,is_published,is_featured,is_new,is_bestseller,is_special_offer,badge_text",
         )
         .eq("is_published", true)
         .or("is_special_offer.eq.true,discount_percent.gt.0")
         .order("discount_percent", { ascending: false })
         .order("name");
       if (error) throw error;
-      return (data ?? []) as unknown as ProductCardType[];
+      return (data ?? []) as ProductCardType[];
     },
   });
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
-      <main className="mx-auto max-w-[1400px] px-6 py-20 md:px-10 md:py-28">
-        <div className="mb-12 flex items-end justify-between gap-4">
-          <div>
-            <p className="eyebrow text-muted-foreground">Special offers</p>
-            <h1 className="mt-3 font-serif text-5xl md:text-6xl">Акции и скидки</h1>
-          </div>
-          <Link to="/catalog" className="smeg-underline text-sm uppercase tracking-[0.2em] text-foreground/70">
-            Весь каталог →
+      <main className="pb-20 pt-24 md:pt-32">
+        <div className="mx-auto max-w-[1400px] px-4 md:px-10">
+          <p className="eyebrow text-muted-foreground">{t("sale.title")}</p>
+          <h1 className="mt-2 font-serif text-3xl md:text-5xl">{t("sale.title")}</h1>
+          {isLoading ? (
+            <p className="mt-8 text-sm text-muted-foreground">{t("catalog.loading")}</p>
+          ) : items.length === 0 ? (
+            <p className="mt-8 text-muted-foreground">{t("sale.empty")}</p>
+          ) : (
+            <div className="mt-10">
+              <ProductGrid items={items} />
+            </div>
+          )}
+          <Link to="/catalog" className="mt-10 inline-block smeg-underline text-sm uppercase tracking-[0.18em]">
+            {t("sale.allCatalog")}
           </Link>
         </div>
-        {isLoading ? (
-          <p className="text-muted-foreground">Загрузка…</p>
-        ) : items.length === 0 ? (
-          <p className="text-muted-foreground">Сейчас активных акций нет. Загляните позже.</p>
-        ) : (
-          <ProductGrid items={items} />
-        )}
       </main>
       <Footer />
     </div>

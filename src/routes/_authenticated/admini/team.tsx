@@ -4,44 +4,41 @@ import { useServerFn } from "@tanstack/react-start";
 import { listTeam, setTeamRole } from "@/lib/admin-team.functions";
 import { toast } from "sonner";
 import { Loader2, ShieldCheck, Headset, User } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
-export const Route = createFileRoute("/_authenticated/admin/team")({
+export const Route = createFileRoute("/_authenticated/admini/team")({
   beforeLoad: ({ context }) => {
     const role = (context as { role?: string }).role;
-    if (role !== "admin") throw redirect({ to: "/admin" });
+    if (role !== "admin") throw redirect({ to: "/admini" });
   },
   component: TeamPage,
 });
 
 function TeamPage() {
+  const { t } = useI18n();
   const fetchTeam = useServerFn(listTeam);
   const setRole = useServerFn(setTeamRole);
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin-team"],
-    queryFn: () => fetchTeam(),
-  });
+  const { data, isLoading } = useQuery({ queryKey: ["admin-team"], queryFn: () => fetchTeam() });
   const mutation = useMutation({
     mutationFn: (v: { user_id: string; role: "admin" | "manager" | "user" }) => setRole({ data: v }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-team"] });
-      toast.success("Роль обновлена");
+      toast.success(t("admin.team.roleUpdated"));
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Ошибка"),
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
 
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-serif text-4xl">Команда</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Управление ролями. Админ — полный доступ. Менеджер — только заказы и заявки.
-        </p>
+        <h1 className="font-serif text-4xl">{t("admin.team.title")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("admin.team.desc")}</p>
       </header>
 
       {isLoading && (
         <p className="text-sm text-muted-foreground">
-          <Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> Загрузка…
+          <Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> {t("admin.loading")}
         </p>
       )}
 
@@ -49,10 +46,10 @@ function TeamPage() {
         <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-secondary/40 text-left text-xs uppercase tracking-[0.15em] text-muted-foreground">
             <tr>
-              <th className="px-4 py-3">E-mail</th>
-              <th className="px-4 py-3">Регистрация</th>
-              <th className="px-4 py-3">Последний вход</th>
-              <th className="px-4 py-3">Роль</th>
+              <th className="px-4 py-3">{t("auth.email")}</th>
+              <th className="px-4 py-3">{t("admin.team.registered")}</th>
+              <th className="px-4 py-3">{t("admin.team.lastLogin")}</th>
+              <th className="px-4 py-3">{t("admin.team.role")}</th>
             </tr>
           </thead>
           <tbody>
@@ -71,17 +68,12 @@ function TeamPage() {
                     <select
                       value={u.role}
                       disabled={mutation.isPending}
-                      onChange={(e) =>
-                        mutation.mutate({
-                          user_id: u.id,
-                          role: e.target.value as "admin" | "manager" | "user",
-                        })
-                      }
+                      onChange={(e) => mutation.mutate({ user_id: u.id, role: e.target.value as "admin" | "manager" | "user" })}
                       className="rounded-sm border border-border bg-background px-2 py-1 text-sm"
                     >
-                      <option value="user">Пользователь</option>
-                      <option value="manager">Менеджер</option>
-                      <option value="admin">Админ</option>
+                      <option value="user">{t("admin.team.role.user")}</option>
+                      <option value="manager">{t("admin.team.role.manager")}</option>
+                      <option value="admin">{t("admin.team.role.admin")}</option>
                     </select>
                   </div>
                 </td>
