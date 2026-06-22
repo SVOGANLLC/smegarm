@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
-import { ExternalLink, Upload } from "lucide-react";
+import { ExternalLink, Trash2, Upload } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useI18n, getI18nDefaults, type Lang } from "@/lib/i18n";
 import { uploadAdminImage } from "@/lib/admin-upload";
 import {
   DEFAULT_HOC_HERO_IMAGE,
   parseHouseOfCoffeeMedia,
+  setHouseOfCoffeeBool,
   setHouseOfCoffeeConfig,
 } from "@/lib/house-of-coffee-config";
 import { HOUSE_OF_COFFEE_SPOTLIGHT } from "@/lib/house-of-coffee";
@@ -62,6 +63,108 @@ const TEXT_SECTIONS: { titleKey: string; fields: TextField[] }[] = [
     ],
   },
 ];
+
+function BannerImageField({
+  label,
+  hint,
+  spec,
+  previewUrl,
+  visible,
+  hasCustomImage,
+  usesDefault,
+  uploading,
+  onUpload,
+  onVisibleChange,
+  onRemove,
+}: {
+  label: string;
+  hint?: string;
+  spec?: string;
+  previewUrl: string;
+  visible: boolean;
+  hasCustomImage: boolean;
+  usesDefault?: boolean;
+  uploading: boolean;
+  onUpload: (file: File) => void;
+  onVisibleChange: (visible: boolean) => void;
+  onRemove: () => void;
+}) {
+  const { t } = useI18n();
+  const ref = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="rounded-sm border border-border bg-background p-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <div className="relative aspect-[16/9] w-full max-w-xs overflow-hidden rounded-sm border border-border bg-secondary/30 sm:w-48">
+          {previewUrl ? (
+            <img src={previewUrl} alt="" className={`h-full w-full object-cover ${!visible ? "opacity-40" : ""}`} />
+          ) : (
+            <div className="flex h-full items-center justify-center text-xs text-muted-foreground">—</div>
+          )}
+          {!visible && previewUrl ? (
+            <span className="absolute inset-x-0 bottom-0 bg-foreground/80 px-2 py-1 text-center text-[10px] uppercase tracking-[0.14em] text-background">
+              {t("admin.hoc.hiddenOnSite")}
+            </span>
+          ) : null}
+          {usesDefault ? (
+            <span className="absolute inset-x-0 top-0 bg-background/90 px-2 py-1 text-center text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              {t("admin.hoc.defaultImage")}
+            </span>
+          ) : null}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <p className="text-sm font-medium">{label}</p>
+            <label className="flex cursor-pointer items-center gap-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={visible}
+                onChange={(e) => onVisibleChange(e.target.checked)}
+                className="h-4 w-4 rounded-sm border border-border accent-foreground"
+              />
+              {t("admin.hoc.showOnSite")}
+            </label>
+          </div>
+          {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+          {spec && <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground/90">{spec}</p>}
+          <input
+            ref={ref}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) onUpload(f);
+              e.target.value = "";
+            }}
+          />
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={() => ref.current?.click()}
+              className="inline-flex items-center gap-2 rounded-sm border border-border px-4 py-2 text-xs uppercase tracking-[0.16em] hover:bg-secondary disabled:opacity-50"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              {uploading ? "…" : t("admin.hoc.upload")}
+            </button>
+            {hasCustomImage ? (
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={onRemove}
+                className="inline-flex items-center gap-2 rounded-sm border border-border px-4 py-2 text-xs uppercase tracking-[0.16em] text-destructive hover:bg-destructive/10 disabled:opacity-50"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {t("admin.hoc.removeImage")}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ImageField({
   label,
@@ -142,11 +245,12 @@ export function HouseOfCoffeeEditor({
     onChange(next);
   };
 
-  const upload = async (key: string, storagePath: string, file: File) => {
+  const upload = async (key: string, storagePath: string, file: File, visibleKey?: string) => {
     setUploading(key);
     try {
       const url = await uploadAdminImage(storagePath, file, t);
-      const next = setHouseOfCoffeeConfig(value, key, url);
+      let next = setHouseOfCoffeeConfig(value, key, url);
+      if (visibleKey) next = setHouseOfCoffeeBool(next, visibleKey, true);
       onChange(next);
       await onPersist(next);
       toast.success(t("admin.hoc.imageSaved"));
@@ -156,6 +260,24 @@ export function HouseOfCoffeeEditor({
       setUploading(null);
     }
   };
+
+  const setVisible = async (visibleKey: string, on: boolean) => {
+    const next = setHouseOfCoffeeBool(value, visibleKey, on);
+    onChange(next);
+    await onPersist(next);
+    toast.success(on ? t("admin.hoc.bannerShown") : t("admin.hoc.bannerHidden"));
+  };
+
+  const removeImage = async (imageKey: string, visibleKey: string) => {
+    let next = setHouseOfCoffeeBool(value, visibleKey, false);
+    next = setHouseOfCoffeeConfig(next, imageKey, "");
+    onChange(next);
+    await onPersist(next);
+    toast.success(t("admin.hoc.imageRemoved"));
+  };
+
+  const heroPreview = media.heroImageStored ?? DEFAULT_HOC_HERO_IMAGE;
+  const heroUsesDefault = media.heroImageStored === null;
 
   return (
     <div className="space-y-8">
@@ -178,21 +300,32 @@ export function HouseOfCoffeeEditor({
         <h3 className="font-serif text-xl">{t("admin.hoc.section.media")}</h3>
         <p className="mt-1 text-sm text-muted-foreground">{t("admin.hoc.section.mediaDesc")}</p>
         <div className="mt-4 space-y-4">
-          <ImageField
+          <BannerImageField
             label={t("admin.hoc.field.heroImage")}
             hint={t("admin.hoc.field.heroImageHint")}
             spec={t("admin.hoc.spec.hero")}
-            url={media.heroImage || DEFAULT_HOC_HERO_IMAGE}
+            previewUrl={heroPreview}
+            visible={media.heroVisible}
+            hasCustomImage={media.heroImageStored !== null}
+            usesDefault={heroUsesDefault}
             uploading={uploading === "config.heroImage"}
-            onUpload={(f) => upload("config.heroImage", "brand/house-of-coffee/hero-banner", f)}
+            onUpload={(f) => upload("config.heroImage", "brand/house-of-coffee/hero-banner", f, "config.heroVisible")}
+            onVisibleChange={(on) => setVisible("config.heroVisible", on)}
+            onRemove={() => removeImage("config.heroImage", "config.heroVisible")}
           />
-          <ImageField
+          <BannerImageField
             label={t("admin.hoc.field.bannerImage")}
             hint={t("admin.hoc.field.bannerImageHint")}
             spec={t("admin.hoc.spec.banner")}
-            url={media.bannerImage}
+            previewUrl={media.bannerImage}
+            visible={media.bannerVisible}
+            hasCustomImage={Boolean(media.bannerImage)}
             uploading={uploading === "config.bannerImage"}
-            onUpload={(f) => upload("config.bannerImage", "brand/house-of-coffee/banner-after-video", f)}
+            onUpload={(f) =>
+              upload("config.bannerImage", "brand/house-of-coffee/banner-after-video", f, "config.bannerVisible")
+            }
+            onVisibleChange={(on) => setVisible("config.bannerVisible", on)}
+            onRemove={() => removeImage("config.bannerImage", "config.bannerVisible")}
           />
           <label className="block rounded-sm border border-border bg-background p-4">
             <span className="text-sm font-medium">{t("admin.hoc.field.youtube")}</span>

@@ -54,7 +54,7 @@ function HouseOfCoffeePage() {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       <main className="pb-24 pt-14 md:pt-20">
-        {media?.heroImage ? (
+        {media?.heroVisible && media.heroImage ? (
           <section className="w-full">
             <img
               src={media.heroImage}
@@ -93,7 +93,7 @@ function HouseOfCoffeePage() {
           </div>
         </section>
 
-        {media?.bannerImage ? (
+        {media?.bannerVisible && media.bannerImage ? (
           <section className="site-section">
             <div className="mx-auto max-w-[1400px] px-4 md:px-10">
               <Reveal>
