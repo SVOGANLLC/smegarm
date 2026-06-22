@@ -378,6 +378,8 @@ export async function fetchCatalog(f: CatalogFilters): Promise<{ items: Product[
     let pq = supabase.from("products").select(PRODUCT_COLS).in("sku", pageSkus).eq("is_published", true);
     if (f.colours?.length) pq = pq.in("colour", f.colours);
     if (f.aesthetics?.length) pq = pq.in("aesthetic", f.aesthetics);
+    if (f.families?.length) pq = pq.in("family", f.families);
+    if (f.categoryIn?.length) pq = pq.in("category", f.categoryIn);
     if (f.theme) pq = pq.eq("theme_key", f.theme);
     if (f.inStock) pq = pq.eq("availability", "in_stock");
     if (f.flag === "sale") pq = pq.not("price_old", "is", null);

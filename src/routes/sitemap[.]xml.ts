@@ -42,7 +42,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           ),
         );
 
-        const staticUrls = ["/", "/catalog", "/sale"];
+        const staticUrls = ["/", "/catalog", "/sale", "/house-of-coffee"];
         const urls: Array<{ loc: string; lastmod?: string }> = [
           ...staticUrls.map((p) => ({ loc: `${origin}${p}` })),
           ...categorySlugs.map((s) => ({ loc: `${origin}/catalog?category=${s}` })),

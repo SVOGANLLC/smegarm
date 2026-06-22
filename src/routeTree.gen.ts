@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SaleRouteImport } from './routes/sale'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as HouseOfCoffeeRouteImport } from './routes/house-of-coffee'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CatalogRouteImport } from './routes/catalog'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -52,6 +53,11 @@ const SaleRoute = SaleRouteImport.update({
 const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   id: '/robots.txt',
   path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HouseOfCoffeeRoute = HouseOfCoffeeRouteImport.update({
+  id: '/house-of-coffee',
+  path: '/house-of-coffee',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -204,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
+  '/house-of-coffee': typeof HouseOfCoffeeRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -234,6 +241,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
+  '/house-of-coffee': typeof HouseOfCoffeeRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
+  '/house-of-coffee': typeof HouseOfCoffeeRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -296,6 +305,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/catalog'
     | '/checkout'
+    | '/house-of-coffee'
     | '/robots.txt'
     | '/sale'
     | '/sitemap.xml'
@@ -326,6 +336,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/catalog'
     | '/checkout'
+    | '/house-of-coffee'
     | '/robots.txt'
     | '/sale'
     | '/sitemap.xml'
@@ -355,6 +366,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/catalog'
     | '/checkout'
+    | '/house-of-coffee'
     | '/robots.txt'
     | '/sale'
     | '/sitemap.xml'
@@ -387,6 +399,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CatalogRoute: typeof CatalogRoute
   CheckoutRoute: typeof CheckoutRoute
+  HouseOfCoffeeRoute: typeof HouseOfCoffeeRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SaleRoute: typeof SaleRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -421,6 +434,13 @@ declare module '@tanstack/react-router' {
       path: '/robots.txt'
       fullPath: '/robots.txt'
       preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/house-of-coffee': {
+      id: '/house-of-coffee'
+      path: '/house-of-coffee'
+      fullPath: '/house-of-coffee'
+      preLoaderRoute: typeof HouseOfCoffeeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -676,6 +696,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CatalogRoute: CatalogRoute,
   CheckoutRoute: CheckoutRoute,
+  HouseOfCoffeeRoute: HouseOfCoffeeRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SaleRoute: SaleRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,

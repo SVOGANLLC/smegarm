@@ -10,7 +10,7 @@ import { PriceBlock } from "./ProductCard";
 import { fetchFeatured, type Product, type ProductCard } from "@/lib/products";
 import { parseIconSkus } from "@/lib/homepage-config";
 import { supabase } from "@/integrations/supabase/client";
-import smegLogoWhite from "@/assets/smeg-logo-white.png.asset.json";
+import { SmegWordmark } from "./SmegWordmark";
 
 function FeaturedCard({ p, lang }: { p: Product; lang: "ru" | "en" | "hy" }) {
   const name = pickLocalized(p as unknown as Record<string, unknown>, "name", lang) || p.name;
@@ -61,21 +61,7 @@ function FeaturedCard({ p, lang }: { p: Product; lang: "ru" | "en" | "hy" }) {
 
 export function Featured() {
   const { t, lang } = useI18n();
-  const titleRaw = t("section.featured.title");
-  const titleParts = titleRaw.split(/Smeg/i);
-  const renderedTitle = titleParts.flatMap((part, i) =>
-    i === 0
-      ? [part]
-      : [
-          <img
-            key={`smeg-${i}`}
-            src={smegLogoWhite.url}
-            alt="SMEG"
-            className="mx-1 inline-block h-[0.8em] w-auto align-middle"
-          />,
-          part,
-        ],
-  );
+  const renderedTitle = <SmegWordmark text={t("section.featured.title")} variant="light" />;
   const { data: homepageConfig } = useQuery({
     queryKey: ["site-content", "homepage"],
     queryFn: async () => {

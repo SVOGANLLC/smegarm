@@ -21,6 +21,7 @@ import { canonicalLink, hreflangLinks, seoMeta } from "@/lib/seo";
 
 const searchSchema = z.object({
   category: z.string().optional(),
+  family: z.string().optional(),
   q: z.string().optional(),
   colour: z.string().optional(), // csv
   aesthetic: z.string().optional(),
@@ -73,9 +74,24 @@ function CatalogNotFoundView() {
 
 const PAGE_SIZE = 36;
 
+const CATEGORY_SLUG_ALIASES: Record<string, string> = { oven: "ovens" };
+
+function findCategoryBySlug(
+  categories: Awaited<ReturnType<typeof fetchCategories>>,
+  slug: string | undefined,
+) {
+  if (!slug) return undefined;
+  const normalized = CATEGORY_SLUG_ALIASES[slug] ?? slug;
+  return (
+    categories.find((c) => c.slug === normalized) ??
+    categories.find((c) => c.slug === slug) ??
+    categories.find((c) => slugify(c.category) === normalized)
+  );
+}
+
 function CatalogPage() {
   const search = Route.useSearch();
-  const { category, q, page, flag, sort, theme, inStock } = search;
+  const { category, family, q, page, flag, sort, theme, inStock } = search;
   const colours = split(search.colour);
   const aesthetics = split(search.aesthetic);
   const navigate = useNavigate({ from: Route.fullPath });
@@ -91,7 +107,7 @@ function CatalogPage() {
   const facetsQuery = useQuery({ queryKey: ["facets"], queryFn: fetchFacets, staleTime: 10 * 60_000 });
   const swatchesQuery = useQuery({ queryKey: ["color-swatches"], queryFn: fetchColorSwatches, staleTime: 30 * 60_000 });
 
-  const currentCat = category ? catsQuery.data?.find((c) => c.slug === category) : undefined;
+  const currentCat = findCategoryBySlug(catsQuery.data ?? [], category);
   const categoryRawList = currentCat?.raw;
   const categoryLabel = currentCat
     ? catLabel(currentCat.category, lang, {
@@ -118,10 +134,11 @@ function CatalogPage() {
   };
 
   const productsQuery = useQuery({
-    queryKey: ["catalog", currentCat?.slug ?? null, q ?? "", colours, aesthetics, theme ?? "", flag ?? "", inStock ?? false, sort ?? "", page, shuffleKey],
+    queryKey: ["catalog", currentCat?.slug ?? null, family ?? "", q ?? "", colours, aesthetics, theme ?? "", flag ?? "", inStock ?? false, sort ?? "", page, shuffleKey],
     queryFn: () =>
       fetchCatalog({
-        categoryIn: q ? undefined : categoryRawList,
+        categoryIn: categoryRawList,
+        families: family ? [family] : undefined,
         search: q || undefined,
         colours: colours.length ? colours : undefined,
         aesthetics: aesthetics.length ? aesthetics : undefined,
@@ -149,7 +166,7 @@ function CatalogPage() {
     navigate({ search: { page: 1 } as CatalogSearch });
 
   const activeCount =
-    colours.length + aesthetics.length + (flag ? 1 : 0) + (inStock ? 1 : 0) + (q ? 1 : 0) + (theme ? 1 : 0);
+    colours.length + aesthetics.length + (flag ? 1 : 0) + (inStock ? 1 : 0) + (q ? 1 : 0) + (theme ? 1 : 0) + (family ? 1 : 0);
 
   const filters = (
     <div className="space-y-7">

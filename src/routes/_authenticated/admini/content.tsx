@@ -3,10 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getI18nDefaults, useI18n, type Lang } from "@/lib/i18n";
-import { FONT_OPTIONS, type ContentStyle, type ContentStylesMap } from "@/lib/content-styles";
-import { CategoriesContentEditor } from "@/components/admin/CategoriesContentEditor";
-import { HomepageProductsEditor } from "@/components/admin/HomepageProductsEditor";
+import { useI18n, type Lang } from "@/lib/i18n";
+import type { ContentStylesMap } from "@/lib/content-styles";
+import { ContentBlockEditor, type ContentBlock } from "@/components/admin/ContentBlockEditor";
+import { HouseOfCoffeeEditor } from "@/components/admin/HouseOfCoffeeEditor";
 
 export const Route = createFileRoute("/_authenticated/admini/content")({
   beforeLoad: ({ context }) => {
@@ -16,10 +16,15 @@ export const Route = createFileRoute("/_authenticated/admini/content")({
   component: ContentPage,
 });
 
-type Field = { i18nKey: string; labelKey: string; multiline?: boolean; labelVars?: Record<string, string | number> };
-type Block = { key: string; labelKey: string; fields: Field[] };
+type TabId = "homepage" | "house-of-coffee" | "contacts";
 
-const BLOCKS: Block[] = [
+const TABS: { id: TabId; labelKey: string }[] = [
+  { id: "homepage", labelKey: "admin.content.tab.homepage" },
+  { id: "house-of-coffee", labelKey: "admin.content.tab.hoc" },
+  { id: "contacts", labelKey: "admin.content.tab.contacts" },
+];
+
+const HOMEPAGE_BLOCKS: ContentBlock[] = [
   {
     key: "hero",
     labelKey: "admin.content.block.hero",
@@ -44,17 +49,6 @@ const BLOCKS: Block[] = [
       { i18nKey: "section.story.stat.years", labelKey: "admin.content.field.statYears" },
       { i18nKey: "section.story.stat.countries", labelKey: "admin.content.field.statCountries" },
       { i18nKey: "section.story.stat.colours", labelKey: "admin.content.field.statColours" },
-    ],
-  },
-  {
-    key: "dealer",
-    labelKey: "admin.content.block.dealer",
-    fields: [
-      { i18nKey: "section.dealer.eyebrow", labelKey: "admin.content.field.eyebrow" },
-      { i18nKey: "section.dealer.title", labelKey: "admin.content.field.titlePlain" },
-      { i18nKey: "section.dealer.body", labelKey: "admin.content.field.body", multiline: true },
-      { i18nKey: "section.dealer.cta", labelKey: "admin.content.field.cta" },
-      { i18nKey: "section.dealer.address", labelKey: "admin.content.field.address" },
     ],
   },
   {
@@ -96,12 +90,20 @@ const BLOCKS: Block[] = [
   {
     key: "marquee",
     labelKey: "admin.content.block.marquee",
+    fields: [{ i18nKey: "marquee.text", labelKey: "admin.content.field.marquee", multiline: true }],
+  },
+];
+
+const CONTACT_BLOCKS: ContentBlock[] = [
+  {
+    key: "dealer",
+    labelKey: "admin.content.block.dealer",
     fields: [
-      {
-        i18nKey: "marquee.text",
-        labelKey: "admin.content.field.marquee",
-        multiline: true,
-      },
+      { i18nKey: "section.dealer.eyebrow", labelKey: "admin.content.field.eyebrow" },
+      { i18nKey: "section.dealer.title", labelKey: "admin.content.field.titlePlain" },
+      { i18nKey: "section.dealer.body", labelKey: "admin.content.field.body", multiline: true },
+      { i18nKey: "section.dealer.cta", labelKey: "admin.content.field.cta" },
+      { i18nKey: "section.dealer.address", labelKey: "admin.content.field.address" },
     ],
   },
   {
@@ -115,18 +117,12 @@ const BLOCKS: Block[] = [
   },
 ];
 
-const LANGS: { code: Lang; labelKey: string }[] = [
-  { code: "ru", labelKey: "admin.content.langRu" },
-  { code: "en", labelKey: "admin.content.langEn" },
-  { code: "hy", labelKey: "admin.content.langHy" },
-];
-
 type BlockValue = Record<string, Partial<Record<Lang, string>>>;
 
 function ContentPage() {
   const { t } = useI18n();
   const qc = useQueryClient();
-  const defaults = getI18nDefaults();
+  const [tab, setTab] = useState<TabId>("homepage");
   const q = useQuery({
     queryKey: ["site-content"],
     queryFn: async () => {
@@ -144,7 +140,6 @@ function ContentPage() {
 
   const [state, setState] = useState<Record<string, BlockValue>>({});
   const [styles, setStyles] = useState<ContentStylesMap>({});
-  const [openStyles, setOpenStyles] = useState<Record<string, boolean>>({});
   useEffect(() => {
     if (q.data) {
       setState(q.data.map);
@@ -154,9 +149,7 @@ function ContentPage() {
 
   const save = useMutation({
     mutationFn: async ({ key, value, styles: nextStyles }: { key: string; value: BlockValue; styles: ContentStylesMap }) => {
-      const { error: e1 } = await supabase
-        .from("site_content")
-        .upsert({ key, value }, { onConflict: "key" });
+      const { error: e1 } = await supabase.from("site_content").upsert({ key, value }, { onConflict: "key" });
       if (e1) throw e1;
       const { error: e2 } = await supabase
         .from("site_content")
@@ -182,7 +175,7 @@ function ContentPage() {
     });
   };
 
-  const updateStyle = (i18nKey: string, patch: Partial<ContentStyle>) => {
+  const updateStyle = (i18nKey: string, patch: Partial<import("@/lib/content-styles").ContentStyle>) => {
     setStyles((prev) => {
       const cur = { ...(prev[i18nKey] ?? {}) };
       for (const [k, v] of Object.entries(patch)) {
@@ -196,65 +189,61 @@ function ContentPage() {
     });
   };
 
+  const activeBlocks = tab === "homepage" ? HOMEPAGE_BLOCKS : tab === "contacts" ? CONTACT_BLOCKS : [];
+  const hocValue = state["house-of-coffee"] ?? {};
+
   return (
     <div>
       <h1 className="font-serif text-4xl">{t("admin.content.title")}</h1>
-      <p className="mt-2 text-sm text-muted-foreground">{t("admin.content.desc")}</p>
+      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{t("admin.content.desc")}</p>
 
-      <div className="mt-10 space-y-8">
-        {BLOCKS.map((b) => {
+      <div className="mt-8 flex flex-wrap gap-2 border-b border-border pb-4">
+        {TABS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setTab(item.id)}
+            className={`rounded-full px-5 py-2 text-xs uppercase tracking-[0.16em] transition ${
+              tab === item.id ? "bg-foreground text-background" : "bg-secondary text-foreground/70 hover:text-foreground"
+            }`}
+          >
+            {t(item.labelKey)}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-8 space-y-6">
+        {tab === "house-of-coffee" && (
+          <>
+            <HouseOfCoffeeEditor
+              value={hocValue}
+              onChange={(next) => setState((prev) => ({ ...prev, "house-of-coffee": next }))}
+              onPersist={async (next) => {
+                setState((prev) => ({ ...prev, "house-of-coffee": next }));
+                await save.mutateAsync({ key: "house-of-coffee", value: next, styles });
+              }}
+            />
+            <button
+              onClick={() => save.mutate({ key: "house-of-coffee", value: hocValue, styles })}
+              className="rounded-sm bg-foreground px-6 py-3 text-xs uppercase tracking-[0.2em] text-background hover:opacity-90"
+            >
+              {t("admin.hoc.save")}
+            </button>
+          </>
+        )}
+
+        {activeBlocks.map((b) => {
           const v = state[b.key] ?? {};
           return (
-            <div key={b.key} className="rounded-sm border border-border p-6">
-              <h2 className="font-serif text-2xl">{t(b.labelKey)}</h2>
-              <div className="mt-4 space-y-6">
-                {b.fields.map((f) => (
-                  <div key={f.i18nKey} className="rounded-sm bg-secondary/40 p-4">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-sm font-medium text-foreground">{t(f.labelKey, f.labelVars)}</span>
-                      <code className="text-[10px] text-muted-foreground">{f.i18nKey}</code>
-                    </div>
-                    <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
-                      {LANGS.map((l) => {
-                        const placeholder = defaults[l.code][f.i18nKey] ?? "";
-                        const fieldVal = v[f.i18nKey]?.[l.code] ?? "";
-                        return (
-                          <label key={l.code} className="block">
-                            <span className="eyebrow mb-1 block text-muted-foreground">{t(l.labelKey)}</span>
-                            <textarea
-                              rows={f.multiline ? 3 : 2}
-                              value={fieldVal}
-                              maxLength={2000}
-                              placeholder={placeholder}
-                              onChange={(e) => updateField(b.key, f.i18nKey, l.code, e.target.value)}
-                              className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
-                            />
-                          </label>
-                        );
-                      })}
-                    </div>
-                    <StyleEditor
-                      i18nKey={f.i18nKey}
-                      value={styles[f.i18nKey] ?? {}}
-                      open={!!openStyles[f.i18nKey]}
-                      onToggle={() => setOpenStyles((p) => ({ ...p, [f.i18nKey]: !p[f.i18nKey] }))}
-                      onChange={(patch) => updateStyle(f.i18nKey, patch)}
-                    />
-                  </div>
-                ))}
-                {b.key === "categories" && (
-                  <CategoriesContentEditor
-                    value={v}
-                    onChange={(next) => setState((prev) => ({ ...prev, [b.key]: next }))}
-                  />
-                )}
-                {b.key === "homepage" && (
-                  <HomepageProductsEditor
-                    value={v}
-                    onChange={(next) => setState((prev) => ({ ...prev, [b.key]: next }))}
-                  />
-                )}
-              </div>
+            <div key={b.key}>
+              <ContentBlockEditor
+                block={b}
+                value={v}
+                styles={styles}
+                onFieldChange={(i18nKey, lang, value) => updateField(b.key, i18nKey, lang, value)}
+                onStyleChange={updateStyle}
+                onValueReplace={(next) => setState((prev) => ({ ...prev, [b.key]: next }))}
+              />
               <button
                 onClick={() => save.mutate({ key: b.key, value: v, styles })}
                 className="mt-4 rounded-sm bg-foreground px-5 py-2 text-xs uppercase tracking-[0.2em] text-background hover:opacity-90"
@@ -266,146 +255,5 @@ function ContentPage() {
         })}
       </div>
     </div>
-  );
-}
-
-function StyleEditor({
-  i18nKey,
-  value,
-  open,
-  onToggle,
-  onChange,
-}: {
-  i18nKey: string;
-  value: ContentStyle;
-  open: boolean;
-  onToggle: () => void;
-  onChange: (patch: Partial<ContentStyle>) => void;
-}) {
-  const { t } = useI18n();
-  const styled = Object.keys(value).length > 0;
-  return (
-    <div className="mt-4 rounded-sm border border-border bg-background">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center justify-between px-3 py-2 text-left text-xs uppercase tracking-[0.18em] text-foreground/70 hover:text-foreground"
-      >
-        <span>{t("admin.content.styleTitle")} {styled && <span className="ml-2 inline-block h-1.5 w-1.5 rounded-full bg-accent" />}</span>
-        <span>{open ? "−" : "+"}</span>
-      </button>
-      {open && (
-        <div className="grid grid-cols-1 gap-3 border-t border-border p-3 md:grid-cols-3">
-          <Field label={t("admin.content.styleFont")}>
-            <select
-              value={value.fontFamily ?? ""}
-              onChange={(e) => onChange({ fontFamily: e.target.value })}
-              className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
-            >
-              {FONT_OPTIONS.map((f) => (
-                <option key={f.label} value={f.value}>{f.label}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label={t("admin.content.styleSize")}>
-            <input
-              value={value.fontSize ?? ""}
-              onChange={(e) => onChange({ fontSize: e.target.value })}
-              placeholder="auto"
-              className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
-            />
-          </Field>
-          <Field label={t("admin.content.styleWeight")}>
-            <select
-              value={value.fontWeight ?? ""}
-              onChange={(e) => onChange({ fontWeight: e.target.value })}
-              className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
-            >
-              <option value="">auto</option>
-              {[300, 400, 500, 600, 700, 800, 900].map((w) => (
-                <option key={w} value={String(w)}>{w}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label={t("admin.content.styleColor")}>
-            <div className="flex gap-2">
-              <input
-                type="color"
-                value={value.color || "#111111"}
-                onChange={(e) => onChange({ color: e.target.value })}
-                className="h-8 w-12 rounded-sm border border-border"
-              />
-              <input
-                value={value.color ?? ""}
-                onChange={(e) => onChange({ color: e.target.value })}
-                placeholder="auto"
-                className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
-              />
-            </div>
-          </Field>
-          <Field label={t("admin.content.styleLetterSpacing")}>
-            <input
-              value={value.letterSpacing ?? ""}
-              onChange={(e) => onChange({ letterSpacing: e.target.value })}
-              placeholder={t("admin.content.styleLetterEx")}
-              className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
-            />
-          </Field>
-          <Field label={t("admin.content.styleLineHeight")}>
-            <input
-              value={value.lineHeight ?? ""}
-              onChange={(e) => onChange({ lineHeight: e.target.value })}
-              placeholder={t("admin.content.styleLineEx")}
-              className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
-            />
-          </Field>
-          <Field label={t("admin.content.styleCase")}>
-            <select
-              value={value.textTransform ?? ""}
-              onChange={(e) => onChange({ textTransform: (e.target.value || undefined) as ContentStyle["textTransform"] })}
-              className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
-            >
-              <option value="">auto</option>
-              <option value="none">{t("admin.content.styleNormal")}</option>
-              <option value="uppercase">UPPERCASE</option>
-              <option value="lowercase">lowercase</option>
-              <option value="capitalize">Capitalize</option>
-            </select>
-          </Field>
-          <Field label={t("admin.content.styleStyle")}>
-            <select
-              value={value.fontStyle ?? ""}
-              onChange={(e) => onChange({ fontStyle: (e.target.value || undefined) as ContentStyle["fontStyle"] })}
-              className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
-            >
-              <option value="">auto</option>
-              <option value="normal">normal</option>
-              <option value="italic">italic</option>
-            </select>
-          </Field>
-          <div className="flex items-end">
-            <button
-              type="button"
-              onClick={() => onChange({ fontFamily: "", fontSize: "", fontWeight: "", color: "", letterSpacing: "", lineHeight: "", textTransform: undefined, fontStyle: undefined })}
-              className="text-xs uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground"
-            >
-              {t("admin.content.resetStyle")}
-            </button>
-          </div>
-          <p className="md:col-span-3 text-[10px] text-muted-foreground">
-            {t("admin.content.styleNote", { key: i18nKey })}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="eyebrow mb-1 block text-muted-foreground">{label}</span>
-      {children}
-    </label>
   );
 }

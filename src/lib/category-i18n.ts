@@ -5,11 +5,11 @@ import type { Lang } from "@/lib/i18n";
 // `category_en` is empty). Unknown categories fall back to the canonical key.
 export const CATEGORY_LABELS: Record<string, { ru: string; en: string; hy: string }> = {
   Refrigerators: { ru: "Холодильники", en: "Refrigerators", hy: "Սառնարաններ" },
-  Hobs: { ru: "Варочные панели", en: "Hobs", hy: "Գազօջախներ և սալօջախներ" },
+  Hobs: { ru: "Варочные панели", en: "Hobs", hy: "Այրման մակերեսներ" },
   Accessories: { ru: "Аксессуары", en: "Accessories", hy: "Աքսեսուարներ" },
   Hoods: { ru: "Вытяжки", en: "Hoods", hy: "Օդաքարշներ" },
-  Oven: { ru: "Духовые шкафы", en: "Ovens", hy: "Վառարաններ" },
-  Ovens: { ru: "Духовые шкафы", en: "Ovens", hy: "Վառարաններ" },
+  Ovens: { ru: "Духовые шкафы", en: "Ovens", hy: "Ջեռոցներ" },
+  Oven: { ru: "Духовые шкафы", en: "Ovens", hy: "Ջեռոցներ" },
   Sinks: { ru: "Мойки", en: "Sinks", hy: "Լվացարաններ" },
   Dishwashers: { ru: "Посудомоечные машины", en: "Dishwashers", hy: "Սպասք լվացող մեքենաներ" },
   Cookers: { ru: "Плиты", en: "Cookers", hy: "Խոհանոցային վառարաններ" },
@@ -18,14 +18,14 @@ export const CATEGORY_LABELS: Record<string, { ru: string; en: string; hy: strin
   "Espresso coffee machines": {
     ru: "Кофемашины",
     en: "Espresso coffee machines",
-    hy: "Սուրճի մեքենաներ",
+    hy: "Էսպրեսո սուրճի մեքենաներ",
   },
   Toasters: { ru: "Тостеры", en: "Toasters", hy: "Տոստերներ" },
   "Microwave ovens": { ru: "Микроволновые печи", en: "Microwave ovens", hy: "Միկրոալիքային վառարաններ" },
   Cookware: { ru: "Посуда", en: "Cookware", hy: "Խոհանոցային սպասք" },
   "Milk frothers": { ru: "Капучинаторы", en: "Milk frothers", hy: "Կաթի փրփրեցուցիչներ" },
   "Tumble dryer": { ru: "Сушильные машины", en: "Tumble dryers", hy: "Չորանոցներ" },
-  "Stand mixers": { ru: "Планетарные миксеры", en: "Stand mixers", hy: "Միքսերներ" },
+  "Stand mixers": { ru: "Планетарные миксеры", en: "Stand mixers", hy: "Կոմբայն հարիչներ" },
   Blenders: { ru: "Блендеры", en: "Blenders", hy: "Բլենդերներ" },
   "Wine coolers": { ru: "Винные шкафы", en: "Wine coolers", hy: "Գինու պահարաններ" },
   "Water bottles": { ru: "Бутылки для воды", en: "Water bottles", hy: "Ջրի շշեր" },
@@ -40,7 +40,7 @@ export const CATEGORY_LABELS: Record<string, { ru: string; en: string; hy: strin
   "Knife sets": { ru: "Наборы ножей", en: "Knife sets", hy: "Դանակների հավաքածուներ" },
   "Washer dryer": { ru: "Стирально-сушильные машины", en: "Washer dryer", hy: "Լվացք-չորանոց մեքենաներ" },
   "Washing Machine": { ru: "Стиральные машины", en: "Washing machine", hy: "Լվացքի մեքենաներ" },
-  "Hand mixers": { ru: "Ручные миксеры", en: "Hand mixers", hy: "Ձեռքի միքսերներ" },
+  "Hand mixers": { ru: "Ручные миксеры", en: "Hand mixers", hy: "Ձեռքի հարիչներ" },
   "Electric barbecues": { ru: "Электрические грили", en: "Electric barbecues", hy: "Էլեկտրական բարբեքյուներ" },
   "Blast chillers": { ru: "Шокеры (быстрое охлаждение)", en: "Blast chillers", hy: "Արագ սառեցուցիչներ" },
   "Kitchen scales": { ru: "Кухонные весы", en: "Kitchen scales", hy: "Խոհանոցային կշեռքներ" },
@@ -53,6 +53,7 @@ export function canonicalCategoryKey(
   category_hy?: string | null,
 ): string {
   const en = category_en?.trim();
+  if (en === "Oven") return "Ovens";
   if (en) return en;
   const r = raw.trim();
   if (!r) return r;

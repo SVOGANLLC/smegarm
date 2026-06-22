@@ -36,9 +36,9 @@ export function Header() {
 
   const nav = [
     { to: "/catalog", label: t("nav.catalog"), internal: true },
+    { to: "/house-of-coffee", label: t("nav.houseOfCoffee"), internal: true },
     { to: "/#collections", label: t("nav.collections"), hash: "collections" },
     { to: "/#story", label: t("nav.story"), hash: "story" },
-    { to: "/#dealer", label: t("nav.dealer"), hash: "dealer" },
     { to: "/#contact", label: t("nav.contact"), hash: "contact" },
   ];
 
@@ -161,7 +161,7 @@ export function Header() {
                     <Link
                       to={n.to}
                       onClick={() => setMenuOpen(false)}
-                      className="block py-3 font-serif text-[clamp(1.75rem,8vw,2.25rem)] leading-tight text-foreground"
+                      className="block py-3 font-serif text-[clamp(1.75rem,8vw,2.25rem)] uppercase leading-tight tracking-[0.06em] text-foreground"
                     >
                       {n.label}
                     </Link>
@@ -179,7 +179,7 @@ export function Header() {
                         if (n.hash) onHashNav(e, n.hash);
                         else setMenuOpen(false);
                       }}
-                      className="block py-3 font-serif text-[clamp(1.75rem,8vw,2.25rem)] leading-tight text-foreground"
+                      className="block py-3 font-serif text-[clamp(1.75rem,8vw,2.25rem)] uppercase leading-tight tracking-[0.06em] text-foreground"
                     >
                       {n.label}
                     </a>

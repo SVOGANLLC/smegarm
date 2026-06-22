@@ -7,6 +7,14 @@ import { ArrowLeft, Copy, Upload, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { translateProduct } from "@/lib/translate.functions";
 import { useI18n } from "@/lib/i18n";
+import {
+  normalizeEanForSave,
+  parseSpecsText,
+  specsToText,
+  syncEanFieldToSpecs,
+  syncEanFromSpecsEdit,
+  type SpecsLocale,
+} from "@/lib/product-ean-sync";
 
 export const Route = createFileRoute("/_authenticated/admini/products/$sku")({
   component: EditProduct,
@@ -19,6 +27,15 @@ type FormState = {
   description_en: string;
   name_hy: string;
   description_hy: string;
+  category: string;
+  category_en: string;
+  category_hy: string;
+  colour: string;
+  colour_en: string;
+  colour_hy: string;
+  aesthetic: string;
+  family: string;
+  ean: string;
   price_amd: string;
   price_old: string;
   discount_percent: string;
@@ -39,32 +56,6 @@ type FormState = {
   specs_hy: string;
 };
 
-function specsToText(v: Record<string, string> | null | undefined): string {
-  if (!v || !Object.keys(v).length) return "";
-  return JSON.stringify(v, null, 2);
-}
-
-function parseSpecsText(raw: string): Record<string, string> {
-  const t = raw.trim();
-  if (!t) return {};
-  try {
-    const parsed = JSON.parse(t) as unknown;
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return Object.fromEntries(
-        Object.entries(parsed as Record<string, unknown>).map(([k, v]) => [k, String(v ?? "")]),
-      );
-    }
-  } catch {
-    /* line format fallback */
-  }
-  const out: Record<string, string> = {};
-  for (const line of t.split("\n")) {
-    const idx = line.indexOf(":");
-    if (idx > 0) out[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
-  }
-  return out;
-}
-
 function EditProduct() {
   const { t } = useI18n();
   const { sku } = Route.useParams();
@@ -73,6 +64,8 @@ function EditProduct() {
   const [form, setForm] = useState<FormState | null>(null);
   const [dupOpen, setDupOpen] = useState(false);
   const [dupSku, setDupSku] = useState("");
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameSku, setRenameSku] = useState("");
 
   const q = useQuery({
     queryKey: ["admin-product", sku],
@@ -92,6 +85,15 @@ function EditProduct() {
         description_en: q.data.description_en ?? "",
         name_hy: q.data.name_hy ?? "",
         description_hy: q.data.description_hy ?? "",
+        category: q.data.category ?? "",
+        category_en: q.data.category_en ?? "",
+        category_hy: q.data.category_hy ?? "",
+        colour: q.data.colour ?? "",
+        colour_en: q.data.colour_en ?? "",
+        colour_hy: q.data.colour_hy ?? "",
+        aesthetic: q.data.aesthetic ?? "",
+        family: q.data.family ?? "",
+        ean: q.data.ean ?? "",
         price_amd: q.data.price_amd?.toString() ?? "",
         price_old: q.data.price_old?.toString() ?? "",
         discount_percent: q.data.discount_percent?.toString() ?? "0",
@@ -136,6 +138,15 @@ function EditProduct() {
           description_en: f.description_en.slice(0, 10000) || null,
           name_hy: f.name_hy.trim().slice(0, 500) || null,
           description_hy: f.description_hy.slice(0, 10000) || null,
+          category: f.category.trim().slice(0, 200) || null,
+          category_en: f.category_en.trim().slice(0, 200) || null,
+          category_hy: f.category_hy.trim().slice(0, 200) || null,
+          colour: f.colour.trim().slice(0, 120) || null,
+          colour_en: f.colour_en.trim().slice(0, 120) || null,
+          colour_hy: f.colour_hy.trim().slice(0, 120) || null,
+          aesthetic: f.aesthetic.trim().slice(0, 120) || null,
+          family: f.family.trim().slice(0, 120) || null,
+          ean: f.ean.trim().slice(0, 32) || null,
           price_amd: price,
           price_old: priceOld,
           discount_percent: disc,
@@ -200,6 +211,59 @@ function EditProduct() {
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
 
+  const renameProductSku = useMutation({
+    mutationFn: async (newSkuRaw: string) => {
+      const src = q.data;
+      if (!src) throw new Error(t("admin.notFound"));
+      const skuNew = newSkuRaw.trim().toUpperCase();
+      if (!skuNew) throw new Error(t("admin.products.skuRequired"));
+      if (skuNew === sku) throw new Error(t("admin.product.renameSkuDesc"));
+
+      const { data: exists } = await supabase.from("products").select("sku").eq("sku", skuNew).maybeSingle();
+      if (exists) throw new Error(t("admin.product.skuExists"));
+
+      const {
+        sku: _sku,
+        created_at: _c,
+        updated_at: _u,
+        stock_reserved: _r,
+        ...rest
+      } = src as Record<string, unknown> & { sku: string };
+
+      const { error: insErr } = await supabase.from("products").insert({
+        ...rest,
+        sku: skuNew,
+      });
+      if (insErr) throw insErr;
+
+      const { error: colErr } = await supabase
+        .from("collection_products")
+        .update({ product_sku: skuNew })
+        .eq("product_sku", sku);
+      if (colErr) throw colErr;
+
+      const { error: ordErr } = await supabase
+        .from("order_items")
+        .update({ product_sku: skuNew })
+        .eq("product_sku", sku);
+      if (ordErr) throw ordErr;
+
+      const { error: delErr } = await supabase.from("products").delete().eq("sku", sku);
+      if (delErr) throw delErr;
+
+      return skuNew;
+    },
+    onSuccess: (skuNew) => {
+      qc.invalidateQueries({ queryKey: ["admin-products"] });
+      setRenameOpen(false);
+      setRenameSku("");
+      setForm(null);
+      toast.success(t("admin.product.renameSkuDone"));
+      navigate({ to: "/admini/products/$sku", params: { sku: skuNew } });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
+  });
+
   if (q.isLoading || !form) return <div className="text-sm text-muted-foreground">{t("admin.loading")}</div>;
   if (!q.data) return <div>{t("admin.notFound")}</div>;
 
@@ -232,7 +296,61 @@ function EditProduct() {
         >
           <Copy className="h-3.5 w-3.5" /> {t("admin.product.duplicate")}
         </button>
+        <button
+          type="button"
+          onClick={() => {
+            setRenameSku("");
+            setRenameOpen(true);
+          }}
+          className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] text-foreground/60 hover:text-foreground"
+        >
+          {t("admin.product.renameSku")}
+        </button>
       </div>
+
+      {renameOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-sm border border-border bg-background p-6">
+            <h2 className="font-serif text-2xl">{t("admin.product.renameSku")}</h2>
+            <p className="mt-1 text-xs text-muted-foreground">{t("admin.product.renameSkuDesc")}</p>
+            <p className="mt-2 font-mono text-xs text-muted-foreground">{sku}</p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                renameProductSku.mutate(renameSku);
+              }}
+              className="mt-5 space-y-4"
+            >
+              <label className="block">
+                <span className="eyebrow mb-1.5 block text-muted-foreground">{t("admin.products.skuLabel")}</span>
+                <input
+                  value={renameSku}
+                  onChange={(e) => setRenameSku(e.target.value.toUpperCase())}
+                  autoFocus
+                  required
+                  className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-foreground"
+                />
+              </label>
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setRenameOpen(false)}
+                  className="rounded-sm border border-border px-4 py-2 text-xs uppercase tracking-[0.18em] hover:border-foreground"
+                >
+                  {t("admin.cancel")}
+                </button>
+                <button
+                  type="submit"
+                  disabled={renameProductSku.isPending}
+                  className="rounded-sm bg-foreground px-4 py-2 text-xs uppercase tracking-[0.18em] text-background disabled:opacity-50"
+                >
+                  {renameProductSku.isPending ? "..." : t("admin.save")}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {dupOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
@@ -280,7 +398,7 @@ function EditProduct() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          save.mutate(form);
+          save.mutate(normalizeEanForSave(form));
         }}
         className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]"
       >
@@ -383,6 +501,79 @@ function EditProduct() {
         </div>
 
         <aside className="space-y-6 rounded-sm border border-border p-6">
+          <div className="space-y-3 rounded-sm border border-border/60 bg-secondary/30 p-3">
+            <p className="eyebrow text-muted-foreground">{t("admin.product.catalogFields")}</p>
+            <Field label={t("admin.products.categoryLabel")}>
+              <input
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                placeholder="Ovens"
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+              />
+            </Field>
+            <Field label={t("admin.product.categoryEn")}>
+              <input
+                value={form.category_en}
+                onChange={(e) => setForm({ ...form, category_en: e.target.value })}
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+              />
+            </Field>
+            <Field label={t("admin.product.categoryHy")}>
+              <input
+                value={form.category_hy}
+                onChange={(e) => setForm({ ...form, category_hy: e.target.value })}
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+              />
+            </Field>
+            <Field label={t("admin.product.colour")}>
+              <input
+                value={form.colour}
+                onChange={(e) => setForm({ ...form, colour: e.target.value })}
+                placeholder="Cream"
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+              />
+            </Field>
+            <Field label={t("admin.product.colourEn")}>
+              <input
+                value={form.colour_en}
+                onChange={(e) => setForm({ ...form, colour_en: e.target.value })}
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+              />
+            </Field>
+            <Field label={t("admin.product.colourHy")}>
+              <input
+                value={form.colour_hy}
+                onChange={(e) => setForm({ ...form, colour_hy: e.target.value })}
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+              />
+            </Field>
+            <Field label={t("admin.product.aesthetic")}>
+              <input
+                value={form.aesthetic}
+                onChange={(e) => setForm({ ...form, aesthetic: e.target.value })}
+                placeholder="50's Style"
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+              />
+            </Field>
+            <Field label={t("admin.product.family")}>
+              <input
+                value={form.family}
+                onChange={(e) => setForm({ ...form, family: e.target.value })}
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+              />
+            </Field>
+            <Field label={t("admin.product.ean")}>
+              <input
+                value={form.ean}
+                onChange={(e) =>
+                  setForm(syncEanFieldToSpecs({ ...form, ean: e.target.value.replace(/[^0-9]/g, "") }))
+                }
+                inputMode="numeric"
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-foreground"
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">{t("admin.product.eanHint")}</p>
+            </Field>
+          </div>
           <Field label={`${t("admin.product.price")}, ${t("admin.product.priceAmd")}`}>
             <input
               inputMode="numeric"
@@ -517,7 +708,7 @@ function SpecsFields({ form, setForm }: { form: FormState; setForm: (f: FormStat
       <p className="mb-2 text-xs text-muted-foreground">{t("admin.product.specsHint")}</p>
       <textarea
         value={form[key]}
-        onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+        onChange={(e) => setForm(syncEanFromSpecsEdit(form, tab as SpecsLocale, e.target.value))}
         rows={12}
         className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-foreground"
       />
