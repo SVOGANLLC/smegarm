@@ -17,26 +17,39 @@ export const Route = createFileRoute("/_authenticated/admini/tools")({
   component: AdminTools,
 });
 
-const EXPORT_COLS = [
-  "sku",
-  "name",
-  "category",
-  "brand",
-  "family",
-  "aesthetic",
-  "colour",
-  "ean",
-  "price_amd",
-  "price_old",
-  "availability",
-  "is_published",
-  "is_bestseller",
-  "is_new",
-  "is_special_offer",
-  "is_featured",
-  "badge_text",
-  "sort_weight",
+const CATALOG_COLUMNS = [
+  { key: "sku", header: "SKU" },
+  { key: "name", header: "Название" },
+  { key: "category", header: "Категория" },
+  { key: "brand", header: "Бренд" },
+  { key: "family", header: "Линейка" },
+  { key: "aesthetic", header: "Эстетика" },
+  { key: "colour", header: "Цвет" },
+  { key: "ean", header: "EAN" },
+  { key: "price_amd", header: "Цена (AMD)" },
+  { key: "price_old", header: "Старая цена (AMD)" },
+  { key: "discount_percent", header: "Скидка %" },
+  { key: "stock_qty", header: "Количество (остаток шт.)" },
+  { key: "availability", header: "Наличие" },
+  { key: "is_published", header: "Опубликован" },
+  { key: "is_bestseller", header: "Хит" },
+  { key: "is_new", header: "Новинка" },
+  { key: "is_special_offer", header: "Акция" },
+  { key: "is_featured", header: "На главной" },
+  { key: "badge_text", header: "Бейдж" },
+  { key: "sort_weight", header: "Сортировка" },
 ] as const;
+
+const EXPORT_COLS = CATALOG_COLUMNS.map((c) => c.key);
+const EXPORT_HEADERS = CATALOG_COLUMNS.map((c) => c.header);
+
+/** Map Excel header (RU or technical key) → DB field name. */
+const HEADER_TO_FIELD = Object.fromEntries(
+  CATALOG_COLUMNS.flatMap((c) => [
+    [c.header, c.key],
+    [c.key, c.key],
+  ]),
+) as Record<string, string>;
 
 const UPDATABLE = new Set<string>([
   "name",
@@ -48,6 +61,8 @@ const UPDATABLE = new Set<string>([
   "ean",
   "price_amd",
   "price_old",
+  "discount_percent",
+  "stock_qty",
   "availability",
   "is_published",
   "is_bestseller",
@@ -65,7 +80,24 @@ const BOOL_FIELDS = new Set([
   "is_special_offer",
   "is_featured",
 ]);
-const NUM_FIELDS = new Set(["price_amd", "price_old", "sort_weight"]);
+const NUM_FIELDS = new Set(["price_amd", "price_old", "discount_percent", "stock_qty", "sort_weight"]);
+
+function remapImportRow(raw: Row): Row {
+  const out: Row = {};
+  for (const [header, value] of Object.entries(raw)) {
+    const field = HEADER_TO_FIELD[header.trim()];
+    if (field) out[field] = value;
+  }
+  return out;
+}
+
+function rowForExport(dbRow: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const { key, header } of CATALOG_COLUMNS) {
+    out[header] = dbRow[key] ?? "";
+  }
+  return out;
+}
 
 type Row = Record<string, unknown> & { sku?: unknown };
 
@@ -123,7 +155,7 @@ function ExportSection() {
         if (chunk.length < PAGE) break;
         from += PAGE;
       }
-      const ws = XLSX.utils.json_to_sheet(all, { header: [...EXPORT_COLS] });
+      const ws = XLSX.utils.json_to_sheet(all.map(rowForExport), { header: EXPORT_HEADERS });
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "products");
       const stamp = new Date().toISOString().slice(0, 10);
@@ -166,7 +198,10 @@ function normalizeValue(field: string, raw: unknown): unknown {
   }
   if (NUM_FIELDS.has(field)) {
     const n = Number(raw);
-    return Number.isFinite(n) ? n : null;
+    if (!Number.isFinite(n)) return null;
+    if (field === "discount_percent") return Math.max(0, Math.min(90, Math.round(n)));
+    if (field === "stock_qty") return Math.max(0, Math.round(n));
+    return n;
   }
   return String(raw);
 }
@@ -189,7 +224,7 @@ function ImportSection() {
       const buf = await f.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json<Row>(ws, { defval: "" });
+      const json = XLSX.utils.sheet_to_json<Row>(ws, { defval: "" }).map(remapImportRow);
       setRows(json);
       await analyze(json);
     } catch (err) {
@@ -278,7 +313,7 @@ function ImportSection() {
     <Card title={t("admin.tools.importTitle")} icon={Upload}>
       <p className="text-sm text-muted-foreground">
         {t("admin.tools.importDesc")}{" "}
-        <span className="font-mono text-xs">{Array.from(UPDATABLE).join(", ")}</span>
+        <span className="font-mono text-xs">{EXPORT_HEADERS.join(", ")}</span>
       </p>
       <div>
         <input
