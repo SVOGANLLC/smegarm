@@ -317,7 +317,12 @@ const E: Record<string, T3> = {
   "admin.tools.updatedProducts": ["Обновлено {n} товаров", "Updated {n} products", "Թարմացվել է {n} ապրանք"],
   "admin.tools.applyError": ["Ошибка применения", "Apply failed", "Կիրառման սխալ"],
   "admin.tools.readError": ["Не удалось прочитать файл", "Could not read file", "Ֆайլը կարդալ չհաջողվեց"],
-  "admin.tools.noSku": ["В файле не найдены SKU", "No SKUs in file", "Ֆайlում SKU չի գտնվել"],
+  "admin.tools.noSku": ["В файле не найдены SKU", "No SKUs in file", "Ֆայլում SKU չի գտնվել"],
+  "admin.tools.noChanges": [
+    "Изменений не найдено — данные в файле совпадают с каталогом (пустые ячейки не учитываются).",
+    "No changes found — file data matches the catalogue (empty cells are ignored).",
+    "Փոփոխություններ չեն գտնվել — ֆայլի տվյալները համընկնում են կataloգի հետ։",
+  ],
   "admin.tools.pricesTitle": ["Массовое изменение цен", "Bulk price update", "Զանգվածային գնի փոփոխություն"],
   "admin.tools.scope": ["Область", "Scope", "Շրջան"],
   "admin.tools.scopeCategory": ["По категории", "By category", "Ըստ կategորիայի"],
