@@ -188,6 +188,25 @@ function ExportSection() {
 // ---------- IMPORT ----------
 type DiffRow = { sku: string; changes: Record<string, { from: unknown; to: unknown }> };
 
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
+async function fetchProductsBySkus(skus: string[]): Promise<Map<string, Record<string, unknown>>> {
+  const map = new Map<string, Record<string, unknown>>();
+  const cols = [...UPDATABLE, "sku"].join(",");
+  for (const batch of chunk(skus, 120)) {
+    const { data, error } = await supabase.from("products").select(cols).in("sku", batch);
+    if (error) throw error;
+    for (const r of (data ?? []) as unknown as Record<string, unknown>[]) {
+      map.set(String(r.sku), r);
+    }
+  }
+  return map;
+}
+
 function normalizeValue(field: string, raw: unknown): unknown {
   if (raw === "" || raw === undefined || raw === null) return null;
   if (BOOL_FIELDS.has(field)) {
@@ -241,17 +260,12 @@ function ImportSection() {
       toast.error(t("admin.tools.noSku"));
       return;
     }
-    const { data, error } = await supabase
-      .from("products")
-      .select([...UPDATABLE, "sku"].join(","))
-      .in("sku", skus);
-    if (error) {
-      toast.error(error.message);
+    let map: Map<string, Record<string, unknown>>;
+    try {
+      map = await fetchProductsBySkus(skus);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("admin.tools.readError"));
       return;
-    }
-    const map = new Map<string, Record<string, unknown>>();
-    for (const r of (data ?? []) as unknown as Record<string, unknown>[]) {
-      map.set(String(r.sku), r);
     }
     const diffs: DiffRow[] = [];
     for (const row of input) {
@@ -275,6 +289,9 @@ function ImportSection() {
       if (Object.keys(changes).length) diffs.push({ sku, changes });
     }
     setDiff(diffs);
+    if (!diffs.length) {
+      toast.message(t("admin.tools.noChanges"));
+    }
   }
 
   async function apply() {
