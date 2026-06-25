@@ -4,6 +4,17 @@ import { randomBytes } from "node:crypto";
 
 const CONVERSE_BASE = "https://pay.conversebank.am";
 
+/** Converse register returns legacy `ecommerce_pay/webX`, which auto-redirects to the ArCa card form.
+ *  The Apple Pay landing page (as on Ararat) lives at `ecommerce_pay_applePay/webX`. */
+function normalizeConverseFormUrl(raw: string): string {
+  const url = new URL(raw);
+  url.protocol = "https:";
+  if (url.pathname === "/ecommerce_pay/webX") {
+    url.pathname = "/ecommerce_pay_applePay/webX";
+  }
+  return url.href;
+}
+
 function getCreds() {
   const merchant_id = process.env.CONVERSE_MERCHANT_ID;
   const token = process.env.CONVERSE_TOKEN;
@@ -69,6 +80,7 @@ export const startConversePayment = createServerFn({ method: "POST" })
       amount: order.total_amd,
       currency: "051", // AMD
       orderNumber: buildConverseOrderNumber(order.order_no),
+      comment: `Order SMEG-${order.order_no}`,
       returnUrl,
       lang: data.lang,
       token,
@@ -91,7 +103,7 @@ export const startConversePayment = createServerFn({ method: "POST" })
 
     let formUrl: string;
     try {
-      formUrl = new URL(String(json.content.formUrl)).href;
+      formUrl = normalizeConverseFormUrl(String(json.content.formUrl));
       const host = new URL(formUrl).hostname.toLowerCase();
       if (!host.endsWith("conversebank.am")) {
         console.error("converse unexpected formUrl host", formUrl);
