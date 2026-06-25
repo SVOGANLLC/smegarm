@@ -5,14 +5,13 @@ import { randomBytes } from "node:crypto";
 const CONVERSE_BASE = "https://pay.conversebank.am";
 
 /** Converse register returns legacy `ecommerce_pay/webX`, which auto-redirects to the ArCa card form.
- *  The Apple Pay landing page (as on Ararat) lives at `ecommerce_pay_applePay/webX`. */
-function normalizeConverseFormUrl(raw: string): string {
-  const url = new URL(raw);
-  url.protocol = "https:";
-  if (url.pathname === "/ecommerce_pay/webX") {
-    url.pathname = "/ecommerce_pay_applePay/webX";
+ *  `ecommerce_pay_applePay/webX` shows Apple Pay only. `px_transfer/{pxNumber}` shows both. */
+function buildConversePaymentUrl(rawFormUrl: string, pxNumber: string): string {
+  const host = new URL(rawFormUrl).hostname.toLowerCase();
+  if (!host.endsWith("conversebank.am")) {
+    throw new Error("Некорректный ответ платёжного шлюза");
   }
-  return url.href;
+  return `${CONVERSE_BASE}/px_transfer/${pxNumber}`;
 }
 
 function getCreds() {
@@ -103,12 +102,7 @@ export const startConversePayment = createServerFn({ method: "POST" })
 
     let formUrl: string;
     try {
-      formUrl = normalizeConverseFormUrl(String(json.content.formUrl));
-      const host = new URL(formUrl).hostname.toLowerCase();
-      if (!host.endsWith("conversebank.am")) {
-        console.error("converse unexpected formUrl host", formUrl);
-        throw new Error("Некорректный ответ платёжного шлюза");
-      }
+      formUrl = buildConversePaymentUrl(String(json.content.formUrl), String(json.content.pxNumber));
     } catch (e) {
       console.error("converse invalid formUrl", json.content.formUrl, e);
       throw new Error("Некорректный адрес формы оплаты");
