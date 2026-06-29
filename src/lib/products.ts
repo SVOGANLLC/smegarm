@@ -45,6 +45,7 @@ export type Product = {
 };
 
 export type ProductCard = Product & {
+  aesthetic?: string | null;
   price_amd: number | null;
   price_old: number | null;
   discount_percent: number;
@@ -163,8 +164,8 @@ export async function fetchFeatured(skus: string[]): Promise<Product[]> {
   return (data ?? []) as Product[];
 }
 
-const CARD_COLS =
-  "sku,name,name_en,name_hy,category,category_en,category_hy,colour,colour_en,colour_hy,model_group,main_image,price_amd,price_old,discount_percent,availability,stock_qty,stock_reserved,lead_time_days,is_published,is_featured,is_new,is_bestseller,is_special_offer,badge_text";
+export const CARD_COLS =
+  "sku,name,name_en,name_hy,category,category_en,category_hy,aesthetic,colour,colour_en,colour_hy,model_group,main_image,price_amd,price_old,discount_percent,availability,stock_qty,stock_reserved,lead_time_days,is_published,is_featured,is_new,is_bestseller,is_special_offer,badge_text";
 
 export async function fetchProductsByFlag(
   flag: "is_featured" | "is_new" | "is_bestseller" | "is_special_offer",

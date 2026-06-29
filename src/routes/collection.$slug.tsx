@@ -1,12 +1,22 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
-import { ProductGrid } from "@/components/site/ProductCard";
-import { fetchCollectionWithProducts } from "@/lib/products";import { canonicalLink, hreflangLinks, seoMeta } from "@/lib/seo";
+import { ProductListingShell } from "@/components/site/ProductListingShell";
+import { fetchCollectionWithProducts } from "@/lib/products";
+import { canonicalLink, hreflangLinks, seoMeta } from "@/lib/seo";
 import { getI18nDefaults, pickLocalized, useI18n } from "@/lib/i18n";
 
+const searchSchema = z.object({
+  colour: z.string().optional(),
+  aesthetic: z.string().optional(),
+  spec: z.string().optional(),
+  inStock: z.boolean().optional(),
+});
+
 export const Route = createFileRoute("/collection/$slug")({
+  validateSearch: (s) => searchSchema.parse(s),
   loader: async ({ params, context }) => {
     const data = await context.queryClient.ensureQueryData({
       queryKey: ["collection", params.slug],
@@ -56,6 +66,8 @@ function CollectionNotFoundView() {
 
 function CollectionPage() {
   const { slug } = Route.useParams();
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
   const { lang, t } = useI18n();
   const { data, isLoading } = useQuery({
     queryKey: ["collection", slug],
@@ -94,7 +106,11 @@ function CollectionPage() {
             {data.products.length === 0 ? (
               <p className="text-muted-foreground">{t("collection.empty")}</p>
             ) : (
-              <ProductGrid items={data.products} />
+              <ProductListingShell
+                products={data.products}
+                search={search}
+                onSearchChange={(next) => navigate({ search: next })}
+              />
             )}
           </>
         )}

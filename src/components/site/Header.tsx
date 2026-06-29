@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import smegLogo from "@/assets/smeg-logo.svg.asset.json";
 import { CartButton } from "@/components/site/CartDrawer";
 import { HeaderSearch } from "@/components/site/HeaderSearch";
+import { CatalogMegaMenu, CatalogMobileNav } from "@/components/site/CatalogMegaMenu";
 
 const langLabels: Record<Lang, string> = { ru: "RU", en: "EN", hy: "ՀՅ" };
 
@@ -35,7 +36,6 @@ export function Header() {
   }, [menuOpen]);
 
   const nav = [
-    { to: "/catalog", label: t("nav.catalog"), internal: true },
     { to: "/house-of-coffee", label: t("nav.houseOfCoffee"), internal: true },
     { to: "/#collections", label: t("nav.collections"), hash: "collections" },
     { to: "/#story", label: t("nav.story"), hash: "story" },
@@ -85,6 +85,7 @@ export function Header() {
           </Link>
 
           <nav className="hidden items-center gap-9 lg:flex">
+            <CatalogMegaMenu />
             {nav.map((n) =>
               n.internal ? (
                 <Link
@@ -150,13 +151,14 @@ export function Header() {
           >
             <div className="h-14 shrink-0" aria-hidden />
             <nav className="flex flex-1 flex-col justify-center gap-1 px-6">
+              <CatalogMobileNav onNavigate={() => setMenuOpen(false)} />
               {nav.map((n, i) =>
                 n.internal ? (
                   <motion.div
                     key={n.to}
                     initial={{ opacity: 0, x: -16 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
+                    transition={{ delay: (i + 1) * 0.05 }}
                   >
                     <Link
                       to={n.to}
@@ -171,7 +173,7 @@ export function Header() {
                     key={n.to}
                     initial={{ opacity: 0, x: -16 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
+                    transition={{ delay: (i + 1) * 0.05 }}
                   >
                     <a
                       href={n.to}

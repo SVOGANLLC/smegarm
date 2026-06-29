@@ -1,16 +1,25 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
-import { ProductGrid } from "@/components/site/ProductCard";
-import type { ProductCard as ProductCardType } from "@/lib/products";
+import { ProductListingShell } from "@/components/site/ProductListingShell";
+import { CARD_COLS, type ProductCard as ProductCardType } from "@/lib/products";
 import { useI18n, getI18nDefaults } from "@/lib/i18n";
 import { canonicalLink, hreflangLinks, seoMeta } from "@/lib/seo";
 
 const hyMeta = getI18nDefaults().hy;
 
+const searchSchema = z.object({
+  colour: z.string().optional(),
+  aesthetic: z.string().optional(),
+  spec: z.string().optional(),
+  inStock: z.boolean().optional(),
+});
+
 export const Route = createFileRoute("/sale")({
+  validateSearch: (s) => searchSchema.parse(s),
   head: () => ({
     meta: seoMeta({
       title: hyMeta["sale.metaTitle"],
@@ -26,14 +35,14 @@ export const Route = createFileRoute("/sale")({
 
 function Sale() {
   const { t } = useI18n();
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["sale-page"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select(
-          "sku,name,category,colour,main_image,price_amd,price_old,discount_percent,availability,stock_qty,stock_reserved,lead_time_days,is_published,is_featured,is_new,is_bestseller,is_special_offer,badge_text",
-        )
+        .select(CARD_COLS)
         .eq("is_published", true)
         .or("is_special_offer.eq.true,discount_percent.gt.0")
         .order("discount_percent", { ascending: false })
@@ -56,7 +65,11 @@ function Sale() {
             <p className="mt-8 text-muted-foreground">{t("sale.empty")}</p>
           ) : (
             <div className="mt-10">
-              <ProductGrid items={items} />
+              <ProductListingShell
+                products={items}
+                search={search}
+                onSearchChange={(next) => navigate({ search: next })}
+              />
             </div>
           )}
           <Link to="/catalog" className="mt-10 inline-block smeg-underline text-sm uppercase tracking-[0.18em]">

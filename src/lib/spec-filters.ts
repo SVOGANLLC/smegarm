@@ -130,6 +130,7 @@ export type SpecFacetContext = {
   families?: string[];
   colours?: string[];
   aesthetics?: string[];
+  skus?: string[];
   inStock?: boolean;
   active?: SpecFilters;
 };
@@ -142,6 +143,7 @@ export async function fetchSpecFacets(ctx: SpecFacetContext): Promise<SpecFacet[
     p_aesthetics: ctx.aesthetics?.length ? ctx.aesthetics : null,
     p_in_stock: ctx.inStock ?? false,
     p_active: specFiltersToRpc(ctx.active ?? {}),
+    p_skus: ctx.skus?.length ? ctx.skus : null,
   });
   if (error) throw error;
   return (data ?? []) as SpecFacet[];

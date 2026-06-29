@@ -128,20 +128,39 @@ export function ProductCard({
   );
 }
 
-export function ProductGrid({ items }: { items: ProductCardType[] }) {
+export function ProductGrid({
+  items,
+  swatchHex,
+}: {
+  items: Array<ProductCardType & { variants?: import("@/lib/products").Variant[]; priceFrom?: number | null; variantCount?: number }>;
+  swatchHex?: (canonical: string) => string;
+}) {
   if (!items.length) return null;
   return (
     <div className="light-section rounded-sm p-4 md:p-8">
       <HorizontalScroll className="md:hidden">
         {items.map((p) => (
           <HorizontalScrollItem key={p.sku}>
-            <ProductCard p={p} />
+            <ProductCard
+              p={p}
+              variants={p.variants}
+              priceFrom={p.priceFrom}
+              variantCount={p.variantCount}
+              swatchHex={swatchHex}
+            />
           </HorizontalScrollItem>
         ))}
       </HorizontalScroll>
       <div className="hidden md:grid md:grid-cols-2 md:gap-6 lg:grid-cols-4 lg:gap-8">
         {items.map((p) => (
-          <ProductCard key={p.sku} p={p} />
+          <ProductCard
+            key={p.sku}
+            p={p}
+            variants={p.variants}
+            priceFrom={p.priceFrom}
+            variantCount={p.variantCount}
+            swatchHex={swatchHex}
+          />
         ))}
       </div>
     </div>
