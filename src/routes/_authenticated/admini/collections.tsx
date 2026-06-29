@@ -22,6 +22,7 @@ type CollectionRow = {
   is_published: boolean;
   sort_weight: number;
   section: CollectionSection | null;
+  product_count?: number;
 };
 
 type LinkedProduct = {
@@ -85,7 +86,7 @@ function CollectionProducts({
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [query, setQuery] = useState("");
 
   const linked = useQuery({
@@ -244,13 +245,24 @@ function AdminCollections() {
   const list = useQuery({
     queryKey: ["admin-collections"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("collections")
-        .select("id,slug,name,name_en,name_hy,description,cover_image,is_published,sort_weight,section")
-        .order("sort_weight", { ascending: false })
-        .order("name");
+      const [{ data, error }, { data: links, error: linkErr }] = await Promise.all([
+        supabase
+          .from("collections")
+          .select("id,slug,name,name_en,name_hy,description,cover_image,is_published,sort_weight,section")
+          .order("sort_weight", { ascending: false })
+          .order("name"),
+        supabase.from("collection_products").select("collection_id"),
+      ]);
       if (error) throw error;
-      return (data ?? []) as CollectionRow[];
+      if (linkErr) throw linkErr;
+      const counts = new Map<string, number>();
+      for (const row of links ?? []) {
+        counts.set(row.collection_id, (counts.get(row.collection_id) ?? 0) + 1);
+      }
+      return ((data ?? []) as CollectionRow[]).map((c) => ({
+        ...c,
+        product_count: counts.get(c.id) ?? 0,
+      }));
     },
   });
 
@@ -349,7 +361,14 @@ function AdminCollections() {
                   onBlur={(e) => e.target.value !== c.name && update.mutate({ id: c.id, patch: { name: e.target.value } })}
                   className="w-full bg-transparent font-serif text-xl outline-none"
                 />
-                <p className="font-mono text-xs text-muted-foreground">/{c.slug}</p>
+                <p className="font-mono text-xs text-muted-foreground">
+                  /{c.slug}
+                  {typeof c.product_count === "number" && (
+                    <span className="ml-2 font-sans normal-case">
+                      · {t("admin.collections.productCount", { n: c.product_count })}
+                    </span>
+                  )}
+                </p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <input
                     defaultValue={c.name_en ?? ""}

@@ -9,6 +9,7 @@ import {
   serializeSmallCategories,
 } from "@/lib/categories-config";
 import { useI18n } from "@/lib/i18n";
+import { CatalogCategoryOrderEditor } from "@/components/admin/CatalogCategoryOrderEditor";
 
 type BlockValue = Record<string, Partial<Record<Lang, string>>>;
 
@@ -107,6 +108,8 @@ export function CategoriesContentEditor({
           />
         </label>
       </div>
+
+      <CatalogCategoryOrderEditor value={value} onChange={onChange} />
     </div>
   );
 }

@@ -14,6 +14,8 @@ import { useState } from "react";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useI18n, getI18nDefaults } from "@/lib/i18n";
 import { categoryLabel as catLabel } from "@/lib/category-i18n";
+import { parseCatalogOrder, sortCategoriesByOrder } from "@/lib/category-order";
+import { supabase } from "@/integrations/supabase/client";
 import { ProductCard } from "@/components/site/ProductCard";
 import type { ProductCard as ProductCardType } from "@/lib/products";
 import { colourLabel as colourI18n } from "@/lib/colour-i18n";
@@ -104,6 +106,14 @@ function CatalogPage() {
     queryFn: fetchCategories,
     staleTime: 5 * 60_000,
   });
+  const orderQuery = useQuery({
+    queryKey: ["site-content", "categories-order"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_content").select("value").eq("key", "categories").maybeSingle();
+      return parseCatalogOrder((data?.value ?? {}) as Record<string, Partial<Record<"ru" | "en" | "hy", string>>>);
+    },
+    staleTime: 60_000,
+  });
   const facetsQuery = useQuery({ queryKey: ["facets"], queryFn: fetchFacets, staleTime: 10 * 60_000 });
   const swatchesQuery = useQuery({ queryKey: ["color-swatches"], queryFn: fetchColorSwatches, staleTime: 30 * 60_000 });
 
@@ -117,12 +127,7 @@ function CatalogPage() {
       })
     : undefined;
 
-  const sortedCategories = [...(catsQuery.data ?? [])].sort((a, b) =>
-    catLabel(a.category, lang, { hy: a.category_hy, en: a.category_en, ru: a.category_ru }).localeCompare(
-      catLabel(b.category, lang, { hy: b.category_hy, en: b.category_en, ru: b.category_ru }),
-      lang === "hy" ? "hy" : lang === "ru" ? "ru" : "en",
-    ),
-  );
+  const sortedCategories = sortCategoriesByOrder(catsQuery.data ?? [], orderQuery.data ?? []);
 
   // colour value (canonical) → localized label for current lang
   const colourLabel = (value: string) => {

@@ -7,6 +7,7 @@ import { ArrowLeft, Copy, Upload, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { translateProduct } from "@/lib/translate.functions";
 import { useI18n } from "@/lib/i18n";
+import { ProductCollectionsEditor } from "@/components/admin/ProductCollectionsEditor";
 import {
   normalizeEanForSave,
   parseSpecsText,
@@ -574,6 +575,7 @@ function EditProduct() {
               <p className="mt-1 text-[11px] text-muted-foreground">{t("admin.product.eanHint")}</p>
             </Field>
           </div>
+          <ProductCollectionsEditor sku={sku} />
           <Field label={`${t("admin.product.price")}, ${t("admin.product.priceAmd")}`}>
             <input
               inputMode="numeric"

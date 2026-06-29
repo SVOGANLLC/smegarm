@@ -16,6 +16,7 @@ import { I18nProvider } from "../lib/i18n";
 import { CartProvider } from "../lib/cart";
 import { CartDrawer } from "../components/site/CartDrawer";
 import { WhatsAppFab } from "../components/site/WhatsAppFab";
+import { ScrollToTopButton } from "../components/site/ScrollToTopButton";
 import { canonicalLink, faviconLinks, hreflangLinks, seoMeta, absoluteUrl } from "../lib/seo";
 
 function NotFoundComponent() {
@@ -155,6 +156,7 @@ function RootComponent() {
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
           <CartDrawer />
+          <ScrollToTopButton />
           <WhatsAppFab />
         </CartProvider>
       </I18nProvider>

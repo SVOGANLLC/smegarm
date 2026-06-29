@@ -4,9 +4,10 @@ import { useState, useRef } from "react";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Download, Upload, Percent, Loader2, Languages } from "lucide-react";
+import { Download, Upload, Percent, Loader2, Languages, Type } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { countUntranslated, translateBatch } from "@/lib/translate.functions";
+import { fixHyMixedScript, hasHyMixedScript } from "@/lib/hy-script";
 import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/admini/tools")({
@@ -115,6 +116,7 @@ function AdminTools() {
       <ImportSection />
       <BulkPriceSection />
       <BulkTranslateSection />
+      <HyScriptSection />
     </div>
   );
 }
@@ -715,5 +717,110 @@ function Stat({ label, value, warn }: { label: string; value: number; warn?: boo
       <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
       <p className={`mt-1 font-serif text-2xl ${warn ? "text-amber-600" : "text-foreground"}`}>{value}</p>
     </div>
+  );
+}
+
+type HyIssue = { sku: string; field: string; before: string; after: string };
+
+function HyScriptSection() {
+  const { t } = useI18n();
+  const [busy, setBusy] = useState(false);
+  const [issues, setIssues] = useState<HyIssue[]>([]);
+
+  async function scan() {
+    setBusy(true);
+    try {
+      const found: HyIssue[] = [];
+      const PAGE = 500;
+      let from = 0;
+      for (;;) {
+        const { data, error } = await supabase
+          .from("products")
+          .select("sku,name_hy,description_hy,category_hy,colour_hy")
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        if (!data?.length) break;
+        for (const row of data) {
+          for (const field of ["name_hy", "description_hy", "category_hy", "colour_hy"] as const) {
+            const before = row[field];
+            if (!hasHyMixedScript(before)) continue;
+            const after = fixHyMixedScript(before);
+            if (after !== before) found.push({ sku: row.sku, field, before: before!, after });
+          }
+        }
+        if (data.length < PAGE) break;
+        from += PAGE;
+      }
+      setIssues(found);
+      toast.success(
+        found.length ? t("admin.tools.hyScriptFound", { n: found.length }) : t("admin.tools.hyScriptNone"),
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("admin.error"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function apply() {
+    if (!issues.length) return;
+    setBusy(true);
+    try {
+      let fixed = 0;
+      for (const issue of issues) {
+        const { error } = await supabase
+          .from("products")
+          .update({ [issue.field]: issue.after })
+          .eq("sku", issue.sku);
+        if (error) throw error;
+        fixed += 1;
+      }
+      setIssues([]);
+      toast.success(t("admin.tools.hyScriptDone", { n: fixed }));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("admin.error"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card title={t("admin.tools.hyScriptTitle")} icon={Type}>
+      <p className="text-sm text-muted-foreground">{t("admin.tools.hyScriptDesc")}</p>
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={scan}
+          className="rounded-sm border border-border px-4 py-2 text-xs uppercase tracking-[0.14em] hover:border-foreground disabled:opacity-50"
+        >
+          {busy ? t("admin.tools.analyzing") : t("admin.tools.hyScriptScan")}
+        </button>
+        {issues.length > 0 && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={apply}
+            className="rounded-sm bg-foreground px-4 py-2 text-xs uppercase tracking-[0.14em] text-background disabled:opacity-50"
+          >
+            {t("admin.tools.hyScriptApply", { n: issues.length })}
+          </button>
+        )}
+      </div>
+      {issues.length > 0 && (
+        <div className="max-h-60 overflow-auto rounded-sm border border-border bg-secondary/30 p-3 font-mono text-xs">
+          {issues.slice(0, 120).map((row, i) => (
+            <div key={`${row.sku}-${row.field}-${i}`} className="border-b border-border/50 py-1 last:border-0">
+              <span className="text-muted-foreground">{row.sku}</span> · {row.field}
+              <div className="text-rose-700 line-through">{row.before}</div>
+              <div className="text-emerald-700">{row.after}</div>
+            </div>
+          ))}
+          {issues.length > 120 && (
+            <p className="mt-2 text-muted-foreground">{t("admin.tools.moreRows", { n: issues.length - 120 })}</p>
+          )}
+        </div>
+      )}
+    </Card>
   );
 }
