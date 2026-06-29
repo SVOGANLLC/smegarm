@@ -84,7 +84,7 @@ export function Header() {
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-9 lg:flex">
+          <nav className="hidden items-center gap-7 md:flex md:gap-9">
             <CatalogMegaMenu />
             {nav.map((n) =>
               n.internal ? (
@@ -131,7 +131,7 @@ export function Header() {
               onClick={() => setMenuOpen((o) => !o)}
               aria-label={menuOpen ? t("header.close") : t("header.menu")}
               aria-expanded={menuOpen}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/80 backdrop-blur lg:hidden"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/80 backdrop-blur md:hidden"
             >
               {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
@@ -147,7 +147,7 @@ export function Header() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[45] flex flex-col bg-background lg:hidden"
+            className="fixed inset-0 z-[45] flex flex-col bg-background md:hidden"
           >
             <div className="h-14 shrink-0" aria-hidden />
             <nav className="flex flex-1 flex-col justify-center gap-1 px-6">

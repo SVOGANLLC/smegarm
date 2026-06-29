@@ -5,8 +5,10 @@ import { Footer } from "@/components/site/Footer";
 import {
   fetchCatalog,
   fetchCategories,
+  fetchCategoriesScoped,
   fetchColorSwatches,
   fetchFacets,
+  fetchFacetsScoped,
   slugify,
 } from "@/lib/products";
 import { z } from "zod";
@@ -157,11 +159,46 @@ function CatalogPage() {
     categoryRawList ??
     (sectionCategoryList?.length && !category ? sectionCategoryList : undefined);
 
+  const scopedCatsQuery = useQuery({
+    queryKey: ["catalog-categories-scoped", section ?? "", effectiveFamilies ?? null, effectiveCategoryIn ?? null],
+    queryFn: () =>
+      fetchCategoriesScoped({
+        families: effectiveFamilies,
+        categoryIn: effectiveCategoryIn,
+      }),
+    enabled: !!(section || effectiveFamilies?.length || effectiveCategoryIn?.length),
+    staleTime: 5 * 60_000,
+  });
+
+  const sidebarCategories = sortCategoriesByOrder(
+    section || effectiveFamilies?.length || effectiveCategoryIn?.length
+      ? (scopedCatsQuery.data ?? [])
+      : sortedCategories,
+    orderQuery.data ?? [],
+  );
+
+  const scopedFacetsQuery = useQuery({
+    queryKey: ["facets-scoped", section ?? "", effectiveFamilies ?? null, effectiveCategoryIn ?? null, inStock ?? false],
+    queryFn: () =>
+      fetchFacetsScoped({
+        families: effectiveFamilies,
+        categoryIn: effectiveCategoryIn,
+        inStock,
+      }),
+    enabled: !!(section || effectiveFamilies?.length || effectiveCategoryIn?.length),
+    staleTime: 60_000,
+  });
+
+  const activeFacets =
+    section || effectiveFamilies?.length || effectiveCategoryIn?.length
+      ? scopedFacetsQuery.data
+      : facetsQuery.data;
+
   const groupByColor = shouldGroupCatalog(groupConfigQuery.data ?? { enabled: true, disabledCategorySlugs: [] }, category);
 
   // colour value (canonical) → localized label for current lang
   const colourLabel = (value: string) => {
-    const f = facetsQuery.data?.colours.find((c) => c.value === value);
+    const f = activeFacets?.colours.find((c) => c.value === value);
     const canonical = f?.value_en ?? value;
     if (lang === "hy") return f?.label_hy || colourI18n(canonical, lang);
     if (lang === "en") return f?.label_en || colourI18n(canonical, lang);
@@ -386,12 +423,24 @@ function CatalogPage() {
             </button>
           ))}
         </div>
+        {section && (
+          <p className="mb-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            {t("catalog.sidebar.inSection")}: {t(`catalog.section.${section}`)}
+          </p>
+        )}
         <div className="max-h-72 space-y-1 overflow-y-auto pr-1">
-          {sortedCategories.map((c) => (
+          {sidebarCategories.map((c) => (
             <button
               key={c.slug}
               onClick={() =>
-                navigate({ search: (prev: CatalogSearch) => ({ ...prev, category: c.slug, page: 1 }) })
+                navigate({
+                  search: (prev: CatalogSearch) => ({
+                    ...prev,
+                    category: c.slug,
+                    section: undefined,
+                    page: 1,
+                  }),
+                })
               }
               className={`flex w-full items-baseline justify-between text-left text-sm transition ${category === c.slug ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
             >
@@ -404,7 +453,7 @@ function CatalogPage() {
 
       <FacetGroup label={t("facet.colour")}>
         <div className="flex flex-wrap gap-2">
-          {facetsQuery.data?.colours
+          {activeFacets?.colours
             .filter((c) => (c.value_en ?? c.value) !== "Decorated / Special")
             .slice(0, 30)
             .map((c) => {
@@ -426,7 +475,7 @@ function CatalogPage() {
 
       <FacetGroup label={t("facet.aesthetic")}>
         <ScrollableFacet
-          items={facetsQuery.data?.aesthetics ?? []}
+          items={activeFacets?.aesthetics ?? []}
           selected={aesthetics}
           onToggle={(v) => toggleIn("aesthetic", v)}
         />
@@ -487,7 +536,7 @@ function CatalogPage() {
               </select>
               <button
                 onClick={() => setMobileOpen(true)}
-                className="flex flex-1 items-center justify-center gap-2 rounded-full border border-border px-4 py-2 text-xs uppercase tracking-[0.14em] md:flex-none lg:hidden"
+                className="flex flex-1 items-center justify-center gap-2 rounded-full border border-border px-4 py-2 text-xs uppercase tracking-[0.14em] sm:flex-none md:hidden"
               >
                 <SlidersHorizontal className="h-3.5 w-3.5" /> {t("catalog.filters")}
                 {activeCount > 0 && <span className="rounded-full bg-foreground px-1.5 text-[10px] text-background">{activeCount}</span>}
@@ -495,8 +544,8 @@ function CatalogPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[260px_1fr]">
-            <aside className="hidden lg:block lg:sticky lg:top-28 lg:self-start lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:pr-2">{filters}</aside>
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-[260px_1fr]">
+            <aside className="hidden md:block md:sticky md:top-28 md:self-start md:max-h-[calc(100vh-8rem)] md:overflow-y-auto md:pr-2">{filters}</aside>
 
             <section className="light-section rounded-sm p-4 md:p-8">
               {productsQuery.isLoading ? (
@@ -559,7 +608,7 @@ function CatalogPage() {
       </main>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-foreground/40" onClick={() => setMobileOpen(false)} />
           <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-background p-6 shadow-2xl animate-in slide-in-from-bottom">
             <div className="mb-4 flex items-center justify-between">

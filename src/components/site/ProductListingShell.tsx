@@ -224,7 +224,7 @@ export function ProductListingShell({ products, search, onSearchChange, groupByC
 
   return (
     <div>
-      <div className="mb-5 flex items-center gap-3 lg:hidden">
+      <div className="mb-5 flex items-center gap-3 md:hidden">
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
@@ -238,8 +238,8 @@ export function ProductListingShell({ products, search, onSearchChange, groupByC
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-[240px_1fr]">
-        <aside className="hidden lg:block lg:sticky lg:top-28 lg:self-start lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:pr-2">
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-[240px_1fr]">
+        <aside className="hidden md:block md:sticky md:top-28 md:self-start md:max-h-[calc(100vh-8rem)] md:overflow-y-auto md:pr-2">
           {filters}
         </aside>
         <section>
@@ -254,7 +254,7 @@ export function ProductListingShell({ products, search, onSearchChange, groupByC
       </div>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-foreground/40" onClick={() => setMobileOpen(false)} />
           <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-background p-6 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">

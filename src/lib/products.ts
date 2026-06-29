@@ -118,6 +118,60 @@ export async function fetchCategories(): Promise<CategoryStat[]> {
     .sort((a, b) => b.count - a.count);
 }
 
+type CategoryRow = { category: string | null; category_en: string | null; category_hy: string | null };
+
+function groupCategoryRows(rows: CategoryRow[]): CategoryStat[] {
+  const hasCyrillic = (s: string) => /[\u0400-\u04FF]/.test(s);
+  const hasArmenian = (s: string) => /[\u0530-\u058F]/.test(s);
+  const groups = new Map<
+    string,
+    { count: number; raw: Set<string>; en?: string | null; hy?: string | null; ru?: string | null }
+  >();
+  for (const row of rows) {
+    const raw = row.category?.trim();
+    if (!raw) continue;
+    const canonical = canonicalCategoryKey(raw, row.category_en, row.category_hy);
+    const cur = groups.get(canonical) ?? { count: 0, raw: new Set<string>() };
+    cur.count += 1;
+    cur.raw.add(raw);
+    if (!cur.en) cur.en = row.category_en?.trim() || (hasCyrillic(raw) || hasArmenian(raw) ? null : raw);
+    if (!cur.hy && row.category_hy?.trim()) cur.hy = row.category_hy.trim();
+    if (!cur.hy && hasArmenian(raw)) cur.hy = raw;
+    if (!cur.ru && hasCyrillic(raw)) cur.ru = raw;
+    groups.set(canonical, cur);
+  }
+  return Array.from(groups.entries())
+    .map(([canonical, v]) => ({
+      category: canonical,
+      raw: Array.from(v.raw),
+      category_en: v.en ?? canonical,
+      category_hy: v.hy ?? null,
+      category_ru: v.ru ?? null,
+      slug: slugify(canonical),
+      count: v.count,
+    }))
+    .sort((a, b) => b.count - a.count);
+}
+
+/** Categories that have at least one product in the given catalog context (section, family, etc.). */
+export async function fetchCategoriesScoped(opts: {
+  families?: string[];
+  categoryIn?: string[];
+  inStock?: boolean;
+}): Promise<CategoryStat[]> {
+  let q = supabase
+    .from("products")
+    .select("category,category_en,category_hy")
+    .eq("is_published", true)
+    .not("category", "is", null);
+  if (opts.families?.length) q = q.in("family", opts.families);
+  if (opts.categoryIn?.length) q = q.in("category", opts.categoryIn);
+  if (opts.inStock) q = q.eq("availability", "in_stock");
+  const { data, error } = await q;
+  if (error) throw error;
+  return groupCategoryRows((data ?? []) as CategoryRow[]);
+}
+
 export async function fetchProducts(opts: {
   category?: string;
   aesthetic?: string;
@@ -328,6 +382,49 @@ export async function fetchFacets(): Promise<FacetCounts> {
     .from("products")
     .select("family,aesthetic,colour,colour_en,colour_hy")
     .limit(5000);
+  if (error) throw error;
+  const tally = (key: "family" | "aesthetic" | "colour") => {
+    const m = new Map<string, number>();
+    for (const r of (data ?? []) as Array<Record<string, string | null>>) {
+      const v = (r[key] ?? "").trim();
+      if (!v) continue;
+      m.set(v, (m.get(v) ?? 0) + 1);
+    }
+    return Array.from(m.entries())
+      .map(([value, count]) => ({ value, count }))
+      .sort((a, b) => b.count - a.count);
+  };
+  const colourLabels = new Map<string, { en?: string | null; hy?: string | null }>();
+  for (const r of (data ?? []) as Array<{ colour: string | null; colour_en: string | null; colour_hy: string | null }>) {
+    const v = (r.colour ?? "").trim();
+    if (!v) continue;
+    const cur = colourLabels.get(v) ?? {};
+    if (!cur.en && r.colour_en) cur.en = r.colour_en;
+    if (!cur.hy && r.colour_hy) cur.hy = r.colour_hy;
+    colourLabels.set(v, cur);
+  }
+  const colours = tally("colour").map((c) => ({
+    ...c,
+    value_en: colourLabels.get(c.value)?.en ?? null,
+    label_en: colourLabels.get(c.value)?.en ?? null,
+    label_hy: colourLabels.get(c.value)?.hy ?? null,
+  }));
+  return { families: tally("family"), aesthetics: tally("aesthetic"), colours };
+}
+
+export async function fetchFacetsScoped(opts: {
+  families?: string[];
+  categoryIn?: string[];
+  inStock?: boolean;
+}): Promise<FacetCounts> {
+  let q = supabase
+    .from("products")
+    .select("family,aesthetic,colour,colour_en,colour_hy")
+    .eq("is_published", true);
+  if (opts.families?.length) q = q.in("family", opts.families);
+  if (opts.categoryIn?.length) q = q.in("category", opts.categoryIn);
+  if (opts.inStock) q = q.eq("availability", "in_stock");
+  const { data, error } = await q.limit(5000);
   if (error) throw error;
   const tally = (key: "family" | "aesthetic" | "colour") => {
     const m = new Map<string, number>();
