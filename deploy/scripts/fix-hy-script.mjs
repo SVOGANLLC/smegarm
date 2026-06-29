@@ -19,10 +19,10 @@ const LOOKALIKE = {
 };
 
 function loadEnv() {
-  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY) {
     return {
       SUPABASE_URL: process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
-      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY,
       VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
     };
   }
@@ -45,7 +45,14 @@ function isSkuLike(word) {
 
 function fixWord(word) {
   if (!ARMENIAN.test(word) || isSkuLike(word)) return word;
-  return [...word].map((ch) => (ARMENIAN.test(ch) ? ch : LOOKALIKE[ch] ?? ch)).join("");
+  return [...word]
+    .map((ch) => {
+      if (ARMENIAN.test(ch)) return ch;
+      // Keep model codes / SKUs (uppercase Latin + digits).
+      if (/[A-Z0-9]/.test(ch)) return ch;
+      return LOOKALIKE[ch] ?? ch;
+    })
+    .join("");
 }
 
 function fixHy(text) {
