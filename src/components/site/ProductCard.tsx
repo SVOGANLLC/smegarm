@@ -3,7 +3,9 @@ import { motion } from "motion/react";
 import type { ProductCard as ProductCardType } from "@/lib/products";
 import { AddToCartButton } from "@/components/site/AddToCartButton";
 import { AvailPill } from "@/components/site/AvailPill";
+import { CardColorSwatches } from "@/components/site/CardColorSwatches";
 import { useI18n, pickLocalized } from "@/lib/i18n";
+import type { Variant } from "@/lib/products";
 import { HorizontalScroll, HorizontalScrollItem } from "./HorizontalScroll";
 
 function formatAmd(n: number | null) {
@@ -31,24 +33,51 @@ export function Badges({ p }: { p: ProductCardType }) {
   );
 }
 
-export function PriceBlock({ p }: { p: ProductCardType }) {
+export function PriceBlock({
+  p,
+  priceFrom,
+  variantCount,
+}: {
+  p: ProductCardType;
+  priceFrom?: number | null;
+  variantCount?: number;
+}) {
   const { t } = useI18n();
-  const price = formatAmd(p.price_amd);
+  const showFrom = (variantCount ?? 0) > 1 && priceFrom != null;
+  const price = formatAmd(showFrom ? priceFrom : p.price_amd);
   const old = formatAmd(p.price_old);
   if (!price && !old) {
     return <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t("product.requestPrice")}</span>;
   }
   return (
-    <div className="flex items-baseline gap-2">
-      {price && <span className="text-sm font-medium text-foreground md:text-base">{price}</span>}
-      {old && p.price_old && p.price_amd && p.price_old > p.price_amd && (
+    <div className="flex flex-wrap items-baseline gap-2">
+      {price && (
+        <span className="text-sm font-medium text-foreground md:text-base">
+          {showFrom ? `${t("product.priceFrom")} ${price}` : price}
+        </span>
+      )}
+      {!showFrom && old && p.price_old && p.price_amd && p.price_old > p.price_amd && (
         <span className="text-xs text-muted-foreground line-through">{old}</span>
       )}
     </div>
   );
 }
 
-export function ProductCard({ p, showCart = true }: { p: ProductCardType; showCart?: boolean }) {
+export function ProductCard({
+  p,
+  showCart = true,
+  variants,
+  priceFrom,
+  variantCount,
+  swatchHex,
+}: {
+  p: ProductCardType;
+  showCart?: boolean;
+  variants?: Variant[];
+  priceFrom?: number | null;
+  variantCount?: number;
+  swatchHex?: (canonicalColour: string) => string;
+}) {
   const { lang } = useI18n();
   const name = pickLocalized(p as unknown as Record<string, unknown>, "name", lang) || p.name;
   const category = pickLocalized(p as unknown as Record<string, unknown>, "category", lang) || p.category;
@@ -78,7 +107,10 @@ export function ProductCard({ p, showCart = true }: { p: ProductCardType; showCa
             </p>
           </Link>
           <AvailPill availability={p.availability} stock_qty={p.stock_qty} stock_reserved={p.stock_reserved} lead_time_days={p.lead_time_days} />
-          <PriceBlock p={p} />
+          {variants && swatchHex && (
+            <CardColorSwatches variants={variants} currentSku={p.sku} swatchHex={swatchHex} />
+          )}
+          <PriceBlock p={p} priceFrom={priceFrom} variantCount={variantCount ?? variants?.length} />
           {showCart && (
             <div className="mt-auto pt-2">
               <AddToCartButton

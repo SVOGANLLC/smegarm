@@ -1,5 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import { canonicalCategoryKey } from "@/lib/category-i18n";
+import { fetchSkusMatchingSpecFilters, type SpecFilters } from "@/lib/spec-filters";
+import {
+  buildProductGroups,
+  dedupeVariants,
+  sortGroups,
+  type GroupSkuRow,
+} from "@/lib/catalog-grouping";
 
 export type Product = {
   sku: string;
@@ -157,7 +164,7 @@ export async function fetchFeatured(skus: string[]): Promise<Product[]> {
 }
 
 const CARD_COLS =
-  "sku,name,name_en,name_hy,category,category_en,category_hy,colour,colour_en,colour_hy,main_image,price_amd,price_old,discount_percent,availability,stock_qty,stock_reserved,lead_time_days,is_published,is_featured,is_new,is_bestseller,is_special_offer,badge_text";
+  "sku,name,name_en,name_hy,category,category_en,category_hy,colour,colour_en,colour_hy,model_group,main_image,price_amd,price_old,discount_percent,availability,stock_qty,stock_reserved,lead_time_days,is_published,is_featured,is_new,is_bestseller,is_special_offer,badge_text";
 
 export async function fetchProductsByFlag(
   flag: "is_featured" | "is_new" | "is_bestseller" | "is_special_offer",
@@ -208,7 +215,21 @@ export type Theme = {
   description_hy?: string | null;
 };
 
-export type Variant = { sku: string; colour: string | null; colour_en: string | null; colour_hy: string | null; main_image: string | null };
+export type Variant = {
+  sku: string;
+  colour: string | null;
+  colour_en: string | null;
+  colour_hy: string | null;
+  main_image: string | null;
+  price_amd?: number | null;
+  model_group?: string | null;
+};
+
+export type CatalogDisplayItem = Product & {
+  variants?: Variant[];
+  variantCount?: number;
+  priceFrom?: number | null;
+};
 
 export type SearchSuggestion = {
   sku: string;
@@ -258,13 +279,41 @@ export async function fetchTheme(key: string): Promise<Theme | null> {
 export async function fetchProductVariants(modelGroup: string): Promise<Variant[]> {
   const { data, error } = await supabase
     .from("products")
-    .select("sku,colour,colour_en,colour_hy,main_image")
+    .select("sku,colour,colour_en,colour_hy,main_image,price_amd,model_group")
     .eq("model_group", modelGroup)
+    .eq("is_published", true)
     .not("colour", "is", null)
     .order("sku", { ascending: true })
     .limit(40);
   if (error) throw error;
-  return (data ?? []) as Variant[];
+  return dedupeVariants((data ?? []) as Variant[]);
+}
+
+export async function fetchVariantsByModelGroups(modelGroups: string[]): Promise<Map<string, Variant[]>> {
+  const unique = [...new Set(modelGroups.filter(Boolean))];
+  const out = new Map<string, Variant[]>();
+  if (!unique.length) return out;
+
+  const { data, error } = await supabase
+    .from("products")
+    .select("sku,model_group,colour,colour_en,colour_hy,main_image,price_amd")
+    .in("model_group", unique)
+    .eq("is_published", true)
+    .not("colour", "is", null)
+    .order("sku", { ascending: true });
+  if (error) throw error;
+
+  for (const row of (data ?? []) as Variant[]) {
+    const mg = row.model_group;
+    if (!mg) continue;
+    const list = out.get(mg) ?? [];
+    list.push(row);
+    out.set(mg, list);
+  }
+  for (const [mg, list] of out) {
+    out.set(mg, dedupeVariants(list));
+  }
+  return out;
 }
 
 export type FacetCounts = {
@@ -318,6 +367,8 @@ export type CatalogFilters = {
   theme?: string;
   flag?: "is_featured" | "is_new" | "is_bestseller" | "is_special_offer" | "sale";
   inStock?: boolean;
+  specFilters?: SpecFilters;
+  groupByColor?: boolean;
   sort?: "name" | "price-asc" | "price-desc";
   shuffleSeed?: number;
   limit?: number;
@@ -340,8 +391,9 @@ function shuffleArray<T>(items: T[], seed?: number): T[] {
 
 type CatalogQuery = ReturnType<ReturnType<typeof supabase.from>["select"]>;
 
-function applyCatalogFilters(q: CatalogQuery, f: CatalogFilters): CatalogQuery {
+function applyCatalogFilters(q: CatalogQuery, f: CatalogFilters, skuIn?: string[] | null): CatalogQuery {
   q = q.eq("is_published", true);
+  if (skuIn) q = q.in("sku", skuIn);
   if (f.categoryIn?.length) q = q.in("category", f.categoryIn);
   else if (f.category) q = q.eq("category", f.category);
   if (f.families?.length) q = q.in("family", f.families);
@@ -355,11 +407,105 @@ function applyCatalogFilters(q: CatalogQuery, f: CatalogFilters): CatalogQuery {
 }
 
 const PRODUCT_COLS =
-  "sku,name,name_en,name_hy,category,category_en,category_hy,brand,aesthetic,colour,colour_en,colour_hy,family,ean,description,description_en,description_hy,specs,specs_en,specs_hy,main_image,images,pdf,energy_label,url,price_amd,price_old,discount_percent,availability,stock_qty,stock_reserved,lead_time_days,is_featured,is_new,is_bestseller,is_special_offer,badge_text";
+  "sku,name,name_en,name_hy,category,category_en,category_hy,brand,aesthetic,colour,colour_en,colour_hy,family,model_group,ean,description,description_en,description_hy,specs,specs_en,specs_hy,main_image,images,pdf,energy_label,url,price_amd,price_old,discount_percent,availability,stock_qty,stock_reserved,lead_time_days,is_featured,is_new,is_bestseller,is_special_offer,badge_text";
 
-export async function fetchCatalog(f: CatalogFilters): Promise<{ items: Product[]; total: number }> {
+const GROUP_SKU_COLS = "sku,model_group,price_amd,name";
+
+async function fetchGroupedCatalog(
+  f: CatalogFilters,
+  specSkuIn: string[] | null,
+): Promise<{ items: CatalogDisplayItem[]; total: number }> {
   const limit = f.limit ?? 36;
   const offset = f.offset ?? 0;
+
+  let rows: GroupSkuRow[] = [];
+
+  if (f.search) {
+    const { data: ranked, error: e } = await supabase.rpc("search_products", {
+      q: f.search,
+      only_published: true,
+      max_rows: 500,
+    });
+    if (e) throw e;
+    let skus = ((ranked ?? []) as Array<{ sku: string }>).map((r) => r.sku);
+    if (specSkuIn) {
+      const allowed = new Set(specSkuIn);
+      skus = skus.filter((s) => allowed.has(s));
+    }
+    if (!skus.length) return { items: [], total: 0 };
+
+    const { data, error } = await supabase
+      .from("products")
+      .select(GROUP_SKU_COLS)
+      .in("sku", skus)
+      .eq("is_published", true);
+    if (error) throw error;
+    const bySku = new Map(((data ?? []) as GroupSkuRow[]).map((r) => [r.sku, r]));
+    rows = skus.map((sku) => bySku.get(sku)).filter((r): r is GroupSkuRow => !!r);
+  } else {
+    let sq = supabase.from("products").select(GROUP_SKU_COLS);
+    sq = applyCatalogFilters(sq, f, specSkuIn);
+    const { data, error } = await sq;
+    if (error) throw error;
+    rows = (data ?? []) as GroupSkuRow[];
+  }
+
+  if (!rows.length) return { items: [], total: 0 };
+
+  const rowsBySku = new Map(rows.map((r) => [r.sku, r]));
+  let groups = buildProductGroups(rows);
+  groups = sortGroups(groups, rowsBySku, f.sort, f.shuffleSeed);
+
+  const total = groups.length;
+  const pageGroups = groups.slice(offset, offset + limit);
+  if (!pageGroups.length) return { items: [], total };
+
+  const repSkus = pageGroups.map((g) => g.representativeSku);
+  const { data: products, error: pErr } = await supabase
+    .from("products")
+    .select(PRODUCT_COLS)
+    .in("sku", repSkus)
+    .eq("is_published", true);
+  if (pErr) throw pErr;
+
+  const modelGroups = pageGroups
+    .map((g) => rowsBySku.get(g.representativeSku)?.model_group ?? "")
+    .filter(Boolean);
+  const variantsMap = await fetchVariantsByModelGroups(modelGroups);
+
+  const bySku = new Map(((products ?? []) as Product[]).map((p) => [p.sku, p]));
+  const items: CatalogDisplayItem[] = pageGroups
+    .map((g) => {
+      const p = bySku.get(g.representativeSku);
+      if (!p) return null;
+      const mg = p.model_group?.trim();
+      const variants = mg ? variantsMap.get(mg) : undefined;
+      const variantCount = variants?.length ?? 1;
+      return {
+        ...p,
+        variants,
+        variantCount,
+        priceFrom: variantCount > 1 ? g.priceFrom : null,
+      };
+    })
+    .filter((p): p is CatalogDisplayItem => !!p);
+
+  return { items, total };
+}
+
+export async function fetchCatalog(f: CatalogFilters): Promise<{ items: CatalogDisplayItem[]; total: number }> {
+  const limit = f.limit ?? 36;
+  const offset = f.offset ?? 0;
+
+  let specSkuIn: string[] | null = null;
+  if (f.specFilters && Object.keys(f.specFilters).length > 0) {
+    specSkuIn = await fetchSkusMatchingSpecFilters(f.specFilters);
+    if (!specSkuIn?.length) return { items: [], total: 0 };
+  }
+
+  if (f.groupByColor) {
+    return fetchGroupedCatalog(f, specSkuIn);
+  }
 
   // Text search: global, ranked by RPC — do not intersect with category sidebar filter.
   if (f.search) {
@@ -369,7 +515,11 @@ export async function fetchCatalog(f: CatalogFilters): Promise<{ items: Product[
       max_rows: 500,
     });
     if (e) throw e;
-    const ranked = (rows ?? []) as Array<{ sku: string }>;
+    let ranked = (rows ?? []) as Array<{ sku: string }>;
+    if (specSkuIn) {
+      const allowed = new Set(specSkuIn);
+      ranked = ranked.filter((r) => allowed.has(r.sku));
+    }
     if (!ranked.length) return { items: [], total: 0 };
 
     const pageSkus = ranked.slice(offset, offset + limit).map((r) => r.sku);
@@ -399,7 +549,7 @@ export async function fetchCatalog(f: CatalogFilters): Promise<{ items: Product[
 
   if (!f.sort) {
     let sq = supabase.from("products").select("sku");
-    sq = applyCatalogFilters(sq, f);
+    sq = applyCatalogFilters(sq, f, specSkuIn);
     const { data: skuRows, error: skuErr } = await sq;
     if (skuErr) throw skuErr;
     const skus = shuffleArray(
@@ -422,7 +572,7 @@ export async function fetchCatalog(f: CatalogFilters): Promise<{ items: Product[
   }
 
   let q = supabase.from("products").select(PRODUCT_COLS, { count: "exact" });
-  q = applyCatalogFilters(q, f);
+  q = applyCatalogFilters(q, f, specSkuIn);
   if (f.sort === "price-asc") q = q.order("price_amd", { ascending: true, nullsFirst: false });
   else if (f.sort === "price-desc") q = q.order("price_amd", { ascending: false, nullsFirst: false });
   else q = q.order("name", { ascending: true });

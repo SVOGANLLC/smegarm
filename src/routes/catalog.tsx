@@ -15,10 +15,20 @@ import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useI18n, getI18nDefaults } from "@/lib/i18n";
 import { categoryLabel as catLabel } from "@/lib/category-i18n";
 import { parseCatalogOrder, sortCategoriesByOrder } from "@/lib/category-order";
+import { parseCatalogGroupConfig, shouldGroupCatalog } from "@/lib/catalog-group-config";
+import { sectionCategories, sectionFamilies, sectionTitleKey, type CatalogSection } from "@/lib/catalog-sections";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductCard } from "@/components/site/ProductCard";
+import { SpecFiltersPanel } from "@/components/site/SpecFiltersPanel";
 import type { ProductCard as ProductCardType } from "@/lib/products";
 import { colourLabel as colourI18n } from "@/lib/colour-i18n";
+import {
+  countActiveSpecFilters,
+  fetchSpecFacets,
+  parseSpecSearchParam,
+  serializeSpecSearchParam,
+  type SpecFilters,
+} from "@/lib/spec-filters";
 import { canonicalLink, hreflangLinks, seoMeta } from "@/lib/seo";
 
 const searchSchema = z.object({
@@ -31,6 +41,8 @@ const searchSchema = z.object({
   flag: z.enum(["is_featured", "is_new", "is_bestseller", "is_special_offer", "sale"]).optional(),
   inStock: z.boolean().optional(),
   sort: z.enum(["name", "price-asc", "price-desc"]).optional(),
+  spec: z.string().optional(),
+  section: z.enum(["large", "small", "accessories"]).optional(),
   page: z.number().int().min(1).default(1),
 });
 type CatalogSearch = z.infer<typeof searchSchema>;
@@ -93,9 +105,10 @@ function findCategoryBySlug(
 
 function CatalogPage() {
   const search = Route.useSearch();
-  const { category, family, q, page, flag, sort, theme, inStock } = search;
+  const { category, family, q, page, flag, sort, theme, inStock, spec: specRaw, section } = search;
   const colours = split(search.colour);
   const aesthetics = split(search.aesthetic);
+  const specFilters = parseSpecSearchParam(specRaw);
   const navigate = useNavigate({ from: Route.fullPath });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shuffleKey] = useState(() => Math.random());
@@ -114,6 +127,14 @@ function CatalogPage() {
     },
     staleTime: 60_000,
   });
+  const groupConfigQuery = useQuery({
+    queryKey: ["site-content", "categories-grouping"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_content").select("value").eq("key", "categories").maybeSingle();
+      return parseCatalogGroupConfig((data?.value ?? {}) as Record<string, Partial<Record<"ru" | "en" | "hy", string>>>);
+    },
+    staleTime: 60_000,
+  });
   const facetsQuery = useQuery({ queryKey: ["facets"], queryFn: fetchFacets, staleTime: 10 * 60_000 });
   const swatchesQuery = useQuery({ queryKey: ["color-swatches"], queryFn: fetchColorSwatches, staleTime: 30 * 60_000 });
 
@@ -129,6 +150,15 @@ function CatalogPage() {
 
   const sortedCategories = sortCategoriesByOrder(catsQuery.data ?? [], orderQuery.data ?? []);
 
+  const sectionFamilyList = sectionFamilies(section);
+  const sectionCategoryList = sectionCategories(section);
+  const effectiveFamilies = family ? [family] : sectionFamilyList;
+  const effectiveCategoryIn =
+    categoryRawList ??
+    (sectionCategoryList?.length && !category ? sectionCategoryList : undefined);
+
+  const groupByColor = shouldGroupCatalog(groupConfigQuery.data ?? { enabled: true, disabledCategorySlugs: [] }, category);
+
   // colour value (canonical) → localized label for current lang
   const colourLabel = (value: string) => {
     const f = facetsQuery.data?.colours.find((c) => c.value === value);
@@ -138,18 +168,42 @@ function CatalogPage() {
     return colourI18n(canonical, lang);
   };
 
+  const specFacetsQuery = useQuery({
+    queryKey: [
+      "spec-facets",
+      effectiveCategoryIn ?? null,
+      effectiveFamilies ?? null,
+      colours,
+      aesthetics,
+      inStock ?? false,
+      specRaw ?? "",
+    ],
+    queryFn: () =>
+      fetchSpecFacets({
+        categories: effectiveCategoryIn,
+        families: effectiveFamilies,
+        colours: colours.length ? colours : undefined,
+        aesthetics: aesthetics.length ? aesthetics : undefined,
+        inStock,
+        active: specFilters,
+      }),
+    staleTime: 60_000,
+  });
+
   const productsQuery = useQuery({
-    queryKey: ["catalog", currentCat?.slug ?? null, family ?? "", q ?? "", colours, aesthetics, theme ?? "", flag ?? "", inStock ?? false, sort ?? "", page, shuffleKey],
+    queryKey: ["catalog", currentCat?.slug ?? null, family ?? "", section ?? "", groupByColor, q ?? "", colours, aesthetics, theme ?? "", flag ?? "", inStock ?? false, sort ?? "", specRaw ?? "", page, shuffleKey],
     queryFn: () =>
       fetchCatalog({
-        categoryIn: categoryRawList,
-        families: family ? [family] : undefined,
+        categoryIn: effectiveCategoryIn,
+        families: effectiveFamilies,
         search: q || undefined,
         colours: colours.length ? colours : undefined,
         aesthetics: aesthetics.length ? aesthetics : undefined,
         theme: theme || undefined,
         flag,
         inStock,
+        specFilters,
+        groupByColor,
         sort,
         shuffleSeed: sort ? undefined : shuffleKey,
         limit: PAGE_SIZE,
@@ -157,6 +211,9 @@ function CatalogPage() {
       }),
     enabled: !category || !!categoryRawList,
   });
+
+  const swatchHex = (canonical: string) =>
+    swatchesQuery.data?.find((s) => s.colour === canonical)?.hex ?? "#d4d4d4";
 
   const total = productsQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -170,8 +227,48 @@ function CatalogPage() {
   const clearAll = () =>
     navigate({ search: { page: 1 } as CatalogSearch });
 
+  const setSpecFilters = (next: SpecFilters) => {
+    navigate({
+      search: (prev: CatalogSearch) => ({
+        ...prev,
+        spec: serializeSpecSearchParam(next),
+        page: 1,
+      }),
+    });
+  };
+
+  const toggleSpecEnum = (slug: string, value: string) => {
+    const current = [...((specFilters[slug] as string[] | undefined) ?? [])];
+    const nextVals = current.includes(value) ? current.filter((x) => x !== value) : [...current, value];
+    const next = { ...specFilters };
+    if (nextVals.length) next[slug] = nextVals;
+    else delete next[slug];
+    setSpecFilters(next);
+  };
+
+  const setSpecRange = (slug: string, min?: number, max?: number) => {
+    const next = { ...specFilters };
+    if (min == null && max == null) delete next[slug];
+    else next[slug] = { min, max };
+    setSpecFilters(next);
+  };
+
+  const clearSpecField = (slug: string) => {
+    const next = { ...specFilters };
+    delete next[slug];
+    setSpecFilters(next);
+  };
+
   const activeCount =
-    colours.length + aesthetics.length + (flag ? 1 : 0) + (inStock ? 1 : 0) + (q ? 1 : 0) + (theme ? 1 : 0) + (family ? 1 : 0);
+    colours.length +
+    aesthetics.length +
+    (flag ? 1 : 0) +
+    (inStock ? 1 : 0) +
+    (q ? 1 : 0) +
+    (theme ? 1 : 0) +
+    (family ? 1 : 0) +
+    (section ? 1 : 0) +
+    countActiveSpecFilters(specFilters);
 
   const filters = (
     <div className="space-y-7">
@@ -264,11 +361,31 @@ function CatalogPage() {
 
       <FacetGroup label={t("facet.categories")} defaultOpen>
         <button
-          onClick={() => navigate({ search: (prev: CatalogSearch) => ({ ...prev, category: undefined, page: 1 }) })}
-          className={`block w-full text-left text-sm ${!category ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
+          onClick={() => navigate({ search: (prev: CatalogSearch) => ({ ...prev, category: undefined, section: undefined, page: 1 }) })}
+          className={`block w-full text-left text-sm ${!category && !section ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
         >
           {t("facet.all")}
         </button>
+        <div className="mb-3 mt-2 space-y-1 border-b border-border pb-3">
+          {(["large", "small", "accessories"] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() =>
+                navigate({
+                  search: (prev: CatalogSearch) => ({
+                    ...prev,
+                    section: section === s ? undefined : s,
+                    category: undefined,
+                    page: 1,
+                  }),
+                })
+              }
+              className={`block w-full text-left text-sm transition ${section === s ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
+            >
+              {t(`catalog.section.${s}`)}
+            </button>
+          ))}
+        </div>
         <div className="max-h-72 space-y-1 overflow-y-auto pr-1">
           {sortedCategories.map((c) => (
             <button
@@ -315,6 +432,14 @@ function CatalogPage() {
         />
       </FacetGroup>
 
+      <SpecFiltersPanel
+        facets={specFacetsQuery.data ?? []}
+        active={specFilters}
+        onToggleEnum={toggleSpecEnum}
+        onSetRange={setSpecRange}
+        onClearField={clearSpecField}
+      />
+
       {activeCount > 0 && (
         <button
           onClick={clearAll}
@@ -334,7 +459,8 @@ function CatalogPage() {
           <div className="mb-6 md:mb-10">
             <p className="eyebrow text-muted-foreground">{t("catalog.title")}</p>
             <h1 className="mt-2 font-serif text-2xl leading-tight sm:text-3xl md:mt-3 md:text-6xl">
-              {categoryLabel ?? t("catalog.all")}
+              {categoryLabel ??
+                (section ? t(sectionTitleKey(section as CatalogSection)!) : t("catalog.all"))}
             </h1>
             <p className="mt-3 text-sm text-muted-foreground">
               {total > 0 ? `${total} ${t("catalog.modelsSuffix")}` : productsQuery.isLoading ? t("catalog.loading") : t("catalog.empty")}
@@ -383,7 +509,14 @@ function CatalogPage() {
                 <>
                   <div className="grid grid-cols-1 gap-y-8 sm:grid-cols-2 sm:gap-x-6 md:grid-cols-3 lg:grid-cols-4">
                     {productsQuery.data.items.map((p) => (
-                      <ProductCard key={p.sku} p={p as unknown as ProductCardType} />
+                      <ProductCard
+                        key={p.sku}
+                        p={p as unknown as ProductCardType}
+                        variants={p.variants}
+                        priceFrom={p.priceFrom}
+                        variantCount={p.variantCount}
+                        swatchHex={groupByColor ? swatchHex : undefined}
+                      />
                     ))}
                   </div>
 

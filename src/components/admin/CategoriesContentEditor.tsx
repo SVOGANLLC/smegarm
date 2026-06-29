@@ -10,6 +10,7 @@ import {
 } from "@/lib/categories-config";
 import { useI18n } from "@/lib/i18n";
 import { CatalogCategoryOrderEditor } from "@/components/admin/CatalogCategoryOrderEditor";
+import { CatalogGroupingEditor } from "@/components/admin/CatalogGroupingEditor";
 
 type BlockValue = Record<string, Partial<Record<Lang, string>>>;
 
@@ -110,6 +111,7 @@ export function CategoriesContentEditor({
       </div>
 
       <CatalogCategoryOrderEditor value={value} onChange={onChange} />
+      <CatalogGroupingEditor value={value} onChange={onChange} />
     </div>
   );
 }

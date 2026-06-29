@@ -468,6 +468,18 @@ const E: Record<string, T3> = {
   ],
   "admin.content.categories.moveUp": ["Выше", "Move up", "Վերև"],
   "admin.content.categories.moveDown": ["Ниже", "Move down", "Ներքև"],
+  "admin.content.categories.groupTitle": ["Группировка по цветам", "Colour grouping in grid", "Գույնային խմբավորում ցանցում"],
+  "admin.content.categories.groupDesc": [
+    "Одна карточка на линейку (model_group) с кружками цветов — как на странице товара.",
+    "One card per product line (model_group) with colour swatches — same as on the product page.",
+    "Մեկ քարտ մոդելային շարքի համար (model_group) գույնի կետերով — ինչպես ապրանքի էջում։",
+  ],
+  "admin.content.categories.groupEnabled": ["Группировать карточки в каталоге", "Group cards in catalogue", "Խմբավորել քարտերը կատալոգում"],
+  "admin.content.categories.groupOffDesc": [
+    "Категории без группировки (плоская сетка):",
+    "Categories without grouping (flat grid):",
+    "Կատեգորիաներ առանց խմբավորման (հարթ ցանց).",
+  ],
   "admin.content.block.marquee": ["Бегущая строка", "Marquee ticker", "Վազող տող"],
   "admin.content.field.marquee": ["Слова (каждое с новой строки или через запятую)", "Words (one per line or comma-separated)", "Բառեր (յուրաքանչյուր տողով կամ ստորակetor"],
   "admin.content.block.footer": ["Подвал", "Footer", "Վերջնամաս"],
