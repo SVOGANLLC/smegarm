@@ -149,13 +149,14 @@ const E: Record<string, T3> = {
   "admin.collections.nameEn": ["Название EN", "Name EN", "Անվանում EN"],
   "admin.collections.nameHy": ["Название HY", "Name HY", "Անվանում HY"],
   "admin.collections.namesHint": [
-    "Названия на сайте по языку интерфейса. Измените поля и нажмите «Сохранить названия». URL (slug) строится из RU (или EN).",
-    "Names shown per site language. Edit fields and click Save names. Slug is derived from RU (or EN).",
-    "Անվանումները ըստ լեզվի։ Խմբագրեք և սեղմեք «Պահպանել անվանումները»։",
+    "Русская версия сайта берёт название из поля «Название RU» (не из EN). Сохранение — кнопкой или при выходе из поля. Slug — из RU (или EN).",
+    "Russian site uses the Name RU field (not EN). Save via button or on blur. Slug is derived from RU (or EN).",
+    "Ռուսերեն կայքը վերցնում է «Անվանում RU» դաշտը։ Պահպանում՝ կոճակով կամ դաշտից դուրս գալիս։",
   ],
   "admin.collections.saveTexts": ["Сохранить названия", "Save names", "Պահպանել անվանումները"],
   "admin.collections.unsaved": ["есть несохранённые изменения", "unsaved changes", "չպահպանված փոփոխություններ"],
   "admin.collections.nothingToSave": ["Нет изменений для сохранения", "Nothing to save", "Պահպանելու բան չկա"],
+  "admin.collections.nameRuRequired": ["Укажите название на русском", "Russian name is required", "Նշեք ռուսերեն անվանում"],
   "admin.collections.slugPending": ["сохранится при выходе из поля", "saves on blur", "պահպանվում է դաշտից դուրս գալիս"],
   "admin.collections.slugFromLatin": [
     "Для URL нужны латинские буквы в названии (или укажите EN-название)",

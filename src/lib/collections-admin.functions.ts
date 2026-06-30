@@ -19,10 +19,26 @@ async function assertCatalogStaff(supabase: SupabaseClient, userId: string) {
   if (!data?.length) throw new Error("Forbidden: catalog access required");
 }
 
+const collectionPatchSchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    name_en: z.string().nullable().optional(),
+    name_hy: z.string().nullable().optional(),
+    description: z.string().nullable().optional(),
+    description_en: z.string().nullable().optional(),
+    description_hy: z.string().nullable().optional(),
+    cover_image: z.string().nullable().optional(),
+    is_published: z.boolean().optional(),
+    sort_weight: z.number().optional(),
+    section: z.enum(["design", "timeless", "special"]).optional(),
+    slug: z.string().min(1).optional(),
+  })
+  .passthrough();
+
 const updateCollectionSchema = z.object({
   id: z.string().uuid(),
   slug: z.string().min(1),
-  patch: z.record(z.unknown()),
+  patch: collectionPatchSchema,
   syncSlugFromName: z.boolean().optional(),
   slugFallback: z.string().optional(),
 });
@@ -47,6 +63,12 @@ export const updateCollectionAdmin = createServerFn({ method: "POST" })
 
     if (error) throw error;
     if (!row) throw new Error("Collection not found or not updated");
+
+    const expectedName = finalPatch.name;
+    if (typeof expectedName === "string" && row.name.trim() !== expectedName.trim()) {
+      throw new Error("Russian name was not saved — try again or contact support");
+    }
+
     return row;
   });
 

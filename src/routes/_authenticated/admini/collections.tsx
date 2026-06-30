@@ -348,7 +348,11 @@ function CollectionEditorCard({
   const buildTextPatch = (): Record<string, string | null> => {
     const patch: Record<string, string | null> = {};
     const nextName = name.trim();
-    if (nextName && nextName !== c.name.trim()) patch.name = nextName;
+    const prevName = c.name.trim();
+    if (nextName !== prevName) {
+      if (!nextName) throw new Error(t("admin.collections.nameRuRequired"));
+      patch.name = nextName;
+    }
     const nextEn = nameEn.trim() || null;
     if (nextEn !== (c.name_en?.trim() || null)) patch.name_en = nextEn;
     const nextHy = nameHy.trim() || null;
@@ -363,7 +367,13 @@ function CollectionEditorCard({
   };
 
   const saveTexts = async () => {
-    const patch = buildTextPatch();
+    let patch: Record<string, string | null>;
+    try {
+      patch = buildTextPatch();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("admin.error"));
+      return;
+    }
     if (!Object.keys(patch).length) {
       toast.message(t("admin.collections.nothingToSave"));
       return;
@@ -383,6 +393,10 @@ function CollectionEditorCard({
     }
   };
 
+  const saveTextsOnBlur = () => {
+    if (dirty && !isSaving) void saveTexts();
+  };
+
   const fieldClass =
     "w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground";
   const labelClass = "mb-1 block text-[10px] uppercase tracking-[0.18em] text-muted-foreground";
@@ -391,7 +405,7 @@ function CollectionEditorCard({
   return (
     <div className="rounded-sm border border-border p-4">
       <div className="flex items-start gap-4">
-        <CoverPreview url={c.cover_image} name={c.name} />
+        <CoverPreview url={c.cover_image} name={name || c.name} />
         <div className="flex-1 space-y-3">
           <div>
             <span className={labelClass}>{t("admin.collections.nameRu")}</span>
@@ -401,7 +415,13 @@ function CollectionEditorCard({
                 setName(e.target.value);
                 setDirty(true);
               }}
-              onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+              onBlur={saveTextsOnBlur}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void saveTexts();
+                }
+              }}
               className="w-full bg-transparent font-serif text-xl outline-none focus:ring-1 focus:ring-foreground/20"
             />
           </div>
@@ -441,6 +461,7 @@ function CollectionEditorCard({
                   setNameEn(e.target.value);
                   setDirty(true);
                 }}
+                onBlur={saveTextsOnBlur}
                 className={fieldClass}
               />
             </label>
@@ -452,6 +473,7 @@ function CollectionEditorCard({
                   setNameHy(e.target.value);
                   setDirty(true);
                 }}
+                onBlur={saveTextsOnBlur}
                 className={fieldClass}
               />
             </label>
@@ -502,6 +524,7 @@ function CollectionEditorCard({
                   setDescription(e.target.value);
                   setDirty(true);
                 }}
+                onBlur={saveTextsOnBlur}
                 rows={2}
                 className={`${fieldClass} resize-none`}
               />
@@ -515,6 +538,7 @@ function CollectionEditorCard({
                     setDescriptionEn(e.target.value);
                     setDirty(true);
                   }}
+                  onBlur={saveTextsOnBlur}
                   rows={2}
                   className={`${fieldClass} resize-none`}
                 />
@@ -527,6 +551,7 @@ function CollectionEditorCard({
                     setDescriptionHy(e.target.value);
                     setDirty(true);
                   }}
+                  onBlur={saveTextsOnBlur}
                   rows={2}
                   className={`${fieldClass} resize-none`}
                 />

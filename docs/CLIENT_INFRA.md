@@ -90,6 +90,7 @@ docker compose up -d
 - VPS: `/opt/smeg/.env`, `deploy/supabase/.env`
 - Railway: Variables в панели Railway
 - GitHub client mirror: `CLIENT_GITHUB_TOKEN` (PAT заказчика с правом push в `SVOGANLLC/smegarm`)
+- Локальная копия PAT (для скриптов): `~/.config/svogan/github-pat` (chmod 600, не в git)
 
 ---
 
