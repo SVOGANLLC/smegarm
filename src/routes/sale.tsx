@@ -16,6 +16,8 @@ const searchSchema = z.object({
   aesthetic: z.string().optional(),
   spec: z.string().optional(),
   inStock: z.boolean().optional(),
+  model: z.string().optional(),
+  modelSkus: z.string().optional(),
 });
 
 export const Route = createFileRoute("/sale")({

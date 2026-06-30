@@ -42,12 +42,13 @@ function CollectionCard({ c, i, lang }: { c: Collection; i: number; lang: "ru" |
 
 export function Collections() {
   const { t, lang } = useI18n();
-  const { data: collections = [] } = useQuery({
+  const { data: collections = [], isLoading } = useQuery({
     queryKey: ["collections-list"],
     queryFn: fetchCollections,
     staleTime: 5 * 60 * 1000,
   });
-  if (!collections.length) return null;
+
+  if (!isLoading && collections.length === 0) return null;
 
   const grouped = SECTION_ORDER.map((section) => ({
     section,
@@ -66,22 +67,26 @@ export function Collections() {
           </h2>
         </div>
 
-        <div className="mt-12 space-y-14 md:mt-16 md:space-y-20">
-          {grouped.map(({ section, items }) => (
-            <div key={section}>
-              <h3 className="text-[0.6875rem] font-medium uppercase tracking-[0.22em] text-[#c4a574] md:text-xs">
-                {t(`section.collections.group.${section}`)}
-              </h3>
-              <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-8 sm:gap-x-6">
-                {items.map((c, i) => (
-                  <li key={c.id}>
-                    <CollectionCard c={c} i={i} lang={lang} />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+        {isLoading ? (
+          <p className="mt-12 text-sm text-white/50">{t("catalog.loading")}</p>
+        ) : (
+          <div className="mt-12 space-y-14 md:mt-16 md:space-y-20">
+            {grouped.map(({ section, items }) => (
+              <div key={section}>
+                <h3 className="text-[0.6875rem] font-medium uppercase tracking-[0.22em] text-[#c4a574] md:text-xs">
+                  {t(`section.collections.group.${section}`)}
+                </h3>
+                <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-8 sm:gap-x-6">
+                  {items.map((c, i) => (
+                    <li key={c.id}>
+                      <CollectionCard c={c} i={i} lang={lang} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

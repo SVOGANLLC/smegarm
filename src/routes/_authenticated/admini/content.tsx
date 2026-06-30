@@ -1,12 +1,14 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useI18n, type Lang } from "@/lib/i18n";
 import type { ContentStylesMap } from "@/lib/content-styles";
 import { ContentBlockEditor, type ContentBlock } from "@/components/admin/ContentBlockEditor";
 import { HouseOfCoffeeEditor } from "@/components/admin/HouseOfCoffeeEditor";
+import { assertRowUpdated } from "@/lib/supabase-assert";
+import { siteContentQueryKey } from "@/lib/site-content";
 
 export const Route = createFileRoute("/_authenticated/admini/content")({
   beforeLoad: ({ context }) => {
@@ -140,24 +142,34 @@ function ContentPage() {
 
   const [state, setState] = useState<Record<string, BlockValue>>({});
   const [styles, setStyles] = useState<ContentStylesMap>({});
+  const hydratedRef = useRef(false);
   useEffect(() => {
-    if (q.data) {
-      setState(q.data.map);
-      setStyles(q.data.styles);
-    }
+    if (!q.data || hydratedRef.current) return;
+    setState(q.data.map);
+    setStyles(q.data.styles);
+    hydratedRef.current = true;
   }, [q.data]);
 
   const save = useMutation({
     mutationFn: async ({ key, value, styles: nextStyles }: { key: string; value: BlockValue; styles: ContentStylesMap }) => {
-      const { error: e1 } = await supabase.from("site_content").upsert({ key, value }, { onConflict: "key" });
-      if (e1) throw e1;
-      const { error: e2 } = await supabase
+      const { data: row1, error: e1 } = await supabase
         .from("site_content")
-        .upsert({ key: "__styles__", value: nextStyles }, { onConflict: "key" });
+        .upsert({ key, value }, { onConflict: "key" })
+        .select("key")
+        .maybeSingle();
+      if (e1) throw e1;
+      assertRowUpdated(row1, t("admin.writeNoRow"));
+      const { data: row2, error: e2 } = await supabase
+        .from("site_content")
+        .upsert({ key: "__styles__", value: nextStyles }, { onConflict: "key" })
+        .select("key")
+        .maybeSingle();
       if (e2) throw e2;
+      assertRowUpdated(row2, t("admin.writeNoRow"));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["site-content"] });
+      qc.invalidateQueries({ queryKey: siteContentQueryKey });
       toast.success(t("admin.content.savedRefresh"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),

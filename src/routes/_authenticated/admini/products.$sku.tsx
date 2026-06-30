@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, Copy, Upload, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -16,6 +16,7 @@ import {
   syncEanFromSpecsEdit,
   type SpecsLocale,
 } from "@/lib/product-ean-sync";
+import { assertRowUpdated } from "@/lib/supabase-assert";
 
 export const Route = createFileRoute("/_authenticated/admini/products/$sku")({
   component: EditProduct,
@@ -57,6 +58,44 @@ type FormState = {
   specs_hy: string;
 };
 
+function productToForm(data: Record<string, unknown>): FormState {
+  return {
+    name: (data.name as string) ?? "",
+    description: (data.description as string) ?? "",
+    name_en: (data.name_en as string) ?? "",
+    description_en: (data.description_en as string) ?? "",
+    name_hy: (data.name_hy as string) ?? "",
+    description_hy: (data.description_hy as string) ?? "",
+    category: (data.category as string) ?? "",
+    category_en: (data.category_en as string) ?? "",
+    category_hy: (data.category_hy as string) ?? "",
+    colour: (data.colour as string) ?? "",
+    colour_en: (data.colour_en as string) ?? "",
+    colour_hy: (data.colour_hy as string) ?? "",
+    aesthetic: (data.aesthetic as string) ?? "",
+    family: (data.family as string) ?? "",
+    ean: (data.ean as string) ?? "",
+    price_amd: data.price_amd != null ? String(data.price_amd) : "",
+    price_old: data.price_old != null ? String(data.price_old) : "",
+    discount_percent: data.discount_percent != null ? String(data.discount_percent) : "0",
+    stock_qty: data.stock_qty != null ? String(data.stock_qty) : "0",
+    lead_time_days: data.lead_time_days != null ? String(data.lead_time_days) : "",
+    is_published: !!data.is_published,
+    is_featured: !!data.is_featured,
+    is_new: !!data.is_new,
+    is_bestseller: !!data.is_bestseller,
+    is_special_offer: !!data.is_special_offer,
+    badge_text: (data.badge_text as string) ?? "",
+    seo_title: (data.seo_title as string) ?? "",
+    seo_description: (data.seo_description as string) ?? "",
+    main_image: (data.main_image as string) ?? "",
+    images: Array.isArray(data.images) ? (data.images as string[]).join("\n") : "",
+    specs: specsToText(data.specs as Record<string, string> | null),
+    specs_en: specsToText(data.specs_en as Record<string, string> | null),
+    specs_hy: specsToText(data.specs_hy as Record<string, string> | null),
+  };
+}
+
 function EditProduct() {
   const { t } = useI18n();
   const { sku } = Route.useParams();
@@ -67,6 +106,7 @@ function EditProduct() {
   const [dupSku, setDupSku] = useState("");
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameSku, setRenameSku] = useState("");
+  const hydratedSkuRef = useRef<string | null>(null);
 
   const q = useQuery({
     queryKey: ["admin-product", sku],
@@ -75,47 +115,14 @@ function EditProduct() {
       if (error) throw error;
       return data;
     },
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
-    if (q.data && !form) {
-      setForm({
-        name: q.data.name ?? "",
-        description: q.data.description ?? "",
-        name_en: q.data.name_en ?? "",
-        description_en: q.data.description_en ?? "",
-        name_hy: q.data.name_hy ?? "",
-        description_hy: q.data.description_hy ?? "",
-        category: q.data.category ?? "",
-        category_en: q.data.category_en ?? "",
-        category_hy: q.data.category_hy ?? "",
-        colour: q.data.colour ?? "",
-        colour_en: q.data.colour_en ?? "",
-        colour_hy: q.data.colour_hy ?? "",
-        aesthetic: q.data.aesthetic ?? "",
-        family: q.data.family ?? "",
-        ean: q.data.ean ?? "",
-        price_amd: q.data.price_amd?.toString() ?? "",
-        price_old: q.data.price_old?.toString() ?? "",
-        discount_percent: q.data.discount_percent?.toString() ?? "0",
-        stock_qty: q.data.stock_qty?.toString() ?? "0",
-        lead_time_days: q.data.lead_time_days?.toString() ?? "",
-        is_published: !!q.data.is_published,
-        is_featured: !!q.data.is_featured,
-        is_new: !!q.data.is_new,
-        is_bestseller: !!q.data.is_bestseller,
-        is_special_offer: !!q.data.is_special_offer,
-        badge_text: q.data.badge_text ?? "",
-        seo_title: q.data.seo_title ?? "",
-        seo_description: q.data.seo_description ?? "",
-        main_image: q.data.main_image ?? "",
-        images: (q.data.images ?? []).join("\n"),
-        specs: specsToText(q.data.specs as Record<string, string> | null),
-        specs_en: specsToText(q.data.specs_en as Record<string, string> | null),
-        specs_hy: specsToText(q.data.specs_hy as Record<string, string> | null),
-      });
-    }
-  }, [q.data, form]);
+    if (!q.data || hydratedSkuRef.current === sku) return;
+    setForm(productToForm(q.data as Record<string, unknown>));
+    hydratedSkuRef.current = sku;
+  }, [sku, q.data]);
 
   const save = useMutation({
     mutationFn: async (f: FormState) => {
@@ -130,7 +137,7 @@ function EditProduct() {
       const stockQty = Math.max(0, parseInt(f.stock_qty, 10) || 0);
       const leadRaw = f.lead_time_days.trim();
       const leadDays = leadRaw === "" ? null : Math.max(0, Math.min(365, parseInt(leadRaw, 10) || 0));
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("products")
         .update({
           name: f.name.trim().slice(0, 500),
@@ -167,11 +174,15 @@ function EditProduct() {
           specs_en: parseSpecsText(f.specs_en),
           specs_hy: parseSpecsText(f.specs_hy),
         })
-        .eq("sku", sku);
+        .eq("sku", sku)
+        .select("*")
+        .maybeSingle();
       if (error) throw error;
+      return assertRowUpdated(data, t("admin.saveNoRow"));
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-product", sku] });
+    onSuccess: (saved) => {
+      setForm(productToForm(saved as Record<string, unknown>));
+      qc.setQueryData(["admin-product", sku], saved);
       qc.invalidateQueries({ queryKey: ["admin-products"] });
       qc.invalidateQueries({ queryKey: ["product", sku] });
       toast.success(t("admin.saved"));

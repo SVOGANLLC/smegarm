@@ -1,6 +1,4 @@
 import { motion } from "motion/react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { categoryLabel } from "@/lib/category-i18n";
 
@@ -18,7 +16,7 @@ const DEFAULT_KEYS = [
 ] as const;
 
 function parseMarqueeText(raw: string | undefined, lang: "ru" | "en" | "hy"): string[] {
-  if (!raw?.trim()) return [];
+  if (!raw?.trim() || raw === "marquee.text") return [];
   return raw
     .split(/[\n,|]+/)
     .map((s) => s.trim())
@@ -33,17 +31,7 @@ function parseMarqueeText(raw: string | undefined, lang: "ru" | "en" | "hy"): st
 
 export function Marquee() {
   const { lang, t } = useI18n();
-  const { data: customText } = useQuery({
-    queryKey: ["marquee-content"],
-    queryFn: async () => {
-      const { data } = await supabase.from("site_content").select("value").eq("key", "marquee").maybeSingle();
-      const block = (data?.value ?? {}) as Record<string, Partial<Record<"ru" | "en" | "hy", string>>>;
-      return block["marquee.text"]?.[lang] ?? block["marquee.text"]?.hy ?? "";
-    },
-    staleTime: 60_000,
-  });
-
-  const fromAdmin = parseMarqueeText(customText, lang);
+  const fromAdmin = parseMarqueeText(t("marquee.text"), lang);
   const words =
     fromAdmin.length > 0
       ? fromAdmin

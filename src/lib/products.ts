@@ -4,6 +4,7 @@ import { fetchSkusMatchingSpecFilters, type SpecFilters } from "@/lib/spec-filte
 import {
   buildProductGroups,
   dedupeVariants,
+  normalizeShuffleSeed,
   sortGroups,
   type GroupSkuRow,
 } from "@/lib/catalog-grouping";
@@ -221,6 +222,71 @@ export async function fetchFeatured(skus: string[]): Promise<Product[]> {
 export const CARD_COLS =
   "sku,name,name_en,name_hy,category,category_en,category_hy,aesthetic,colour,colour_en,colour_hy,model_group,main_image,price_amd,price_old,discount_percent,availability,stock_qty,stock_reserved,lead_time_days,is_published,is_featured,is_new,is_bestseller,is_special_offer,badge_text";
 
+export async function fetchProductsBySkus(skus: string[]): Promise<ProductCard[]> {
+  const unique = [...new Set(skus.filter(Boolean))];
+  if (!unique.length) return [];
+  const { data, error } = await supabase
+    .from("products")
+    .select(CARD_COLS)
+    .in("sku", unique)
+    .eq("is_published", true);
+  if (error) throw error;
+  const bySku = new Map(((data ?? []) as ProductCard[]).map((p) => [p.sku, p]));
+  return unique.map((sku) => bySku.get(sku)).filter((p): p is ProductCard => !!p);
+}
+
+export type AdminModelGroup = {
+  model_group: string;
+  product_count: number;
+  colour_count: number;
+  sample_sku: string;
+  sample_name: string;
+  family: string | null;
+};
+
+/** Published product lines with 2+ variants (for admin group naming). */
+export async function fetchAdminModelGroups(): Promise<AdminModelGroup[]> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("model_group, sku, name, colour, family")
+    .eq("is_published", true)
+    .not("model_group", "is", null);
+  if (error) throw error;
+
+  const map = new Map<
+    string,
+    { skus: Set<string>; colours: Set<string>; sample_sku: string; sample_name: string; family: string | null }
+  >();
+
+  for (const row of data ?? []) {
+    const mg = (row.model_group as string)?.trim();
+    if (!mg) continue;
+    const entry = map.get(mg) ?? {
+      skus: new Set<string>(),
+      colours: new Set<string>(),
+      sample_sku: row.sku as string,
+      sample_name: (row.name as string) ?? "",
+      family: (row.family as string | null) ?? null,
+    };
+    entry.skus.add(row.sku as string);
+    const c = (row.colour as string | null)?.trim();
+    if (c) entry.colours.add(c);
+    map.set(mg, entry);
+  }
+
+  return Array.from(map.entries())
+    .filter(([, v]) => v.skus.size >= 2)
+    .map(([model_group, v]) => ({
+      model_group,
+      product_count: v.skus.size,
+      colour_count: v.colours.size,
+      sample_sku: v.sample_sku,
+      sample_name: v.sample_name,
+      family: v.family,
+    }))
+    .sort((a, b) => a.model_group.localeCompare(b.model_group));
+}
+
 export async function fetchProductsByFlag(
   flag: "is_featured" | "is_new" | "is_bestseller" | "is_special_offer",
   limit = 8,
@@ -278,6 +344,13 @@ export type Variant = {
   main_image: string | null;
   price_amd?: number | null;
   model_group?: string | null;
+  name?: string | null;
+  name_en?: string | null;
+  name_hy?: string | null;
+  availability?: string | null;
+  stock_qty?: number | null;
+  stock_reserved?: number | null;
+  lead_time_days?: number | null;
 };
 
 export type CatalogDisplayItem = Product & {
@@ -331,10 +404,13 @@ export async function fetchTheme(key: string): Promise<Theme | null> {
   return (data as Theme | null) ?? null;
 }
 
+const VARIANT_COLS =
+  "sku,colour,colour_en,colour_hy,main_image,price_amd,model_group,name,name_en,name_hy,availability,stock_qty,stock_reserved,lead_time_days";
+
 export async function fetchProductVariants(modelGroup: string): Promise<Variant[]> {
   const { data, error } = await supabase
     .from("products")
-    .select("sku,colour,colour_en,colour_hy,main_image,price_amd,model_group")
+    .select(VARIANT_COLS)
     .eq("model_group", modelGroup)
     .eq("is_published", true)
     .not("colour", "is", null)
@@ -351,7 +427,7 @@ export async function fetchVariantsByModelGroups(modelGroups: string[]): Promise
 
   const { data, error } = await supabase
     .from("products")
-    .select("sku,model_group,colour,colour_en,colour_hy,main_image,price_amd")
+    .select(VARIANT_COLS)
     .in("model_group", unique)
     .eq("is_published", true)
     .not("colour", "is", null)
@@ -475,7 +551,7 @@ export type CatalogFilters = {
 
 function shuffleArray<T>(items: T[], seed?: number): T[] {
   const arr = [...items];
-  let state = seed ?? Math.floor(Math.random() * 0xffffffff);
+  let state = normalizeShuffleSeed(seed);
   const rand = () => {
     state = (state * 1664525 + 1013904223) >>> 0;
     return state / 0xffffffff;
@@ -577,7 +653,10 @@ async function fetchGroupedCatalog(
       const p = bySku.get(g.representativeSku);
       if (!p) return null;
       const mg = p.model_group?.trim();
-      const variants = mg ? variantsMap.get(mg) : undefined;
+      const groupSkuSet = new Set(g.skus);
+      const variants = mg
+        ? variantsMap.get(mg)?.filter((v) => groupSkuSet.has(v.sku))
+        : undefined;
       const variantCount = variants?.length ?? 1;
       return {
         ...p,

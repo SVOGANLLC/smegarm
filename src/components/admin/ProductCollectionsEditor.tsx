@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Plus, X } from "lucide-react";
+import { assertRowUpdated } from "@/lib/supabase-assert";
+import { applyCollectionMembershipToProduct, isAutoCollectionSlug } from "@/lib/collection-auto-sync";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
@@ -12,6 +14,19 @@ export function ProductCollectionsEditor({ sku }: { sku: string }) {
   const { t } = useI18n();
   const qc = useQueryClient();
   const [pickId, setPickId] = useState("");
+
+  const productMeta = useQuery({
+    queryKey: ["product-collection-meta", sku],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("aesthetic, theme_key")
+        .eq("sku", sku)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const linked = useQuery({
     queryKey: ["product-collections", sku],
@@ -41,25 +56,45 @@ export function ProductCollectionsEditor({ sku }: { sku: string }) {
 
   const linkedIds = new Set((linked.data ?? []).map((c) => c.id));
   const available = (all.data ?? []).filter((c) => !linkedIds.has(c.id));
+  const meta = productMeta.data;
 
-  const invalidate = () => {
+  const invalidate = (slug?: string) => {
     qc.invalidateQueries({ queryKey: ["product-collections", sku] });
     qc.invalidateQueries({ queryKey: ["admin-collection-products"] });
     qc.invalidateQueries({ queryKey: ["admin-collections"] });
+    qc.invalidateQueries({ queryKey: ["collections-list"] });
+    if (slug) qc.invalidateQueries({ queryKey: ["collection", slug] });
   };
 
   const add = useMutation({
     mutationFn: async (collectionId: string) => {
-      const { error } = await supabase.from("collection_products").insert({
-        collection_id: collectionId,
-        product_sku: sku,
-        sort_weight: 0,
-      });
+      const col = all.data?.find((c) => c.id === collectionId);
+      if (!col) throw new Error(t("admin.notFound"));
+
+      const { data, error } = await supabase
+        .from("collection_products")
+        .upsert(
+          {
+            collection_id: collectionId,
+            product_sku: sku,
+            sort_weight: 0,
+          },
+          { onConflict: "collection_id,product_sku" },
+        )
+        .select("collection_id")
+        .maybeSingle();
       if (error) throw error;
+      assertRowUpdated(data, t("admin.writeNoRow"));
+
+      await applyCollectionMembershipToProduct(sku, col.slug, "add");
+      return col;
     },
-    onSuccess: () => {
+    onSuccess: (col) => {
       setPickId("");
-      invalidate();
+      invalidate(col.slug);
+      qc.invalidateQueries({ queryKey: ["product-collection-meta", sku] });
+      qc.invalidateQueries({ queryKey: ["admin-product", sku] });
+      qc.invalidateQueries({ queryKey: ["product", sku] });
       toast.success(t("admin.collections.productAdded"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
@@ -67,16 +102,35 @@ export function ProductCollectionsEditor({ sku }: { sku: string }) {
 
   const remove = useMutation({
     mutationFn: async (collectionId: string) => {
-      const { error } = await supabase
+      const col = linked.data?.find((c) => c.id === collectionId);
+      if (!col) throw new Error(t("admin.notFound"));
+
+      const { data, error } = await supabase
         .from("collection_products")
         .delete()
         .eq("collection_id", collectionId)
-        .eq("product_sku", sku);
+        .eq("product_sku", sku)
+        .select("collection_id")
+        .maybeSingle();
       if (error) throw error;
+      assertRowUpdated(data, t("admin.writeNoRow"));
+
+      await applyCollectionMembershipToProduct(sku, col.slug, "remove");
+      return col;
     },
-    onSuccess: () => {
-      invalidate();
-      toast.success(t("admin.collections.productRemoved"));
+    onSuccess: (col) => {
+      invalidate(col.slug);
+      qc.invalidateQueries({ queryKey: ["product-collection-meta", sku] });
+      qc.invalidateQueries({ queryKey: ["admin-product", sku] });
+      qc.invalidateQueries({ queryKey: ["product", sku] });
+      const wasAuto = meta && isAutoCollectionSlug(col.slug, meta);
+      if (wasAuto) {
+        toast.message(t("admin.collections.productRemoved"), {
+          description: t("admin.collections.themeSynced"),
+        });
+      } else {
+        toast.success(t("admin.collections.productRemoved"));
+      }
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
@@ -93,6 +147,7 @@ export function ProductCollectionsEditor({ sku }: { sku: string }) {
         </Link>
       </div>
       <p className="text-xs text-muted-foreground">{t("admin.product.collectionsDesc")}</p>
+      <p className="text-xs text-muted-foreground">{t("admin.collections.productsInstantSave")}</p>
 
       {linked.isLoading ? (
         <p className="text-sm text-muted-foreground">{t("admin.loading")}</p>
@@ -105,6 +160,11 @@ export function ProductCollectionsEditor({ sku }: { sku: string }) {
             >
               <span className="min-w-0 flex-1 truncate">{c.name_hy || c.name}</span>
               <span className="font-mono text-[10px] text-muted-foreground">/{c.slug}</span>
+              {meta && isAutoCollectionSlug(c.slug, meta) && (
+                <span className="shrink-0 rounded-sm bg-secondary px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
+                  {t("admin.collections.autoBadge")}
+                </span>
+              )}
               <button
                 type="button"
                 onClick={() => remove.mutate(c.id)}

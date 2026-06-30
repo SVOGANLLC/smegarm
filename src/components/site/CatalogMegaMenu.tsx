@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import {
   buildCatalogNavFromCategories,
@@ -13,7 +13,7 @@ import {
   type CatalogNavItem,
 } from "@/lib/catalog-nav";
 import { fetchCategoriesScoped } from "@/lib/products";
-import { supabase } from "@/integrations/supabase/client";
+import { useSiteContentBlock } from "@/lib/site-content";
 import { cn } from "@/lib/utils";
 
 function NavLink({ item, onClick }: { item: CatalogNavItem; onClick?: () => void }) {
@@ -21,9 +21,14 @@ function NavLink({ item, onClick }: { item: CatalogNavItem; onClick?: () => void
   const label = navItemLabel(item, lang, t);
   if (item.to === "/#collections") {
     return (
-      <a href="/#collections" onClick={onClick} className="block text-sm text-foreground/70 transition hover:text-foreground">
+      <Link
+        to="/"
+        hash="collections"
+        onClick={onClick}
+        className="block text-sm text-foreground/70 transition hover:text-foreground"
+      >
         {label}
-      </a>
+      </Link>
     );
   }
   if (item.to === "/sale") {
@@ -56,18 +61,12 @@ function useCatalogNavColumns() {
     queryFn: () => fetchCategoriesScoped({ families: NAV_SMALL_FAMILIES }),
     staleTime: 5 * 60_000,
   });
-  const customQ = useQuery({
-    queryKey: ["site-content", "catalog-nav"],
-    queryFn: async () => {
-      const { data } = await supabase.from("site_content").select("value").eq("key", "catalog-nav").maybeSingle();
-      return parseCatalogNav((data?.value ?? {}) as Record<string, Partial<Record<"ru" | "en" | "hy", string>>>);
-    },
-    staleTime: 120_000,
-  });
+  const customBlock = useSiteContentBlock("catalog-nav");
+  const customNav = useMemo(() => (customBlock ? parseCatalogNav(customBlock) : undefined), [customBlock]);
 
   const dynamic =
     largeQ.data && smallQ.data ? buildCatalogNavFromCategories(largeQ.data, smallQ.data) : null;
-  return customQ.data ?? dynamic ?? buildCatalogNavFromCategories(largeQ.data ?? [], smallQ.data ?? []);
+  return customNav ?? dynamic ?? buildCatalogNavFromCategories(largeQ.data ?? [], smallQ.data ?? []);
 }
 
 function NavColumns({ columns, onNavigate }: { columns: CatalogNavColumn[]; onNavigate?: () => void }) {

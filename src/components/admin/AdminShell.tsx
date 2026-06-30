@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate, useRouteContext } from "@tanstack/react-router";
 import { ReactNode, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Inbox, FileText, LogOut, Home, Layers, Wrench, ShoppingCart, Users, Bell, Menu, X, Handshake } from "lucide-react";
+import { Package, Inbox, FileText, LogOut, Home, Layers, Wrench, ShoppingCart, Users, Bell, Menu, X, Handshake, CircleHelp } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n, type Lang } from "@/lib/i18n";
 
@@ -10,13 +10,14 @@ const nav: NavItem[] = [
   { to: "/admini", labelKey: "admin.nav.overview", icon: Home, exact: true },
   { to: "/admini/orders", labelKey: "admin.nav.orders", icon: ShoppingCart },
   { to: "/admini/inquiries", labelKey: "admin.nav.inquiries", icon: Inbox },
-  { to: "/admini/products", labelKey: "admin.nav.products", icon: Package, adminOnly: true },
-  { to: "/admini/collections", labelKey: "admin.nav.collections", icon: Layers, adminOnly: true },
+  { to: "/admini/products", labelKey: "admin.nav.products", icon: Package },
+  { to: "/admini/collections", labelKey: "admin.nav.collections", icon: Layers },
   { to: "/admini/content", labelKey: "admin.nav.content", icon: FileText, adminOnly: true },
   { to: "/admini/partners", labelKey: "admin.nav.partners", icon: Handshake, adminOnly: true },
   { to: "/admini/team", labelKey: "admin.nav.team", icon: Users, adminOnly: true },
   { to: "/admini/notifications", labelKey: "admin.nav.notifications", icon: Bell },
   { to: "/admini/tools", labelKey: "admin.nav.tools", icon: Wrench, adminOnly: true },
+  { to: "/admini/help", labelKey: "admin.nav.help", icon: CircleHelp },
 ];
 
 function LangSwitch() {

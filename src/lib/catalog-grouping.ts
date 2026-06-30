@@ -48,6 +48,17 @@ export function buildProductGroups(rows: GroupSkuRow[]): ProductGroup[] {
   return groups;
 }
 
+/** Coerce seed to 32-bit integer (Math.random() floats must not be used with >>> 0). */
+export function normalizeShuffleSeed(seed?: number): number {
+  if (seed == null || !Number.isFinite(seed)) {
+    return Math.floor(Math.random() * 0xffffffff);
+  }
+  if (seed > 0 && seed < 1) {
+    return Math.floor(seed * 0xffffffff) >>> 0;
+  }
+  return seed >>> 0;
+}
+
 export function sortGroups(
   groups: ProductGroup[],
   rowsBySku: Map<string, GroupSkuRow>,
@@ -56,7 +67,7 @@ export function sortGroups(
 ): ProductGroup[] {
   if (!sort) {
     if (shuffleSeed == null) return groups;
-    let state = shuffleSeed >>> 0;
+    let state = normalizeShuffleSeed(shuffleSeed);
     const rand = () => {
       state = (state * 1664525 + 1013904223) >>> 0;
       return state / 0xffffffff;

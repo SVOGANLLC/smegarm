@@ -2,9 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { SlidersHorizontal, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useI18n } from "@/lib/i18n";
-import { fetchColorSwatches, fetchVariantsByModelGroups, type ProductCard } from "@/lib/products";
+import { fetchColorSwatches, fetchProductsBySkus, fetchVariantsByModelGroups, type ProductCard } from "@/lib/products";
+import { ColorSwatchDot } from "@/components/site/ColorSwatchDot";
+import { ModelColorPickerView } from "@/components/site/ModelColorPickerView";
 import { parseCatalogGroupConfig } from "@/lib/catalog-group-config";
-import { supabase } from "@/integrations/supabase/client";
+import { parseModelGroupLabels } from "@/lib/model-group-labels";
+import { useSiteContentBlock } from "@/lib/site-content";
 import {
   countActiveSpecFilters,
   fetchSpecFacets,
@@ -27,6 +30,8 @@ export type ListingSearch = {
   aesthetic?: string;
   spec?: string;
   inStock?: boolean;
+  model?: string;
+  modelSkus?: string;
 };
 
 type Props = {
@@ -45,16 +50,35 @@ export function ProductListingShell({ products, search, onSearchChange, groupByC
   const aesthetics = split(search.aesthetic);
   const specFilters = parseSpecSearchParam(search.spec);
   const inStock = search.inStock ?? false;
+  const modelSkuList = split(search.modelSkus);
 
-  const groupConfigQuery = useQuery({
-    queryKey: ["site-content", "categories-grouping"],
-    queryFn: async () => {
-      const { data } = await supabase.from("site_content").select("value").eq("key", "categories").maybeSingle();
-      return parseCatalogGroupConfig((data?.value ?? {}) as Record<string, Partial<Record<"ru" | "en" | "hy", string>>>);
-    },
+  const modelProductsQuery = useQuery({
+    queryKey: ["listing-model-colors", modelSkuList.join(",")],
+    queryFn: () => fetchProductsBySkus(modelSkuList),
+    enabled: !!search.model && modelSkuList.length > 0,
     staleTime: 60_000,
   });
-  const doGroup = groupByColor && (groupConfigQuery.data?.enabled ?? true);
+
+  const openModelColors = (item: ListingDisplayItem) => {
+    const skus = item.variants?.map((v) => v.sku) ?? [];
+    if (!item.model_group || skus.length < 2) return;
+    onSearchChange({
+      ...search,
+      model: item.model_group,
+      modelSkus: skus.join(","),
+    });
+  };
+
+  const backToModels = () => {
+    const { model: _m, modelSkus: _ms, ...rest } = search;
+    onSearchChange(rest);
+  };
+
+  const categoriesBlock = useSiteContentBlock("categories");
+  const groupingConfig = useMemo(() => parseCatalogGroupConfig(categoriesBlock), [categoriesBlock]);
+  const modelGroupLabels = useMemo(() => parseModelGroupLabels(categoriesBlock), [categoriesBlock]);
+  const doGroup = groupByColor && (groupingConfig.enabled ?? true);
+  const hideSpecFilters = !!search.model || doGroup;
 
   const allSkus = useMemo(() => products.map((p) => p.sku), [products]);
 
@@ -159,16 +183,18 @@ export function ProductListingShell({ products, search, onSearchChange, groupByC
           <div className="flex flex-wrap gap-2">
             {colourFacets.slice(0, 24).map((c) => {
               const row = products.find((p) => p.colour === c.value);
-              const hex = swatchHex(row?.colour_en ?? c.value);
+              const canonical = row?.colour_en ?? c.value;
+              const hex = swatchHex(canonical);
               const active = colours.includes(c.value);
               return (
-                <button
+                <ColorSwatchDot
                   key={c.value}
-                  type="button"
+                  colourName={canonical}
+                  hex={hex}
+                  size="md"
+                  active={active}
                   title={`${colourLabel(c.value)} (${c.count})`}
                   onClick={() => toggleList("colour", c.value)}
-                  className={`h-7 w-7 rounded-full border transition ${active ? "ring-2 ring-foreground ring-offset-2 ring-offset-background border-transparent" : "border-border hover:border-foreground"}`}
-                  style={{ background: hex }}
                 />
               );
             })}
@@ -196,29 +222,31 @@ export function ProductListingShell({ products, search, onSearchChange, groupByC
         </div>
       )}
 
-      <SpecFiltersPanel
-        facets={specFacetsQuery.data ?? []}
-        active={specFilters}
-        onToggleEnum={(slug, value) => {
-          const current = [...((specFilters[slug] as string[] | undefined) ?? [])];
-          const nextVals = current.includes(value) ? current.filter((x) => x !== value) : [...current, value];
-          const next = { ...specFilters };
-          if (nextVals.length) next[slug] = nextVals;
-          else delete next[slug];
-          setSpecFilters(next);
-        }}
-        onSetRange={(slug, min, max) => {
-          const next = { ...specFilters };
-          if (min == null && max == null) delete next[slug];
-          else next[slug] = { min, max };
-          setSpecFilters(next);
-        }}
-        onClearField={(slug) => {
-          const next = { ...specFilters };
-          delete next[slug];
-          setSpecFilters(next);
-        }}
-      />
+      {!hideSpecFilters && (
+        <SpecFiltersPanel
+          facets={specFacetsQuery.data ?? []}
+          active={specFilters}
+          onToggleEnum={(slug, value) => {
+            const current = [...((specFilters[slug] as string[] | undefined) ?? [])];
+            const nextVals = current.includes(value) ? current.filter((x) => x !== value) : [...current, value];
+            const next = { ...specFilters };
+            if (nextVals.length) next[slug] = nextVals;
+            else delete next[slug];
+            setSpecFilters(next);
+          }}
+          onSetRange={(slug, min, max) => {
+            const next = { ...specFilters };
+            if (min == null && max == null) delete next[slug];
+            else next[slug] = { min, max };
+            setSpecFilters(next);
+          }}
+          onClearField={(slug) => {
+            const next = { ...specFilters };
+            delete next[slug];
+            setSpecFilters(next);
+          }}
+        />
+      )}
     </div>
   );
 
@@ -233,9 +261,6 @@ export function ProductListingShell({ products, search, onSearchChange, groupByC
           <SlidersHorizontal className="h-3.5 w-3.5" /> {t("catalog.filters")}
           {activeCount > 0 && <span className="rounded-full bg-foreground px-1.5 text-[10px] text-background">{activeCount}</span>}
         </button>
-        <span className="text-xs text-muted-foreground">
-          {displayItems.length} {t("catalog.modelsSuffix")}
-        </span>
       </div>
 
       <div className="grid grid-cols-1 gap-10 md:grid-cols-[240px_1fr]">
@@ -243,12 +268,32 @@ export function ProductListingShell({ products, search, onSearchChange, groupByC
           {filters}
         </aside>
         <section>
-          {filteredQuery.isLoading ? (
+          {search.model && modelProductsQuery.isLoading ? (
+            <p className="text-sm text-muted-foreground">{t("catalog.loading")}</p>
+          ) : search.model && modelProductsQuery.data?.length ? (
+            <ModelColorPickerView products={modelProductsQuery.data} onBack={backToModels} modelGroupLabels={modelGroupLabels} />
+          ) : search.model ? (
+            <div>
+              <button
+                type="button"
+                onClick={backToModels}
+                className="mb-6 text-xs uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground"
+              >
+                ← {t("catalog.backToModels")}
+              </button>
+              <p className="text-sm text-muted-foreground">{t("catalog.nothing")}</p>
+            </div>
+          ) : filteredQuery.isLoading ? (
             <p className="text-sm text-muted-foreground">{t("catalog.loading")}</p>
           ) : displayItems.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("catalog.nothing")}</p>
           ) : (
-            <ProductGrid items={displayItems} swatchHex={doGroup ? swatchHex : undefined} />
+            <ProductGrid
+              items={displayItems}
+              swatchHex={doGroup ? swatchHex : undefined}
+              onChooseColor={doGroup ? openModelColors : undefined}
+              modelGroupLabels={modelGroupLabels}
+            />
           )}
         </section>
       </div>

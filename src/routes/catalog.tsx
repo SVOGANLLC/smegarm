@@ -9,21 +9,25 @@ import {
   fetchColorSwatches,
   fetchFacets,
   fetchFacetsScoped,
+  fetchProductsBySkus,
   slugify,
 } from "@/lib/products";
 import { z } from "zod";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useI18n, getI18nDefaults } from "@/lib/i18n";
 import { categoryLabel as catLabel } from "@/lib/category-i18n";
 import { parseCatalogOrder, sortCategoriesByOrder } from "@/lib/category-order";
 import { parseCatalogGroupConfig, shouldGroupCatalog } from "@/lib/catalog-group-config";
+import { parseModelGroupLabels, resolveModelGroupLabel } from "@/lib/model-group-labels";
 import { sectionCategories, sectionFamilies, sectionTitleKey, type CatalogSection } from "@/lib/catalog-sections";
-import { supabase } from "@/integrations/supabase/client";
+import { useSiteContentBlock } from "@/lib/site-content";
 import { ProductCard } from "@/components/site/ProductCard";
+import { ModelColorPickerView } from "@/components/site/ModelColorPickerView";
 import { SpecFiltersPanel } from "@/components/site/SpecFiltersPanel";
 import type { ProductCard as ProductCardType } from "@/lib/products";
 import { colourLabel as colourI18n } from "@/lib/colour-i18n";
+import { ColorSwatchDot } from "@/components/site/ColorSwatchDot";
 import {
   countActiveSpecFilters,
   fetchSpecFacets,
@@ -45,12 +49,24 @@ const searchSchema = z.object({
   sort: z.enum(["name", "price-asc", "price-desc"]).optional(),
   spec: z.string().optional(),
   section: z.enum(["large", "small", "accessories"]).optional(),
+  model: z.string().optional(),
+  modelSkus: z.string().optional(),
   page: z.number().int().min(1).default(1),
 });
 type CatalogSearch = z.infer<typeof searchSchema>;
 
 const split = (v?: string) => (v ? v.split(",").filter(Boolean) : []);
 const join = (arr: string[]) => (arr.length ? arr.join(",") : undefined);
+
+/** Leave color-variant grid when any catalog filter changes. */
+function withoutModelView(search: CatalogSearch): CatalogSearch {
+  const { model: _m, modelSkus: _ms, ...rest } = search;
+  return rest as CatalogSearch;
+}
+
+function patchCatalogSearch(prev: CatalogSearch, patch: Partial<CatalogSearch>): CatalogSearch {
+  return { ...withoutModelView(prev), ...patch };
+}
 
 const hyMeta = getI18nDefaults().hy;
 
@@ -107,36 +123,60 @@ function findCategoryBySlug(
 
 function CatalogPage() {
   const search = Route.useSearch();
-  const { category, family, q, page, flag, sort, theme, inStock, spec: specRaw, section } = search;
+  const { category, family, q, page, flag, sort, theme, inStock, spec: specRaw, section, model, modelSkus: modelSkusRaw } = search;
   const colours = split(search.colour);
   const aesthetics = split(search.aesthetic);
   const specFilters = parseSpecSearchParam(specRaw);
   const navigate = useNavigate({ from: Route.fullPath });
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [shuffleKey] = useState(() => Math.random());
+  const [shuffleKey, setShuffleKey] = useState(() => Math.floor(Math.random() * 0xffffffff));
   const { lang, t } = useI18n();
+
+  const modelSkuList = split(modelSkusRaw);
+
+  const modelProductsQuery = useQuery({
+    queryKey: ["model-color-products", modelSkuList.join(",")],
+    queryFn: () => fetchProductsBySkus(modelSkuList),
+    enabled: !!model && modelSkuList.length > 0,
+    staleTime: 60_000,
+  });
+
+  const openModelColors = (item: { model_group?: string | null; variants?: import("@/lib/products").Variant[] }) => {
+    const skus = item.variants?.map((v) => v.sku) ?? [];
+    if (!item.model_group || skus.length < 2) return;
+    navigate({
+      search: (prev: CatalogSearch) => ({
+        ...prev,
+        model: item.model_group!,
+        modelSkus: skus.join(","),
+        page: 1,
+      }),
+    });
+  };
+
+  const backToModels = () => {
+    navigate({
+      search: (prev: CatalogSearch) => {
+        const { model: _m, modelSkus: _ms, ...rest } = prev;
+        return rest as CatalogSearch;
+      },
+    });
+  };
 
   const catsQuery = useQuery({
     queryKey: ["catalog-categories"],
     queryFn: fetchCategories,
     staleTime: 5 * 60_000,
   });
-  const orderQuery = useQuery({
-    queryKey: ["site-content", "categories-order"],
-    queryFn: async () => {
-      const { data } = await supabase.from("site_content").select("value").eq("key", "categories").maybeSingle();
-      return parseCatalogOrder((data?.value ?? {}) as Record<string, Partial<Record<"ru" | "en" | "hy", string>>>);
-    },
-    staleTime: 60_000,
-  });
-  const groupConfigQuery = useQuery({
-    queryKey: ["site-content", "categories-grouping"],
-    queryFn: async () => {
-      const { data } = await supabase.from("site_content").select("value").eq("key", "categories").maybeSingle();
-      return parseCatalogGroupConfig((data?.value ?? {}) as Record<string, Partial<Record<"ru" | "en" | "hy", string>>>);
-    },
-    staleTime: 60_000,
-  });
+  const categoriesBlock = useSiteContentBlock("categories");
+  const catalogOrder = useMemo(() => parseCatalogOrder(categoriesBlock ?? {}), [categoriesBlock]);
+  const grouping = useMemo(
+    () => ({
+      config: parseCatalogGroupConfig(categoriesBlock),
+      modelGroupLabels: parseModelGroupLabels(categoriesBlock),
+    }),
+    [categoriesBlock],
+  );
   const facetsQuery = useQuery({ queryKey: ["facets"], queryFn: fetchFacets, staleTime: 10 * 60_000 });
   const swatchesQuery = useQuery({ queryKey: ["color-swatches"], queryFn: fetchColorSwatches, staleTime: 30 * 60_000 });
 
@@ -150,7 +190,7 @@ function CatalogPage() {
       })
     : undefined;
 
-  const sortedCategories = sortCategoriesByOrder(catsQuery.data ?? [], orderQuery.data ?? []);
+  const sortedCategories = sortCategoriesByOrder(catsQuery.data ?? [], catalogOrder);
 
   const sectionFamilyList = sectionFamilies(section);
   const sectionCategoryList = sectionCategories(section);
@@ -174,7 +214,7 @@ function CatalogPage() {
     section || effectiveFamilies?.length || effectiveCategoryIn?.length
       ? (scopedCatsQuery.data ?? [])
       : sortedCategories,
-    orderQuery.data ?? [],
+    catalogOrder,
   );
 
   const scopedFacetsQuery = useQuery({
@@ -194,7 +234,12 @@ function CatalogPage() {
       ? scopedFacetsQuery.data
       : facetsQuery.data;
 
-  const groupByColor = shouldGroupCatalog(groupConfigQuery.data ?? { enabled: true, disabledCategorySlugs: [] }, category);
+  const groupByColor = shouldGroupCatalog(grouping.config, {
+    categorySlug: category,
+    section: section as CatalogSection | undefined,
+  });
+  const modelGroupLabels = grouping.modelGroupLabels;
+  const hideSpecFilters = !!model || groupByColor;
 
   // colour value (canonical) → localized label for current lang
   const colourLabel = (value: string) => {
@@ -258,7 +303,7 @@ function CatalogPage() {
   const toggleIn = (key: "colour" | "aesthetic", value: string) => {
     const current = split(search[key]);
     const next = current.includes(value) ? current.filter((x) => x !== value) : [...current, value];
-    navigate({ search: (prev: CatalogSearch) => ({ ...prev, [key]: join(next), page: 1 }) });
+    navigate({ search: (prev: CatalogSearch) => patchCatalogSearch(prev, { [key]: join(next), page: 1 }) });
   };
 
   const clearAll = () =>
@@ -266,11 +311,8 @@ function CatalogPage() {
 
   const setSpecFilters = (next: SpecFilters) => {
     navigate({
-      search: (prev: CatalogSearch) => ({
-        ...prev,
-        spec: serializeSpecSearchParam(next),
-        page: 1,
-      }),
+      search: (prev: CatalogSearch) =>
+        patchCatalogSearch(prev, { spec: serializeSpecSearchParam(next), page: 1 }),
     });
   };
 
@@ -319,12 +361,8 @@ function CatalogPage() {
             if (e.key === "Enter") {
               const v = (e.target as HTMLInputElement).value.trim();
               navigate({
-                search: (prev: CatalogSearch) => ({
-                  ...prev,
-                  q: v || undefined,
-                  category: undefined,
-                  page: 1,
-                }),
+                search: (prev: CatalogSearch) =>
+                  patchCatalogSearch(prev, { q: v || undefined, category: undefined, page: 1 }),
               });
             }
           }}
@@ -335,22 +373,22 @@ function CatalogPage() {
       {activeCount > 0 && (
         <div className="flex flex-wrap gap-2">
           {q && (
-            <FilterPill onClear={() => navigate({ search: (prev: CatalogSearch) => ({ ...prev, q: undefined, page: 1 }) })}>
+            <FilterPill onClear={() => navigate({ search: (prev: CatalogSearch) => patchCatalogSearch(prev, { q: undefined, page: 1 }) })}>
               «{q}»
             </FilterPill>
           )}
           {theme && (
-            <FilterPill onClear={() => navigate({ search: (prev: CatalogSearch) => ({ ...prev, theme: undefined, page: 1 }) })}>
+            <FilterPill onClear={() => navigate({ search: (prev: CatalogSearch) => patchCatalogSearch(prev, { theme: undefined, page: 1 }) })}>
               ✦ {THEME_LABELS[theme] ?? theme}
             </FilterPill>
           )}
           {flag && (
-            <FilterPill onClear={() => navigate({ search: (prev: CatalogSearch) => ({ ...prev, flag: undefined, page: 1 }) })}>
+            <FilterPill onClear={() => navigate({ search: (prev: CatalogSearch) => patchCatalogSearch(prev, { flag: undefined, page: 1 }) })}>
               {t(`flag.${flag}`)}
             </FilterPill>
           )}
           {inStock && (
-            <FilterPill onClear={() => navigate({ search: (prev: CatalogSearch) => ({ ...prev, inStock: undefined, page: 1 }) })}>
+            <FilterPill onClear={() => navigate({ search: (prev: CatalogSearch) => patchCatalogSearch(prev, { inStock: undefined, page: 1 }) })}>
               {t("avail.inStock")}
             </FilterPill>
           )}
@@ -367,7 +405,7 @@ function CatalogPage() {
         <button
           onClick={() =>
             navigate({
-              search: (prev: CatalogSearch) => ({ ...prev, inStock: inStock ? undefined : true, page: 1 }),
+              search: (prev: CatalogSearch) => patchCatalogSearch(prev, { inStock: inStock ? undefined : true, page: 1 }),
             })
           }
           className={`block w-full text-left text-sm transition ${inStock ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
@@ -386,7 +424,7 @@ function CatalogPage() {
             key={k}
             onClick={() =>
               navigate({
-                search: (prev: CatalogSearch) => ({ ...prev, flag: flag === k ? undefined : k, page: 1 }),
+                search: (prev: CatalogSearch) => patchCatalogSearch(prev, { flag: flag === k ? undefined : k, page: 1 }),
               })
             }
             className={`block w-full text-left text-sm transition ${flag === k ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
@@ -398,7 +436,7 @@ function CatalogPage() {
 
       <FacetGroup label={t("facet.categories")} defaultOpen>
         <button
-          onClick={() => navigate({ search: (prev: CatalogSearch) => ({ ...prev, category: undefined, section: undefined, page: 1 }) })}
+          onClick={() => navigate({ search: (prev: CatalogSearch) => patchCatalogSearch(prev, { category: undefined, section: undefined, page: 1 }) })}
           className={`block w-full text-left text-sm ${!category && !section ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
         >
           {t("facet.all")}
@@ -409,12 +447,12 @@ function CatalogPage() {
               key={s}
               onClick={() =>
                 navigate({
-                  search: (prev: CatalogSearch) => ({
-                    ...prev,
-                    section: section === s ? undefined : s,
-                    category: undefined,
-                    page: 1,
-                  }),
+                  search: (prev: CatalogSearch) =>
+                    patchCatalogSearch(prev, {
+                      section: section === s ? undefined : s,
+                      category: undefined,
+                      page: 1,
+                    }),
                 })
               }
               className={`block w-full text-left text-sm transition ${section === s ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
@@ -434,12 +472,8 @@ function CatalogPage() {
               key={c.slug}
               onClick={() =>
                 navigate({
-                  search: (prev: CatalogSearch) => ({
-                    ...prev,
-                    category: c.slug,
-                    section: undefined,
-                    page: 1,
-                  }),
+                  search: (prev: CatalogSearch) =>
+                    patchCatalogSearch(prev, { category: c.slug, section: undefined, page: 1 }),
                 })
               }
               className={`flex w-full items-baseline justify-between text-left text-sm transition ${category === c.slug ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
@@ -460,13 +494,16 @@ function CatalogPage() {
             const hex = swatchesQuery.data?.find((s) => s.colour === (c.value_en ?? c.value))?.hex ?? "#d4d4d4";
             const active = colours.includes(c.value);
             const label = colourLabel(c.value);
+            const canonical = c.value_en ?? c.value;
             return (
-              <button
+              <ColorSwatchDot
                 key={c.value}
+                colourName={canonical}
+                hex={hex}
+                size="md"
+                active={active}
                 title={`${label} (${c.count})`}
                 onClick={() => toggleIn("colour", c.value)}
-                className={`h-7 w-7 rounded-full border transition ${active ? "ring-2 ring-foreground ring-offset-2 ring-offset-background border-transparent" : "border-border hover:border-foreground"}`}
-                style={{ background: hex }}
               />
             );
           })}
@@ -481,13 +518,15 @@ function CatalogPage() {
         />
       </FacetGroup>
 
-      <SpecFiltersPanel
-        facets={specFacetsQuery.data ?? []}
-        active={specFilters}
-        onToggleEnum={toggleSpecEnum}
-        onSetRange={setSpecRange}
-        onClearField={clearSpecField}
-      />
+      {!hideSpecFilters && (
+        <SpecFiltersPanel
+          facets={specFacetsQuery.data ?? []}
+          active={specFilters}
+          onToggleEnum={toggleSpecEnum}
+          onSetRange={setSpecRange}
+          onClearField={clearSpecField}
+        />
+      )}
 
       {activeCount > 0 && (
         <button
@@ -511,22 +550,17 @@ function CatalogPage() {
               {categoryLabel ??
                 (section ? t(sectionTitleKey(section as CatalogSection)!) : t("catalog.all"))}
             </h1>
-            <p className="mt-3 text-sm text-muted-foreground">
-              {total > 0 ? `${total} ${t("catalog.modelsSuffix")}` : productsQuery.isLoading ? t("catalog.loading") : t("catalog.empty")}
-            </p>
 
             <div className="mt-5 flex items-center gap-3">
               <select
                 value={sort ?? ""}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const nextSort = (e.target.value as CatalogSearch["sort"]) || undefined;
+                  if (!nextSort) setShuffleKey(Math.floor(Math.random() * 0xffffffff));
                   navigate({
-                    search: (prev: CatalogSearch) => ({
-                      ...prev,
-                      sort: (e.target.value as CatalogSearch["sort"]) || undefined,
-                      page: 1,
-                    }),
-                  })
-                }
+                    search: (prev: CatalogSearch) => patchCatalogSearch(prev, { sort: nextSort, page: 1 }),
+                  });
+                }}
                 className="flex-1 rounded-sm border border-border bg-background px-3 py-2 text-xs uppercase tracking-[0.14em] md:flex-none"
               >
                 <option value="">{t("catalog.sort.random")}</option>
@@ -548,7 +582,26 @@ function CatalogPage() {
             <aside className="hidden md:block md:sticky md:top-28 md:self-start md:max-h-[calc(100vh-8rem)] md:overflow-y-auto md:pr-2">{filters}</aside>
 
             <section className="light-section rounded-sm p-4 md:p-8">
-              {productsQuery.isLoading ? (
+              {model && modelProductsQuery.isLoading ? (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="aspect-[4/5] animate-pulse bg-secondary" />
+                  ))}
+                </div>
+              ) : model && modelProductsQuery.data?.length ? (
+                <ModelColorPickerView products={modelProductsQuery.data} onBack={backToModels} modelGroupLabels={modelGroupLabels} />
+              ) : model ? (
+                <div>
+                  <button
+                    type="button"
+                    onClick={backToModels}
+                    className="mb-6 inline-flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground transition hover:text-foreground"
+                  >
+                    ← {t("catalog.backToModels")}
+                  </button>
+                  <p className="text-sm text-muted-foreground">{t("catalog.nothing")}</p>
+                </div>
+              ) : productsQuery.isLoading ? (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                   {Array.from({ length: 8 }).map((_, i) => (
                     <div key={i} className="aspect-[4/5] animate-pulse bg-secondary" />
@@ -557,16 +610,37 @@ function CatalogPage() {
               ) : productsQuery.data?.items.length ? (
                 <>
                   <div className="grid grid-cols-1 gap-y-8 sm:grid-cols-2 sm:gap-x-6 md:grid-cols-3 lg:grid-cols-4">
-                    {productsQuery.data.items.map((p) => (
+                    {productsQuery.data.items.map((p) => {
+                      const item = p as unknown as ProductCardType & {
+                        variants?: import("@/lib/products").Variant[];
+                        variantCount?: number;
+                        model_group?: string | null;
+                      };
+                      const count = item.variantCount ?? item.variants?.length ?? 1;
+                      const isMulti = count > 1 && groupByColor;
+                      const label = isMulti
+                        ? resolveModelGroupLabel(modelGroupLabels, lang, item.model_group, item.sku, {
+                            variants: item.variants,
+                          })
+                        : {};
+                      return (
                       <ProductCard
                         key={p.sku}
-                        p={p as unknown as ProductCardType}
-                        variants={p.variants}
+                        p={item}
+                        variants={item.variants}
                         priceFrom={p.priceFrom}
-                        variantCount={p.variantCount}
+                        variantCount={item.variantCount}
                         swatchHex={groupByColor ? swatchHex : undefined}
+                        displayName={label.name}
+                        displayImage={label.image}
+                        onChooseColor={
+                          groupByColor && (item.variantCount ?? 0) > 1
+                            ? () => openModelColors(item)
+                            : undefined
+                        }
                       />
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {totalPages > 1 && (

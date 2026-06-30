@@ -9,7 +9,7 @@ import { AvailPill } from "./AvailPill";
 import { PriceBlock } from "./ProductCard";
 import { fetchFeatured, type Product, type ProductCard } from "@/lib/products";
 import { parseIconSkus } from "@/lib/homepage-config";
-import { supabase } from "@/integrations/supabase/client";
+import { useSiteContentBlock } from "@/lib/site-content";
 import { SmegWordmark } from "./SmegWordmark";
 
 function FeaturedCard({ p, lang }: { p: Product; lang: "ru" | "en" | "hy" }) {
@@ -62,14 +62,7 @@ function FeaturedCard({ p, lang }: { p: Product; lang: "ru" | "en" | "hy" }) {
 export function Featured() {
   const { t, lang } = useI18n();
   const renderedTitle = <SmegWordmark text={t("section.featured.title")} variant="light" />;
-  const { data: homepageConfig } = useQuery({
-    queryKey: ["site-content", "homepage"],
-    queryFn: async () => {
-      const { data } = await supabase.from("site_content").select("value").eq("key", "homepage").maybeSingle();
-      return (data?.value ?? {}) as Record<string, Partial<Record<"ru" | "en" | "hy", string>>>;
-    },
-    staleTime: 60_000,
-  });
+  const homepageConfig = useSiteContentBlock("homepage");
 
   const iconSkus = parseIconSkus(homepageConfig);
 

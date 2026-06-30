@@ -1,9 +1,9 @@
-import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useI18n, pickLocalized } from "@/lib/i18n";
 import { colourLabel } from "@/lib/colour-i18n";
 import { fetchColorSwatches, fetchProductVariants } from "@/lib/products";
+import { ColorSwatchDot } from "@/components/site/ColorSwatchDot";
 
 export function ColorSwitcher({
   modelGroup,
@@ -56,16 +56,6 @@ export function ColorSwitcher({
 
   const hexFor = (c: string) => swatches?.find((s) => s.colour === c)?.hex ?? "#d4d4d4";
 
-  const swatchStyle = (v: { colour_en: string | null; colour: string | null; main_image: string | null }) =>
-    (v.colour_en ?? v.colour) === "Decorated / Special" && v.main_image
-      ? { backgroundImage: `url(${v.main_image})`, backgroundSize: "cover", backgroundPosition: "center" }
-      : { background: hexFor(v.colour_en ?? v.colour ?? "") };
-
-  const currentStyle =
-    isDecorated && currentImage
-      ? { backgroundImage: `url(${currentImage})`, backgroundSize: "cover", backgroundPosition: "center" }
-      : { background: canonicalEn ? hexFor(canonicalEn) : "#fff" };
-
   const labelFor = (v: { colour_en: string | null; colour: string | null; colour_hy?: string | null }) =>
     pickLocalized(v as unknown as Record<string, unknown>, "colour", lang) ||
     colourLabel(v.colour_en ?? v.colour ?? "", lang);
@@ -80,27 +70,18 @@ export function ColorSwitcher({
       </p>
       <div className="flex flex-wrap gap-2">
         {items.map((v) => {
+          const canonical = v.colour_en ?? v.colour ?? "";
           const isCurrent = v.sku === currentSku;
-          const title = labelFor(v);
-          if (isCurrent) {
-            return (
-              <span
-                key={v.sku}
-                aria-current
-                className="relative h-9 w-9 rounded-full ring-2 ring-foreground ring-offset-2 ring-offset-background"
-                style={currentStyle}
-                title={title}
-              />
-            );
-          }
           return (
-            <Link
+            <ColorSwatchDot
               key={v.sku}
-              to="/product/$sku"
-              params={{ sku: v.sku }}
-              title={title}
-              className="h-9 w-9 overflow-hidden rounded-full border border-border bg-white transition hover:ring-2 hover:ring-foreground hover:ring-offset-2 hover:ring-offset-background"
-              style={swatchStyle(v)}
+              colourName={canonical}
+              hex={hexFor(canonical)}
+              size="lg"
+              active={isCurrent}
+              title={labelFor(v)}
+              imageUrl={canonical === "Decorated / Special" ? v.main_image : null}
+              href={isCurrent ? undefined : { to: "/product/$sku", params: { sku: v.sku } }}
             />
           );
         })}

@@ -1,0 +1,21 @@
+name: Sync to client repo
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.CLIENT_GITHUB_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to SVOGANLLC/smegarm
+        env:
+          CLIENT_TOKEN: ${{ secrets.CLIENT_GITHUB_TOKEN }}
+        run: |
+          git remote add client "https://x-access-token:${CLIENT_TOKEN}@github.com/SVOGANLLC/smegarm.git" || true
+          git push client HEAD:main --force

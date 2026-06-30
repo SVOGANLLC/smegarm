@@ -1,11 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { assertRowUpdated } from "@/lib/supabase-assert";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChevronDown, ChevronUp, Eye, EyeOff, Trash2, Upload, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import type { CollectionSection } from "@/lib/products";
+import { isAutoCollectionSlug, applyCollectionMembershipToProduct } from "@/lib/collection-auto-sync";
+import { deriveCollectionSlug } from "@/lib/collection-slug";
+import {
+  createCollectionAdmin,
+  deleteCollectionAdmin,
+  updateCollectionAdmin,
+} from "@/lib/collections-admin.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/_authenticated/admini/collections")({
   component: AdminCollections,
@@ -18,6 +27,8 @@ type CollectionRow = {
   name_en: string | null;
   name_hy: string | null;
   description: string | null;
+  description_en: string | null;
+  description_hy: string | null;
   cover_image: string | null;
   is_published: boolean;
   sort_weight: number;
@@ -27,7 +38,13 @@ type CollectionRow = {
 
 type LinkedProduct = {
   product_sku: string;
-  products: { sku: string; name: string | null; main_image: string | null } | null;
+  products: {
+    sku: string;
+    name: string | null;
+    main_image: string | null;
+    aesthetic?: string | null;
+    theme_key?: string | null;
+  } | null;
 };
 
 const SECTIONS: { value: CollectionSection; labelKey: string }[] = [
@@ -35,10 +52,6 @@ const SECTIONS: { value: CollectionSection; labelKey: string }[] = [
   { value: "timeless", labelKey: "admin.collections.sectionTimeless" },
   { value: "special", labelKey: "admin.collections.sectionSpecial" },
 ];
-
-function slugify(s: string) {
-  return s.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-}
 
 async function uploadCover(
   slug: string,
@@ -80,21 +93,30 @@ function CoverPreview({ url, name }: { url: string | null; name: string }) {
 
 function CollectionProducts({
   collectionId,
+  collectionSlug,
   t,
 }: {
   collectionId: string;
+  collectionSlug: string;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const qc = useQueryClient();
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+
+  const invalidateCaches = () => {
+    qc.invalidateQueries({ queryKey: ["admin-collection-products", collectionId] });
+    qc.invalidateQueries({ queryKey: ["admin-collections"] });
+    qc.invalidateQueries({ queryKey: ["collections-list"] });
+    qc.invalidateQueries({ queryKey: ["collection", collectionSlug] });
+  };
 
   const linked = useQuery({
     queryKey: ["admin-collection-products", collectionId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("collection_products")
-        .select("product_sku, products(sku, name, main_image)")
+        .select("product_sku, products(sku, name, main_image, aesthetic, theme_key)")
         .eq("collection_id", collectionId)
         .order("sort_weight", { ascending: false });
       if (error) throw error;
@@ -128,33 +150,55 @@ function CollectionProducts({
   const linkedSkus = new Set((linked.data ?? []).map((l) => l.product_sku));
 
   const add = useMutation({
-    mutationFn: async (sku: string) => {
-      const { error } = await supabase.from("collection_products").insert({
-        collection_id: collectionId,
-        product_sku: sku,
-        sort_weight: 0,
-      });
+    mutationFn: async (productSku: string) => {
+      const { data, error } = await supabase
+        .from("collection_products")
+        .upsert(
+          {
+            collection_id: collectionId,
+            product_sku: productSku,
+            sort_weight: 0,
+          },
+          { onConflict: "collection_id,product_sku" },
+        )
+        .select("product_sku")
+        .maybeSingle();
       if (error) throw error;
+      assertRowUpdated(data, t("admin.writeNoRow"));
+      await applyCollectionMembershipToProduct(productSku, collectionSlug, "add");
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-collection-products", collectionId] });
+      setQuery("");
+      invalidateCaches();
       toast.success(t("admin.collections.productAdded"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
 
   const remove = useMutation({
-    mutationFn: async (sku: string) => {
-      const { error } = await supabase
+    mutationFn: async (productSku: string) => {
+      const { data, error } = await supabase
         .from("collection_products")
         .delete()
         .eq("collection_id", collectionId)
-        .eq("product_sku", sku);
+        .eq("product_sku", productSku)
+        .select("product_sku")
+        .maybeSingle();
       if (error) throw error;
+      assertRowUpdated(data, t("admin.writeNoRow"));
+      await applyCollectionMembershipToProduct(productSku, collectionSlug, "remove");
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-collection-products", collectionId] });
-      toast.success(t("admin.collections.productRemoved"));
+    onSuccess: (_data, productSku) => {
+      invalidateCaches();
+      const row = linked.data?.find((r) => r.product_sku === productSku);
+      const product = row?.products;
+      if (product && isAutoCollectionSlug(collectionSlug, product)) {
+        toast.message(t("admin.collections.productRemoved"), {
+          description: t("admin.collections.themeSynced"),
+        });
+      } else {
+        toast.success(t("admin.collections.productRemoved"));
+      }
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
@@ -172,6 +216,7 @@ function CollectionProducts({
 
       {open && (
         <div className="mt-3 space-y-3">
+          <p className="text-xs text-muted-foreground">{t("admin.collections.productsInstantSave")}</p>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -215,6 +260,12 @@ function CollectionProducts({
                   )}
                   <span className="font-mono text-xs text-muted-foreground">{row.product_sku}</span>
                   <span className="min-w-0 flex-1 truncate">{row.products?.name ?? row.product_sku}</span>
+                  {row.products &&
+                    isAutoCollectionSlug(collectionSlug, row.products) && (
+                      <span className="shrink-0 rounded-sm bg-secondary px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
+                        {t("admin.collections.autoBadge")}
+                      </span>
+                    )}
                   <button
                     type="button"
                     onClick={() => remove.mutate(row.product_sku)}
@@ -235,9 +286,313 @@ function CollectionProducts({
   );
 }
 
+type UpdateVars = {
+  id: string;
+  slug: string;
+  patch: Record<string, unknown>;
+  notify?: boolean;
+  syncSlugFromName?: boolean;
+  slugFallback?: string;
+};
+
+function CollectionEditorCard({
+  c,
+  t,
+  uploadingId,
+  savingId,
+  fileRef,
+  onSave,
+  onPatch,
+  onRemove,
+  onCoverUpload,
+}: {
+  c: CollectionRow;
+  t: (key: string, vars?: Record<string, string | number>) => string;
+  uploadingId: string | null;
+  savingId: string | null;
+  fileRef: (el: HTMLInputElement | null) => void;
+  onSave: (vars: UpdateVars) => Promise<CollectionRow>;
+  onPatch: (vars: UpdateVars) => void;
+  onRemove: () => void;
+  onCoverUpload: (file: File) => void;
+}) {
+  const [name, setName] = useState(c.name);
+  const [nameEn, setNameEn] = useState(c.name_en ?? "");
+  const [nameHy, setNameHy] = useState(c.name_hy ?? "");
+  const [description, setDescription] = useState(c.description ?? "");
+  const [descriptionEn, setDescriptionEn] = useState(c.description_en ?? "");
+  const [descriptionHy, setDescriptionHy] = useState(c.description_hy ?? "");
+  const [dirty, setDirty] = useState(false);
+  const isSaving = savingId === c.id;
+
+  useEffect(() => {
+    if (dirty || isSaving) return;
+    setName(c.name);
+    setNameEn(c.name_en ?? "");
+    setNameHy(c.name_hy ?? "");
+    setDescription(c.description ?? "");
+    setDescriptionEn(c.description_en ?? "");
+    setDescriptionHy(c.description_hy ?? "");
+  }, [
+    c.id,
+    c.name,
+    c.name_en,
+    c.name_hy,
+    c.description,
+    c.description_en,
+    c.description_hy,
+    dirty,
+    isSaving,
+  ]);
+
+  const buildTextPatch = (): Record<string, string | null> => {
+    const patch: Record<string, string | null> = {};
+    const nextName = name.trim();
+    if (nextName && nextName !== c.name.trim()) patch.name = nextName;
+    const nextEn = nameEn.trim() || null;
+    if (nextEn !== (c.name_en?.trim() || null)) patch.name_en = nextEn;
+    const nextHy = nameHy.trim() || null;
+    if (nextHy !== (c.name_hy?.trim() || null)) patch.name_hy = nextHy;
+    const nextDesc = description.trim() || null;
+    if (nextDesc !== (c.description?.trim() || null)) patch.description = nextDesc;
+    const nextDescEn = descriptionEn.trim() || null;
+    if (nextDescEn !== (c.description_en?.trim() || null)) patch.description_en = nextDescEn;
+    const nextDescHy = descriptionHy.trim() || null;
+    if (nextDescHy !== (c.description_hy?.trim() || null)) patch.description_hy = nextDescHy;
+    return patch;
+  };
+
+  const saveTexts = async () => {
+    const patch = buildTextPatch();
+    if (!Object.keys(patch).length) {
+      toast.message(t("admin.collections.nothingToSave"));
+      return;
+    }
+    try {
+      await onSave({
+        id: c.id,
+        slug: c.slug,
+        patch,
+        syncSlugFromName: "name" in patch,
+        slugFallback: nameEn,
+        notify: true,
+      });
+      setDirty(false);
+    } catch {
+      /* toast from parent */
+    }
+  };
+
+  const fieldClass =
+    "w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground";
+  const labelClass = "mb-1 block text-[10px] uppercase tracking-[0.18em] text-muted-foreground";
+  const previewSlug = deriveCollectionSlug(name, nameEn, c.slug);
+
+  return (
+    <div className="rounded-sm border border-border p-4">
+      <div className="flex items-start gap-4">
+        <CoverPreview url={c.cover_image} name={c.name} />
+        <div className="flex-1 space-y-3">
+          <div>
+            <span className={labelClass}>{t("admin.collections.nameRu")}</span>
+            <input
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setDirty(true);
+              }}
+              onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+              className="w-full bg-transparent font-serif text-xl outline-none focus:ring-1 focus:ring-foreground/20"
+            />
+          </div>
+          <p className="font-mono text-xs text-muted-foreground">
+            /{previewSlug}
+            {previewSlug !== c.slug && (
+              <span className="ml-2 font-sans normal-case text-foreground/60">
+                ({t("admin.collections.slugPending")})
+              </span>
+            )}
+            {typeof c.product_count === "number" && (
+              <span className="ml-2 font-sans normal-case">
+                · {t("admin.collections.productCount", { n: c.product_count })}
+              </span>
+            )}
+          </p>
+          <p className="text-xs text-muted-foreground">{t("admin.collections.namesHint")}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={isSaving || !dirty}
+              onClick={() => void saveTexts()}
+              className="rounded-sm bg-foreground px-4 py-2 text-xs uppercase tracking-[0.16em] text-background disabled:opacity-40"
+            >
+              {isSaving ? t("admin.loading") : t("admin.collections.saveTexts")}
+            </button>
+            {dirty && (
+              <span className="text-xs text-amber-700 dark:text-amber-400">{t("admin.collections.unsaved")}</span>
+            )}
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="block">
+              <span className={labelClass}>{t("admin.collections.nameEn")}</span>
+              <input
+                value={nameEn}
+                onChange={(e) => {
+                  setNameEn(e.target.value);
+                  setDirty(true);
+                }}
+                className={fieldClass}
+              />
+            </label>
+            <label className="block">
+              <span className={labelClass}>{t("admin.collections.nameHy")}</span>
+              <input
+                value={nameHy}
+                onChange={(e) => {
+                  setNameHy(e.target.value);
+                  setDirty(true);
+                }}
+                className={fieldClass}
+              />
+            </label>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="block">
+              <span className={labelClass}>{t("admin.collections.section")}</span>
+              <select
+                value={c.section ?? "special"}
+                onChange={(e) =>
+                  onPatch({
+                    id: c.id,
+                    slug: c.slug,
+                    patch: { section: e.target.value as CollectionSection },
+                    notify: true,
+                  })
+                }
+                className={fieldClass}
+              >
+                {SECTIONS.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {t(s.labelKey)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className={labelClass}>{t("admin.collections.sortWeight")}</span>
+              <input
+                type="number"
+                defaultValue={c.sort_weight}
+                onBlur={(e) => {
+                  const next = parseInt(e.target.value, 10) || 0;
+                  if (next !== c.sort_weight) {
+                    onPatch({ id: c.id, slug: c.slug, patch: { sort_weight: next }, notify: true });
+                  }
+                }}
+                className={fieldClass}
+              />
+            </label>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-1">
+            <label className="block">
+              <span className={labelClass}>{t("admin.collections.descRu")}</span>
+              <textarea
+                value={description}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  setDirty(true);
+                }}
+                rows={2}
+                className={`${fieldClass} resize-none`}
+              />
+            </label>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <label className="block">
+                <span className={labelClass}>{t("admin.collections.descEn")}</span>
+                <textarea
+                  value={descriptionEn}
+                  onChange={(e) => {
+                    setDescriptionEn(e.target.value);
+                    setDirty(true);
+                  }}
+                  rows={2}
+                  className={`${fieldClass} resize-none`}
+                />
+              </label>
+              <label className="block">
+                <span className={labelClass}>{t("admin.collections.descHy")}</span>
+                <textarea
+                  value={descriptionHy}
+                  onChange={(e) => {
+                    setDescriptionHy(e.target.value);
+                    setDirty(true);
+                  }}
+                  rows={2}
+                  className={`${fieldClass} resize-none`}
+                />
+              </label>
+            </div>
+          </div>
+          <input
+            defaultValue={c.cover_image ?? ""}
+            placeholder={t("admin.collections.coverPlaceholder")}
+            onBlur={(e) => {
+              const next = e.target.value.trim() || null;
+              const prev = c.cover_image?.trim() || null;
+              if (next !== prev) {
+                onPatch({ id: c.id, slug: c.slug, patch: { cover_image: next }, notify: true });
+              }
+            }}
+            className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-foreground"
+          />
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-sm border border-dashed border-border px-3 py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground hover:border-foreground hover:text-foreground">
+            <Upload className="h-3 w-3" />
+            {uploadingId === c.id ? t("admin.loading") : t("admin.collections.uploadCover")}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              disabled={uploadingId === c.id}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) onCoverUpload(file);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          <CollectionProducts collectionId={c.id} collectionSlug={c.slug} t={t} />
+        </div>
+        <div className="flex flex-col items-end gap-3">
+          <button
+            type="button"
+            onClick={() =>
+              onPatch({ id: c.id, slug: c.slug, patch: { is_published: !c.is_published }, notify: true })
+            }
+            className="text-xs uppercase tracking-[0.18em] text-foreground/70 hover:text-foreground"
+            title={t("admin.visibility")}
+          >
+            {c.is_published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+          </button>
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-rose-600 hover:text-rose-700"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminCollections() {
   const { t } = useI18n();
   const qc = useQueryClient();
+  const updateCollectionFn = useServerFn(updateCollectionAdmin);
+  const createCollectionFn = useServerFn(createCollectionAdmin);
+  const deleteCollectionFn = useServerFn(deleteCollectionAdmin);
   const [newName, setNewName] = useState("");
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -248,7 +603,7 @@ function AdminCollections() {
       const [{ data, error }, { data: links, error: linkErr }] = await Promise.all([
         supabase
           .from("collections")
-          .select("id,slug,name,name_en,name_hy,description,cover_image,is_published,sort_weight,section")
+          .select("id,slug,name,name_en,name_hy,description,description_en,description_hy,cover_image,is_published,sort_weight,section")
           .order("sort_weight", { ascending: false })
           .order("name"),
         supabase.from("collection_products").select("collection_id"),
@@ -268,15 +623,7 @@ function AdminCollections() {
 
   const create = useMutation({
     mutationFn: async (name: string) => {
-      const slug = slugify(name);
-      if (!slug) throw new Error(t("admin.enterName"));
-      const { error } = await supabase.from("collections").insert({
-        name: name.trim(),
-        slug,
-        section: "special",
-        sort_weight: 0,
-      });
-      if (error) throw error;
+      await createCollectionFn({ data: { name: name.trim() } });
     },
     onSuccess: () => {
       setNewName("");
@@ -288,21 +635,32 @@ function AdminCollections() {
   });
 
   const update = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
-      const { error } = await supabase.from("collections").update(patch as never).eq("id", id);
-      if (error) throw error;
+    mutationFn: async (vars: UpdateVars) => {
+      const row = await updateCollectionFn({ data: vars });
+      return row as CollectionRow;
     },
-    onSuccess: () => {
+    onSuccess: (data, { slug: prevSlug, notify }) => {
+      qc.setQueryData(
+        ["admin-collections"],
+        (old: CollectionRow[] | undefined) =>
+          old?.map((row) =>
+            row.id === data.id ? { ...row, ...data, product_count: row.product_count } : row,
+          ),
+      );
       qc.invalidateQueries({ queryKey: ["admin-collections"] });
       qc.invalidateQueries({ queryKey: ["collections-list"] });
+      qc.invalidateQueries({ queryKey: ["collection", prevSlug] });
+      if (data.slug !== prevSlug) {
+        qc.invalidateQueries({ queryKey: ["collection", data.slug] });
+      }
+      if (notify) toast.success(t("admin.collections.updated"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("collections").delete().eq("id", id);
-      if (error) throw error;
+      await deleteCollectionFn({ data: { id } });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-collections"] });
@@ -316,7 +674,7 @@ function AdminCollections() {
     setUploadingId(id);
     try {
       const url = await uploadCover(slug, file, t);
-      await update.mutateAsync({ id, patch: { cover_image: url } });
+      await update.mutateAsync({ id, slug, patch: { cover_image: url } });
       toast.success(t("admin.collections.coverUploaded"));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("admin.error"));
@@ -352,131 +710,20 @@ function AdminCollections() {
 
       <div className="mt-8 space-y-3">
         {list.data?.map((c) => (
-          <div key={c.id} className="rounded-sm border border-border p-4">
-            <div className="flex items-start gap-4">
-              <CoverPreview url={c.cover_image} name={c.name} />
-              <div className="flex-1 space-y-2">
-                <input
-                  defaultValue={c.name}
-                  onBlur={(e) => e.target.value !== c.name && update.mutate({ id: c.id, patch: { name: e.target.value } })}
-                  className="w-full bg-transparent font-serif text-xl outline-none"
-                />
-                <p className="font-mono text-xs text-muted-foreground">
-                  /{c.slug}
-                  {typeof c.product_count === "number" && (
-                    <span className="ml-2 font-sans normal-case">
-                      · {t("admin.collections.productCount", { n: c.product_count })}
-                    </span>
-                  )}
-                </p>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <input
-                    defaultValue={c.name_en ?? ""}
-                    placeholder={t("admin.collections.nameEn")}
-                    onBlur={(e) =>
-                      (e.target.value || null) !== c.name_en &&
-                      update.mutate({ id: c.id, patch: { name_en: e.target.value || null } })
-                    }
-                    className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
-                  />
-                  <input
-                    defaultValue={c.name_hy ?? ""}
-                    placeholder={t("admin.collections.nameHy")}
-                    onBlur={(e) =>
-                      (e.target.value || null) !== c.name_hy &&
-                      update.mutate({ id: c.id, patch: { name_hy: e.target.value || null } })
-                    }
-                    className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
-                  />
-                </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <label className="block">
-                    <span className="mb-1 block text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                      {t("admin.collections.section")}
-                    </span>
-                    <select
-                      value={c.section ?? "special"}
-                      onChange={(e) =>
-                        update.mutate({ id: c.id, patch: { section: e.target.value as CollectionSection } })
-                      }
-                      className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
-                    >
-                      {SECTIONS.map((s) => (
-                        <option key={s.value} value={s.value}>
-                          {t(s.labelKey)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="block">
-                    <span className="mb-1 block text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                      {t("admin.collections.sortWeight")}
-                    </span>
-                    <input
-                      type="number"
-                      defaultValue={c.sort_weight}
-                      onBlur={(e) => {
-                        const next = parseInt(e.target.value, 10) || 0;
-                        if (next !== c.sort_weight) update.mutate({ id: c.id, patch: { sort_weight: next } });
-                      }}
-                      className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
-                    />
-                  </label>
-                </div>
-                <textarea
-                  defaultValue={c.description ?? ""}
-                  placeholder={t("admin.collections.descPlaceholder")}
-                  rows={2}
-                  onBlur={(e) =>
-                    (e.target.value || null) !== c.description &&
-                    update.mutate({ id: c.id, patch: { description: e.target.value || null } })
-                  }
-                  className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
-                />
-                <input
-                  defaultValue={c.cover_image ?? ""}
-                  placeholder={t("admin.collections.coverPlaceholder")}
-                  onBlur={(e) =>
-                    (e.target.value || null) !== c.cover_image &&
-                    update.mutate({ id: c.id, patch: { cover_image: e.target.value || null } })
-                  }
-                  className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-foreground"
-                />
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-sm border border-dashed border-border px-3 py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground hover:border-foreground hover:text-foreground">
-                  <Upload className="h-3 w-3" />
-                  {uploadingId === c.id ? t("admin.loading") : t("admin.collections.uploadCover")}
-                  <input
-                    ref={(el) => { fileRefs.current[c.id] = el; }}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="hidden"
-                    disabled={uploadingId === c.id}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) void handleCoverUpload(c.id, c.slug, file);
-                      e.target.value = "";
-                    }}
-                  />
-                </label>
-                <CollectionProducts collectionId={c.id} t={t} />
-              </div>
-              <div className="flex flex-col items-end gap-3">
-                <button
-                  onClick={() => update.mutate({ id: c.id, patch: { is_published: !c.is_published } })}
-                  className="text-xs uppercase tracking-[0.18em] text-foreground/70 hover:text-foreground"
-                  title={t("admin.visibility")}
-                >
-                  {c.is_published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
-                </button>
-                <button
-                  onClick={() => confirm(t("admin.deleteConfirm", { name: c.name })) && remove.mutate(c.id)}
-                  className="text-rose-600 hover:text-rose-700"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </div>
+          <CollectionEditorCard
+            key={c.id}
+            c={c}
+            t={t}
+            uploadingId={uploadingId}
+            savingId={update.isPending ? (update.variables?.id ?? null) : null}
+            fileRef={(el) => {
+              fileRefs.current[c.id] = el;
+            }}
+            onSave={(vars) => update.mutateAsync(vars)}
+            onPatch={(vars) => update.mutate(vars)}
+            onRemove={() => confirm(t("admin.deleteConfirm", { name: c.name })) && remove.mutate(c.id)}
+            onCoverUpload={(file) => void handleCoverUpload(c.id, c.slug, file)}
+          />
         ))}
         {list.isLoading && <p className="text-sm text-muted-foreground">{t("admin.loading")}</p>}
         {list.data && list.data.length === 0 && <p className="text-sm text-muted-foreground">{t("admin.collections.empty")}</p>}

@@ -4,18 +4,13 @@ import { motion, AnimatePresence } from "motion/react";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { useI18n, type Lang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { scrollToHomeSection } from "@/lib/hash-scroll";
 import smegLogo from "@/assets/smeg-logo.svg.asset.json";
 import { CartButton } from "@/components/site/CartDrawer";
 import { HeaderSearch } from "@/components/site/HeaderSearch";
 import { CatalogMegaMenu, CatalogMobileNav } from "@/components/site/CatalogMegaMenu";
 
 const langLabels: Record<Lang, string> = { ru: "RU", en: "EN", hy: "ՀՅ" };
-
-function scrollToSection(hash: string) {
-  const id = hash.replace(/^#/, "");
-  const el = document.getElementById(id);
-  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-}
 
 export function Header() {
   const { t, lang, setLang } = useI18n();
@@ -45,7 +40,9 @@ export function Header() {
   const onHashNav = (e: MouseEvent, hash: string) => {
     if (pathname === "/") {
       e.preventDefault();
-      scrollToSection(hash);
+      scrollToHomeSection(hash);
+      setMenuOpen(false);
+    } else {
       setMenuOpen(false);
     }
   };
@@ -96,14 +93,15 @@ export function Header() {
                   {n.label}
                 </Link>
               ) : (
-                <a
+                <Link
                   key={n.to}
-                  href={n.to}
+                  to="/"
+                  hash={n.hash}
                   onClick={(e) => n.hash && onHashNav(e, n.hash)}
                   className="smeg-underline text-[13px] uppercase tracking-[0.18em] text-foreground/80 hover:text-foreground"
                 >
                   {n.label}
-                </a>
+                </Link>
               ),
             )}
           </nav>
@@ -175,8 +173,10 @@ export function Header() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: (i + 1) * 0.05 }}
                   >
-                    <a
-                      href={n.to}
+                    <Link
+                      key={n.to}
+                      to="/"
+                      hash={n.hash}
                       onClick={(e) => {
                         if (n.hash) onHashNav(e, n.hash);
                         else setMenuOpen(false);
@@ -184,7 +184,7 @@ export function Header() {
                       className="block py-3 font-serif text-[clamp(1.75rem,8vw,2.25rem)] uppercase leading-tight tracking-[0.06em] text-foreground"
                     >
                       {n.label}
-                    </a>
+                    </Link>
                   </motion.div>
                 ),
               )}

@@ -32,6 +32,7 @@ import { Route as AuthenticatedAdminiPartnersRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminiOrdersRouteImport } from './routes/_authenticated/admini/orders'
 import { Route as AuthenticatedAdminiNotificationsRouteImport } from './routes/_authenticated/admini/notifications'
 import { Route as AuthenticatedAdminiInquiriesRouteImport } from './routes/_authenticated/admini/inquiries'
+import { Route as AuthenticatedAdminiHelpRouteImport } from './routes/_authenticated/admini/help'
 import { Route as AuthenticatedAdminiContentRouteImport } from './routes/_authenticated/admini/content'
 import { Route as AuthenticatedAdminiCollectionsRouteImport } from './routes/_authenticated/admini/collections'
 import { Route as AuthenticatedAdminiProductsIndexRouteImport } from './routes/_authenticated/admini/products.index'
@@ -163,6 +164,11 @@ const AuthenticatedAdminiInquiriesRoute =
     path: '/inquiries',
     getParentRoute: () => AuthenticatedAdminiRouteRoute,
   } as any)
+const AuthenticatedAdminiHelpRoute = AuthenticatedAdminiHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => AuthenticatedAdminiRouteRoute,
+} as any)
 const AuthenticatedAdminiContentRoute =
   AuthenticatedAdminiContentRouteImport.update({
     id: '/content',
@@ -221,6 +227,7 @@ export interface FileRoutesByFullPath {
   '/product/$sku': typeof ProductSkuRoute
   '/admini/collections': typeof AuthenticatedAdminiCollectionsRoute
   '/admini/content': typeof AuthenticatedAdminiContentRoute
+  '/admini/help': typeof AuthenticatedAdminiHelpRoute
   '/admini/inquiries': typeof AuthenticatedAdminiInquiriesRoute
   '/admini/notifications': typeof AuthenticatedAdminiNotificationsRoute
   '/admini/orders': typeof AuthenticatedAdminiOrdersRoute
@@ -251,6 +258,7 @@ export interface FileRoutesByTo {
   '/product/$sku': typeof ProductSkuRoute
   '/admini/collections': typeof AuthenticatedAdminiCollectionsRoute
   '/admini/content': typeof AuthenticatedAdminiContentRoute
+  '/admini/help': typeof AuthenticatedAdminiHelpRoute
   '/admini/inquiries': typeof AuthenticatedAdminiInquiriesRoute
   '/admini/notifications': typeof AuthenticatedAdminiNotificationsRoute
   '/admini/orders': typeof AuthenticatedAdminiOrdersRoute
@@ -283,6 +291,7 @@ export interface FileRoutesById {
   '/product/$sku': typeof ProductSkuRoute
   '/_authenticated/admini/collections': typeof AuthenticatedAdminiCollectionsRoute
   '/_authenticated/admini/content': typeof AuthenticatedAdminiContentRoute
+  '/_authenticated/admini/help': typeof AuthenticatedAdminiHelpRoute
   '/_authenticated/admini/inquiries': typeof AuthenticatedAdminiInquiriesRoute
   '/_authenticated/admini/notifications': typeof AuthenticatedAdminiNotificationsRoute
   '/_authenticated/admini/orders': typeof AuthenticatedAdminiOrdersRoute
@@ -316,6 +325,7 @@ export interface FileRouteTypes {
     | '/product/$sku'
     | '/admini/collections'
     | '/admini/content'
+    | '/admini/help'
     | '/admini/inquiries'
     | '/admini/notifications'
     | '/admini/orders'
@@ -346,6 +356,7 @@ export interface FileRouteTypes {
     | '/product/$sku'
     | '/admini/collections'
     | '/admini/content'
+    | '/admini/help'
     | '/admini/inquiries'
     | '/admini/notifications'
     | '/admini/orders'
@@ -377,6 +388,7 @@ export interface FileRouteTypes {
     | '/product/$sku'
     | '/_authenticated/admini/collections'
     | '/_authenticated/admini/content'
+    | '/_authenticated/admini/help'
     | '/_authenticated/admini/inquiries'
     | '/_authenticated/admini/notifications'
     | '/_authenticated/admini/orders'
@@ -576,6 +588,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminiInquiriesRouteImport
       parentRoute: typeof AuthenticatedAdminiRouteRoute
     }
+    '/_authenticated/admini/help': {
+      id: '/_authenticated/admini/help'
+      path: '/help'
+      fullPath: '/admini/help'
+      preLoaderRoute: typeof AuthenticatedAdminiHelpRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
     '/_authenticated/admini/content': {
       id: '/_authenticated/admini/content'
       path: '/content'
@@ -648,6 +667,7 @@ const AuthenticatedAdminiProductsRouteWithChildren =
 interface AuthenticatedAdminiRouteRouteChildren {
   AuthenticatedAdminiCollectionsRoute: typeof AuthenticatedAdminiCollectionsRoute
   AuthenticatedAdminiContentRoute: typeof AuthenticatedAdminiContentRoute
+  AuthenticatedAdminiHelpRoute: typeof AuthenticatedAdminiHelpRoute
   AuthenticatedAdminiInquiriesRoute: typeof AuthenticatedAdminiInquiriesRoute
   AuthenticatedAdminiNotificationsRoute: typeof AuthenticatedAdminiNotificationsRoute
   AuthenticatedAdminiOrdersRoute: typeof AuthenticatedAdminiOrdersRoute
@@ -662,6 +682,7 @@ const AuthenticatedAdminiRouteRouteChildren: AuthenticatedAdminiRouteRouteChildr
   {
     AuthenticatedAdminiCollectionsRoute: AuthenticatedAdminiCollectionsRoute,
     AuthenticatedAdminiContentRoute: AuthenticatedAdminiContentRoute,
+    AuthenticatedAdminiHelpRoute: AuthenticatedAdminiHelpRoute,
     AuthenticatedAdminiInquiriesRoute: AuthenticatedAdminiInquiriesRoute,
     AuthenticatedAdminiNotificationsRoute:
       AuthenticatedAdminiNotificationsRoute,

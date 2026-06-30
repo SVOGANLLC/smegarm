@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
@@ -38,6 +38,12 @@ function AdminHome() {
     <div>
       <h1 className="font-serif text-4xl">{t("admin.home.title")}</h1>
       <p className="mt-2 text-sm text-muted-foreground">{t("admin.home.welcome")}</p>
+      <Link
+        to="/admini/help"
+        className="mt-4 inline-flex items-center gap-2 rounded-sm border border-border px-4 py-2 text-xs uppercase tracking-[0.16em] text-foreground/80 hover:border-foreground hover:text-foreground"
+      >
+        {t("admin.nav.help")} →
+      </Link>
       <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4">
         {cards.map((c) => (
           <div

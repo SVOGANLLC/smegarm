@@ -67,7 +67,10 @@ export function groupListingProducts(
   return groups.map((g) => {
     const p = bySku.get(g.representativeSku)!;
     const mg = p.model_group?.trim();
-    const variants = mg ? variantsMap.get(mg) : undefined;
+    const groupSkuSet = new Set(g.skus);
+    const variants = mg
+      ? variantsMap.get(mg)?.filter((v) => groupSkuSet.has(v.sku))
+      : undefined;
     const variantCount = variants?.length ?? 1;
     return {
       ...p,

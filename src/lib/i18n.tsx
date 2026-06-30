@@ -1,7 +1,11 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { adminDicts } from "./admin-i18n";
-import { supabase } from "@/integrations/supabase/client";
-import { stylesToCss, collectGoogleFonts, type ContentStylesMap } from "./content-styles";
+import {
+  applySiteContentStyles,
+  fetchSiteContentBundle,
+  siteContentQueryKey,
+} from "./site-content";
 
 export type Lang = "ru" | "en" | "hy";
 
@@ -102,6 +106,8 @@ const dicts: Record<Lang, Dict> = {
     "product.ean": "EAN",
     "product.requestPrice": "Запросить цену",
     "product.priceFrom": "от",
+    "product.chooseColor": "Выбрать цвет",
+    "product.hideColors": "Свернуть",
     "product.pdf": "PDF спецификация",
     "product.energy": "Энергоэтикетка",
     "product.specs": "Характеристики",
@@ -158,6 +164,8 @@ const dicts: Record<Lang, Dict> = {
     "catalog.next": "Дальше →",
     "catalog.showCount": "Показать",
     "catalog.itemsSuffix": "товаров",
+    "catalog.backToModels": "К моделям",
+    "catalog.colorVariantsSuffix": "вариантов цвета",
     "facet.marketing": "Маркетинг",
     "facet.categories": "Категории",
     "facet.all": "Все",
@@ -396,6 +404,8 @@ const dicts: Record<Lang, Dict> = {
     "product.ean": "EAN",
     "product.requestPrice": "Request price",
     "product.priceFrom": "from",
+    "product.chooseColor": "Choose colour",
+    "product.hideColors": "Hide",
     "product.pdf": "PDF spec sheet",
     "product.energy": "Energy label",
     "product.specs": "Specifications",
@@ -452,6 +462,8 @@ const dicts: Record<Lang, Dict> = {
     "catalog.next": "Next →",
     "catalog.showCount": "Show",
     "catalog.itemsSuffix": "items",
+    "catalog.backToModels": "Back to models",
+    "catalog.colorVariantsSuffix": "colour options",
     "facet.marketing": "Marketing",
     "facet.categories": "Categories",
     "facet.all": "All",
@@ -690,6 +702,8 @@ const dicts: Record<Lang, Dict> = {
     "product.ean": "EAN",
     "product.requestPrice": "Հարցնել գինը",
     "product.priceFrom": "սկսած",
+    "product.chooseColor": "Ընտրել գույն",
+    "product.hideColors": "Ծալել",
     "product.pdf": "PDF բնութագիր",
     "product.energy": "Էներգապիտակ",
     "product.specs": "Բնութագրեր",
@@ -746,6 +760,8 @@ const dicts: Record<Lang, Dict> = {
     "catalog.next": "Առաջ →",
     "catalog.showCount": "Ցույց տալ",
     "catalog.itemsSuffix": "ապրանք",
+    "catalog.backToModels": "Մոդելներին",
+    "catalog.colorVariantsSuffix": "գույնի տարբերակ",
     "facet.marketing": "Մարքեթինգ",
     "facet.categories": "Կատեգորիաներ",
     "facet.all": "Բոլորը",
@@ -915,54 +931,21 @@ export function getI18nDefaults(): Record<Lang, Dict> {
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(readStoredLang);
-  const [overlay, setOverlay] = useState<Record<Lang, Dict>>({ ru: {}, en: {}, hy: {} });
+  const { data: bundle, isSuccess } = useQuery({
+    queryKey: siteContentQueryKey,
+    queryFn: fetchSiteContentBundle,
+    staleTime: 60_000,
+  });
+  const overlay = bundle?.overlay ?? { ru: {}, en: {}, hy: {} };
+
   useEffect(() => {
     if (typeof document !== "undefined") document.documentElement.lang = lang;
   }, [lang]);
+
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase.from("site_content").select("key,value");
-      if (cancelled || !data) return;
-      const next: Record<Lang, Dict> = { ru: {}, en: {}, hy: {} };
-      let stylesMap: ContentStylesMap = {};
-      for (const row of data) {
-        if (row.key === "__styles__") {
-          stylesMap = (row.value as ContentStylesMap) ?? {};
-          continue;
-        }
-        const value = (row.value ?? {}) as Record<string, Partial<Record<Lang, string>>>;
-        for (const [k, perLang] of Object.entries(value)) {
-          if (!perLang || typeof perLang !== "object") continue;
-          (["ru", "en", "hy"] as Lang[]).forEach((l) => {
-            const v = perLang[l];
-            if (typeof v === "string" && v.trim()) next[l][k] = v;
-          });
-        }
-      }
-      setOverlay(next);
-      if (typeof document !== "undefined") {
-        const css = stylesToCss(stylesMap);
-        let styleEl = document.getElementById("ck-runtime-styles") as HTMLStyleElement | null;
-        if (!styleEl) {
-          styleEl = document.createElement("style");
-          styleEl.id = "ck-runtime-styles";
-          document.head.appendChild(styleEl);
-        }
-        styleEl.textContent = css;
-        const fonts = collectGoogleFonts(stylesMap);
-        document.querySelectorAll('link[data-ck-font="1"]').forEach((n) => n.remove());
-        for (const f of fonts) {
-          const link = document.createElement("link");
-          link.rel = "stylesheet";
-          link.href = `https://fonts.googleapis.com/css2?family=${f}&display=swap`;
-          link.setAttribute("data-ck-font", "1");
-          document.head.appendChild(link);
-        }
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+    if (bundle?.styles) applySiteContentStyles(bundle.styles);
+  }, [bundle?.styles]);
+
   const setLang = (l: Lang) => {
     setLangState(l);
     if (typeof window !== "undefined") {
@@ -977,6 +960,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     }
     return s;
   };
+
+  if (!isSuccess) {
+    return <div className="min-h-screen bg-background" aria-busy="true" />;
+  }
+
   return <Ctx.Provider value={{ lang, setLang, t }}>{children}</Ctx.Provider>;
 }
 

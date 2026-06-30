@@ -50,6 +50,12 @@ const SPEC_VALUE_I18N: Record<Lang, Record<string, string>> = {
     "spec.value.installation.partially_integrated": "Частично встраиваемая",
     "spec.value.power_source.mains": "От сети",
     "spec.value.power_source.battery": "Аккумулятор",
+    "spec.value.hob_type.gas": "Газ",
+    "spec.value.hob_type.induction": "Индукция",
+    "spec.value.hob_type.ceramic": "Керамика",
+    "spec.value.hob_type.mixed": "Комбинированная",
+    "spec.value.hob_type.induction_hood": "Индукция с вытяжкой",
+    "spec.value.hob_type.teppanyaki": "Теппанъяки",
   },
   en: {
     "spec.value.installation.built_in": "Built-in",
@@ -58,6 +64,12 @@ const SPEC_VALUE_I18N: Record<Lang, Record<string, string>> = {
     "spec.value.installation.partially_integrated": "Partially integrated",
     "spec.value.power_source.mains": "Mains powered",
     "spec.value.power_source.battery": "Battery",
+    "spec.value.hob_type.gas": "Gas",
+    "spec.value.hob_type.induction": "Induction",
+    "spec.value.hob_type.ceramic": "Ceramic",
+    "spec.value.hob_type.mixed": "Mixed",
+    "spec.value.hob_type.induction_hood": "Induction with hood",
+    "spec.value.hob_type.teppanyaki": "Teppanyaki",
   },
   hy: {
     "spec.value.installation.built_in": "Ներկառուցվող",
@@ -66,6 +78,12 @@ const SPEC_VALUE_I18N: Record<Lang, Record<string, string>> = {
     "spec.value.installation.partially_integrated": "Մասնակի ներկառուցվող",
     "spec.value.power_source.mains": "Ցանցից",
     "spec.value.power_source.battery": "Մարտկոց",
+    "spec.value.hob_type.gas": "Գազ",
+    "spec.value.hob_type.induction": "Ինդուկցիա",
+    "spec.value.hob_type.ceramic": "Կերամիկ",
+    "spec.value.hob_type.mixed": "Խառը",
+    "spec.value.hob_type.induction_hood": "Ինդուկցիա հեռացման հովանոցով",
+    "spec.value.hob_type.teppanyaki": "Տեպպանյակի",
   },
 };
 

@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { getI18nDefaults } from "@/lib/i18n";
+import { scrollToHomeSection } from "@/lib/hash-scroll";
 import { Header } from "@/components/site/Header";
 import { Hero } from "@/components/site/Hero";
 import { Featured } from "@/components/site/Featured";
@@ -37,14 +38,13 @@ export const Route = createFileRoute("/")({
 });
 
 function HashScrollOnLoad() {
+  const hash = useRouterState({ select: (s) => s.location.hash });
+
   useEffect(() => {
-    const hash = window.location.hash.replace(/^#/, "");
     if (!hash) return;
-    const t = window.setTimeout(() => {
-      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 300);
-    return () => window.clearTimeout(t);
-  }, []);
+    return scrollToHomeSection(hash);
+  }, [hash]);
+
   return null;
 }
 

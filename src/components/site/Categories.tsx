@@ -11,19 +11,11 @@ import {
   parseSmallCategories,
   type MainCategoryCard,
 } from "@/lib/categories-config";
-import { supabase } from "@/integrations/supabase/client";
+import { useSiteContentBlock } from "@/lib/site-content";
 
 export function Categories() {
   const { t, lang } = useI18n();
-
-  const { data: configBlock } = useQuery({
-    queryKey: ["site-content", "categories"],
-    queryFn: async () => {
-      const { data } = await supabase.from("site_content").select("value").eq("key", "categories").maybeSingle();
-      return (data?.value ?? {}) as Record<string, Partial<Record<"ru" | "en" | "hy", string>>>;
-    },
-    staleTime: 60_000,
-  });
+  const configBlock = useSiteContentBlock("categories");
 
   const main = parseMainCards(configBlock);
   const small = parseSmallCategories(configBlock);
