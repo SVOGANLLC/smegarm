@@ -62,6 +62,10 @@ const E: Record<string, T3> = {
   "admin.nav.signOut": ["Выйти", "Sign out", "Դուրս գալ"],
   "admin.nav.signedOut": ["Вы вышли", "Signed out", "Դուրս եք գալիս"],
   "admin.nav.brand": ["Admin", "Admin", "Admin"],
+  "admin.theme.title": ["Тема", "Theme", "Թեմա"],
+  "admin.theme.light": ["Белая", "White", "Սպիտակ"],
+  "admin.theme.gray": ["Серая", "Gray", "Մոխրագույն"],
+  "admin.theme.dark": ["Чёрная", "Dark", "Սև"],
 
   // Auth
   "auth.metaTitle": ["Войти — Smeg Armenia", "Sign in — Smeg Armenia", "Մուտք — Smeg Armenia"],
@@ -578,9 +582,9 @@ const E: Record<string, T3> = {
   "admin.content.categories.modelGroupEmpty": ["Нет линеек с несколькими вариантами", "No multi-variant product lines", "Բազմատարբերակ շարքեր չկան"],
   "admin.content.categories.modelGroupVariants": ["вар.", "variants", "տարբ."],
   "admin.content.categories.modelGroupSaveHint": [
-    "Название показывается на сгруппированной карточке в каталоге. Не забудьте нажать «Сохранить блок» выше.",
-    "Title appears on grouped catalogue cards. Remember to click «Save block» above.",
-    "Անվանումը ցուցադրվում է խմբավորված քարտում։ Սեղմեք «Պահել բլոկը» վերևում։",
+    "Название — на сгруппированной карточке в каталоге. Фото сохраняется сразу после загрузки; названия — кнопкой «Сохранить блок».",
+    "Line name appears on grouped catalog cards. Photo saves right after upload; names need Save block.",
+    "Ֆոտոն պահպանվում է բեռնելուց հետո; անունները՝ «Պահպանել բլոկը» կոճակով։",
   ],
   "admin.content.block.marquee": ["Бегущая строка", "Marquee ticker", "Վազող տող"],
   "admin.content.field.marquee": ["Слова (каждое с новой строки или через запятую)", "Words (one per line or comma-separated)", "Բառեր (յուրաքանչյուր տողով կամ ստորակetor"],

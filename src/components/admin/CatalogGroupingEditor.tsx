@@ -10,6 +10,7 @@ import {
   type GroupSectionToggles,
 } from "@/lib/catalog-group-config";
 import { useI18n, type Lang } from "@/lib/i18n";
+import { AdminCheckbox } from "@/components/admin/AdminCheckbox";
 
 type BlockValue = Record<string, Partial<Record<Lang, string>>>;
 
@@ -68,30 +69,24 @@ export function CatalogGroupingEditor({
       <h3 className="text-sm font-medium">{t("admin.content.categories.groupTitle")}</h3>
       <p className="mt-1 text-xs text-muted-foreground">{t("admin.content.categories.groupDesc")}</p>
 
-      <label className="mt-4 flex cursor-pointer items-center gap-3 text-sm">
-        <input
-          type="checkbox"
-          checked={config.enabled}
-          onChange={(e) => setConfig({ enabled: e.target.checked })}
-          className="h-4 w-4 accent-foreground"
-        />
-        <span>{t("admin.content.categories.groupEnabled")}</span>
-      </label>
+      <AdminCheckbox
+        checked={config.enabled}
+        onChange={(enabled) => setConfig({ enabled })}
+        label={t("admin.content.categories.groupEnabled")}
+        className="mt-4"
+      />
 
       {config.enabled && (
         <>
           <div className="mt-4 space-y-2">
             <p className="text-xs text-muted-foreground">{t("admin.content.categories.groupSectionsDesc")}</p>
             {SECTION_KEYS.map(({ key, labelKey }) => (
-              <label key={key} className="flex cursor-pointer items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={config.sections[key]}
-                  onChange={() => toggleSection(key)}
-                  className="h-3.5 w-3.5 accent-foreground"
-                />
-                <span>{t(labelKey)}</span>
-              </label>
+              <AdminCheckbox
+                key={key}
+                checked={config.sections[key]}
+                onChange={() => toggleSection(key)}
+                label={t(labelKey)}
+              />
             ))}
           </div>
 
@@ -107,16 +102,13 @@ export function CatalogGroupingEditor({
                 });
                 return (
                   <li key={c.slug}>
-                    <label className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-background">
-                      <input
-                        type="checkbox"
-                        checked={off}
-                        onChange={() => toggleOffSlug(c.slug)}
-                        className="h-3.5 w-3.5 accent-foreground"
-                      />
-                      <span className="flex-1 truncate">{label}</span>
-                      <span className="font-mono text-[10px] text-muted-foreground">{c.slug}</span>
-                    </label>
+                    <AdminCheckbox
+                      checked={off}
+                      onChange={() => toggleOffSlug(c.slug)}
+                      label={label}
+                      description={c.slug}
+                      className="rounded-sm px-2 py-1.5 hover:bg-background"
+                    />
                   </li>
                 );
               })}

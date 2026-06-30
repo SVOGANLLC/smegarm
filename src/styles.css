@@ -253,4 +253,68 @@
       letter-spacing: 0.14em;
     }
   }
+
+  /* Admin panel themes (independent from public site) */
+  .admin-shell[data-admin-theme="light"] {
+    color-scheme: light;
+    --background: #ffffff;
+    --foreground: #0a0a0a;
+    --card: #ffffff;
+    --card-foreground: #0a0a0a;
+    --popover: #ffffff;
+    --popover-foreground: #0a0a0a;
+    --primary: #0a0a0a;
+    --primary-foreground: #ffffff;
+    --secondary: #f5f5f5;
+    --secondary-foreground: #0a0a0a;
+    --muted: #f5f5f5;
+    --muted-foreground: #666666;
+    --accent: #c8102e;
+    --accent-foreground: #ffffff;
+    --border: #e0e0e0;
+    --input: #e0e0e0;
+    --ring: #0a0a0a;
+  }
+
+  .admin-shell[data-admin-theme="gray"] {
+    color-scheme: light;
+    --background: #e8e8e8;
+    --foreground: #141414;
+    --card: #f2f2f2;
+    --card-foreground: #141414;
+    --popover: #f2f2f2;
+    --popover-foreground: #141414;
+    --primary: #141414;
+    --primary-foreground: #f2f2f2;
+    --secondary: #dcdcdc;
+    --secondary-foreground: #141414;
+    --muted: #dcdcdc;
+    --muted-foreground: #555555;
+    --accent: #c8102e;
+    --accent-foreground: #ffffff;
+    --border: #c8c8c8;
+    --input: #c8c8c8;
+    --ring: #141414;
+  }
+
+  .admin-shell[data-admin-theme="dark"] {
+    color-scheme: dark;
+    --background: #0a0a0a;
+    --foreground: #ffffff;
+    --card: #111111;
+    --card-foreground: #ffffff;
+    --popover: #111111;
+    --popover-foreground: #ffffff;
+    --primary: #ffffff;
+    --primary-foreground: #0a0a0a;
+    --secondary: #161616;
+    --secondary-foreground: #ffffff;
+    --muted: #161616;
+    --muted-foreground: #9a9a9a;
+    --accent: #ffffff;
+    --accent-foreground: #0a0a0a;
+    --border: #262626;
+    --input: #262626;
+    --ring: #ffffff;
+  }
 }

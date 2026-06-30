@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Package, Inbox, FileText, LogOut, Home, Layers, Wrench, ShoppingCart, Users, Bell, Menu, X, Handshake, CircleHelp } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n, type Lang } from "@/lib/i18n";
+import { AdminThemeSwitch } from "@/components/admin/AdminThemeSwitch";
+import { getAdminTheme, initAdminTheme, type AdminTheme } from "@/lib/admin-theme";
 
 type NavItem = { to: string; labelKey: string; icon: typeof Home; exact?: boolean; adminOnly?: boolean };
 const nav: NavItem[] = [
@@ -47,7 +49,21 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const role = ctx.role ?? "admin";
   const items = nav.filter((n) => !n.adminOnly || role === "admin");
   const [open, setOpen] = useState(false);
+  const [theme, setTheme] = useState<AdminTheme>("dark");
   useEffect(() => { setOpen(false); }, [pathname]);
+  useEffect(() => {
+    initAdminTheme();
+  }, []);
+  useEffect(() => {
+    const onTheme = (e: Event) => setTheme((e as CustomEvent<AdminTheme>).detail);
+    const onStorage = () => setTheme(getAdminTheme());
+    window.addEventListener("admin-theme-change", onTheme);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("admin-theme-change", onTheme);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
@@ -63,7 +79,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const currentTitle = currentLabel ? t(currentLabel.labelKey) : t("admin.nav.brand");
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="admin-shell min-h-screen bg-background text-foreground" data-admin-theme={theme}>
       <div className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur md:hidden">
         <button
           onClick={() => setOpen(true)}
@@ -116,6 +132,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             })}
           </nav>
           <LangSwitch />
+          <AdminThemeSwitch />
           <button
             onClick={signOut}
             className="mt-4 flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm text-foreground/60 hover:bg-secondary hover:text-foreground"

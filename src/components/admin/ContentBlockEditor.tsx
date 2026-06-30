@@ -25,6 +25,7 @@ export function ContentBlockEditor({
   onFieldChange,
   onStyleChange,
   onValueReplace,
+  onPersist,
 }: {
   block: ContentBlock;
   value: BlockValue;
@@ -32,6 +33,7 @@ export function ContentBlockEditor({
   onFieldChange: (i18nKey: string, lang: Lang, text: string) => void;
   onStyleChange: (i18nKey: string, patch: Partial<ContentStyle>) => void;
   onValueReplace?: (next: BlockValue) => void;
+  onPersist?: (next: BlockValue) => Promise<void>;
 }) {
   const { t } = useI18n();
   const defaults = getI18nDefaults();
@@ -81,7 +83,7 @@ export function ContentBlockEditor({
             </div>
           ))}
           {block.key === "categories" && onValueReplace && (
-            <CategoriesContentEditor value={value} onChange={onValueReplace} />
+            <CategoriesContentEditor value={value} onChange={onValueReplace} onPersist={onPersist} />
           )}
           {block.key === "homepage" && onValueReplace && (
             <HomepageProductsEditor value={value} onChange={onValueReplace} />

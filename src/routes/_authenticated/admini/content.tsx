@@ -201,6 +201,11 @@ function ContentPage() {
     });
   };
 
+  const persistBlock = async (key: string, value: BlockValue) => {
+    setState((prev) => ({ ...prev, [key]: value }));
+    await save.mutateAsync({ key, value, styles });
+  };
+
   const activeBlocks = tab === "homepage" ? HOMEPAGE_BLOCKS : tab === "contacts" ? CONTACT_BLOCKS : [];
   const hocValue = state["house-of-coffee"] ?? {};
 
@@ -255,9 +260,10 @@ function ContentPage() {
                 onFieldChange={(i18nKey, lang, value) => updateField(b.key, i18nKey, lang, value)}
                 onStyleChange={updateStyle}
                 onValueReplace={(next) => setState((prev) => ({ ...prev, [b.key]: next }))}
+                onPersist={(next) => persistBlock(b.key, next)}
               />
               <button
-                onClick={() => save.mutate({ key: b.key, value: v, styles })}
+                onClick={() => void persistBlock(b.key, state[b.key] ?? {})}
                 className="mt-4 rounded-sm bg-foreground px-5 py-2 text-xs uppercase tracking-[0.2em] text-background hover:opacity-90"
               >
                 {t("admin.content.saveBlock")}

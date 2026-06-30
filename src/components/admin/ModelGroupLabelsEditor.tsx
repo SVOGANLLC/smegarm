@@ -23,11 +23,13 @@ function GroupCardImageFields({
   modelGroup,
   sampleSku,
   onUpdate,
+  onAutoSave,
 }: {
   row: ModelGroupLabel;
   modelGroup: string;
   sampleSku: string;
   onUpdate: (patch: Partial<Omit<ModelGroupLabel, "key">>) => void;
+  onAutoSave?: (patch: Partial<Omit<ModelGroupLabel, "key">>) => Promise<void>;
 }) {
   const { t } = useI18n();
   const [uploading, setUploading] = useState(false);
@@ -79,7 +81,8 @@ function GroupCardImageFields({
                 try {
                   const path = `model-groups/${modelGroup}`;
                   const url = await uploadAdminImage(path, file, t);
-                  onUpdate({ image: url });
+                  if (onAutoSave) await onAutoSave({ image: url });
+                  else onUpdate({ image: url });
                   toast.success(t("admin.uploaded"));
                 } catch (err) {
                   toast.error(err instanceof Error ? err.message : t("admin.error"));
@@ -120,9 +123,11 @@ function GroupCardImageFields({
 export function ModelGroupLabelsEditor({
   value,
   onChange,
+  onPersist,
 }: {
   value: BlockValue;
   onChange: (next: BlockValue) => void;
+  onPersist?: (next: BlockValue) => Promise<void>;
 }) {
   const { t } = useI18n();
   const [filter, setFilter] = useState("");
@@ -134,20 +139,34 @@ export function ModelGroupLabelsEditor({
     staleTime: 60_000,
   });
 
-  const persist = (labels: ModelGroupLabel[]) => {
+  const buildNextValue = (labels: ModelGroupLabel[]): BlockValue => {
     const cleaned = labelsWithContent(labels);
-    onChange({
+    return {
       ...value,
       "config.modelGroupLabels": {
         ru: serializeModelGroupLabels(cleaned),
         en: serializeModelGroupLabels(cleaned),
         hy: serializeModelGroupLabels(cleaned),
       },
-    });
+    };
+  };
+
+  const persist = (labels: ModelGroupLabel[]) => {
+    onChange(buildNextValue(labels));
+  };
+
+  const persistAndSave = async (labels: ModelGroupLabel[]) => {
+    const next = buildNextValue(labels);
+    onChange(next);
+    if (onPersist) await onPersist(next);
   };
 
   const updateGroup = (modelGroup: string, patch: Partial<Omit<ModelGroupLabel, "key">>) => {
     persist(upsertModelGroupLabel(stored, modelGroup, patch));
+  };
+
+  const updateGroupAndSave = async (modelGroup: string, patch: Partial<Omit<ModelGroupLabel, "key">>) => {
+    await persistAndSave(upsertModelGroupLabel(stored, modelGroup, patch));
   };
 
   const groups = useMemo(() => {
@@ -223,6 +242,7 @@ export function ModelGroupLabelsEditor({
                   modelGroup={g.model_group}
                   sampleSku={g.sample_sku}
                   onUpdate={(patch) => updateGroup(g.model_group, patch)}
+                  onAutoSave={(patch) => updateGroupAndSave(g.model_group, patch)}
                 />
               </div>
             );

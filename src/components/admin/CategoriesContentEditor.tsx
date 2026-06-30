@@ -18,9 +18,11 @@ type BlockValue = Record<string, Partial<Record<Lang, string>>>;
 export function CategoriesContentEditor({
   value,
   onChange,
+  onPersist,
 }: {
   value: BlockValue;
   onChange: (next: BlockValue) => void;
+  onPersist?: (next: BlockValue) => Promise<void>;
 }) {
   const { t } = useI18n();
   const cards = parseMainCards(value);
@@ -113,7 +115,7 @@ export function CategoriesContentEditor({
 
       <CatalogCategoryOrderEditor value={value} onChange={onChange} />
       <CatalogGroupingEditor value={value} onChange={onChange} />
-      <ModelGroupLabelsEditor value={value} onChange={onChange} />
+      <ModelGroupLabelsEditor value={value} onChange={onChange} onPersist={onPersist} />
     </div>
   );
 }
