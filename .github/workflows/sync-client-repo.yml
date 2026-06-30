@@ -16,5 +16,10 @@ jobs:
         env:
           CLIENT_TOKEN: ${{ secrets.CLIENT_GITHUB_TOKEN }}
         run: |
-          git remote add client "https://x-access-token:${CLIENT_TOKEN}@github.com/SVOGANLLC/smegarm.git" || true
+          if [ -z "$CLIENT_TOKEN" ]; then
+            echo "Missing CLIENT_GITHUB_TOKEN secret"
+            exit 1
+          fi
+          git remote remove client 2>/dev/null || true
+          git remote add client "https://x-access-token:${CLIENT_TOKEN}@github.com/SVOGANLLC/smegarm.git"
           git push client HEAD:main --force
