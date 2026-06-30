@@ -26,7 +26,7 @@ function FeaturedCard({ p, lang }: { p: Product; lang: "ru" | "en" | "hy" }) {
               src={p.main_image}
               alt={name}
               loading="lazy"
-              className="h-full w-full object-contain p-4 transition-transform duration-[1200ms] ease-out group-active:scale-[1.02] md:p-6 md:group-hover:scale-105"
+              className="h-full w-full object-contain object-center transition-transform duration-[1200ms] ease-out group-active:scale-[1.02] md:group-hover:scale-[1.03]"
             />
           )}
         </div>

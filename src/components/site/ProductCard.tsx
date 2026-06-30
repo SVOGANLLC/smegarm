@@ -140,7 +140,7 @@ export function ProductCard({
                 src={heroImage}
                 alt={name}
                 loading="lazy"
-                className="h-full w-full object-contain p-4 transition-transform duration-[1200ms] ease-out group-hover:scale-105 md:p-6"
+                className="h-full w-full object-contain object-center transition-transform duration-[1200ms] ease-out group-hover:scale-[1.03]"
               />
             )}
           </div>
