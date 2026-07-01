@@ -1,19 +1,22 @@
 import type { CatalogNavGroupDef } from "@/lib/catalog-nav-groups";
 import type { CatalogNavColumn } from "@/lib/catalog-nav";
 
-/** smeg.com-style default subgroup definitions (editable in admin). */
+/**
+ * Default подборки — members use category slugs from DB (`category_en` → slugify)
+ * so products without `family` still match. Use `family` only for subsets inside a broader category.
+ */
 export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
   {
     id: "major-cooking",
     section: "large",
     labels: { ru: "Духовки и варка", en: "Cooking", hy: "Խոհանոց" },
     members: [
-      { type: "family", name: "Oven" },
-      { type: "family", name: "Hob" },
+      { type: "category", slug: "ovens" },
+      { type: "category", slug: "hobs" },
       { type: "category", slug: "hoods" },
-      { type: "family", name: "Cooker" },
-      { type: "family", name: "Microwave" },
-      { type: "category", slug: "countertop-ovens" },
+      { type: "category", slug: "cookers" },
+      { type: "category", slug: "microwave-ovens" },
+      { type: "category", slug: "tabletop-ovens" },
     ],
   },
   {
@@ -21,8 +24,8 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
     section: "large",
     labels: { ru: "Холод и вино", en: "Cooling", hy: "Սառեցում" },
     members: [
-      { type: "family", name: "Refrigerator" },
-      { type: "family", name: "Freezers" },
+      { type: "category", slug: "refrigerators" },
+      { type: "category", slug: "freezers" },
       { type: "category", slug: "wine-coolers" },
       { type: "category", slug: "blast-chillers" },
     ],
@@ -32,10 +35,11 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
     section: "large",
     labels: { ru: "Мойка и стирка", en: "Cleaning & laundry", hy: "Լվացում" },
     members: [
-      { type: "family", name: "Dishwashers" },
-      { type: "family", name: "Washing Machine" },
-      { type: "family", name: "Washer dryer" },
-      { type: "family", name: "Sink" },
+      { type: "category", slug: "dishwashers" },
+      { type: "category", slug: "washing-machine" },
+      { type: "category", slug: "washer-dryer" },
+      { type: "category", slug: "tumble-dryer" },
+      { type: "category", slug: "sinks" },
       { type: "category", slug: "taps" },
     ],
   },
@@ -43,11 +47,7 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
     id: "major-built-in",
     section: "large",
     labels: { ru: "Встраиваемое", en: "Built-in", hy: "Ներկառուցվող" },
-    members: [
-      { type: "family", name: "Drawer" },
-      { type: "family", name: "Countertop Combi Oven" },
-      { type: "category", slug: "built-in-coffee-machines" },
-    ],
+    members: [{ type: "category", slug: "built-in-drawers" }],
   },
   {
     id: "breakfast",
@@ -56,7 +56,7 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
     members: [
       { type: "category", slug: "kettles" },
       { type: "category", slug: "toasters" },
-      { type: "family", name: "Citrus Juicer" },
+      { type: "category", slug: "citrus-juicers" },
     ],
   },
   {
@@ -64,10 +64,9 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
     section: "small",
     labels: { ru: "Кофе", en: "Coffee", hy: "Սուրճ" },
     members: [
-      { type: "family", name: "Espresso Coffee Machine" },
-      { type: "family", name: "Drip filter Coffee Machine" },
-      { type: "family", name: "Coffee Grinder" },
-      { type: "family", name: "Milk Frother" },
+      { type: "category", slug: "espresso-coffee-machines" },
+      { type: "category", slug: "coffee-grinders" },
+      { type: "category", slug: "milk-frothers" },
     ],
   },
   {
@@ -75,8 +74,8 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
     section: "small",
     labels: { ru: "Вода", en: "Water", hy: "Ջուր" },
     members: [
-      { type: "family", name: "Insulated bottle" },
-      { type: "family", name: "Soda Maker" },
+      { type: "category", slug: "water-bottles" },
+      { type: "category", slug: "soda-makers" },
     ],
   },
   {
@@ -85,10 +84,10 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
     labels: { ru: "Миксеры и блендеры", en: "Food preparation", hy: "Պատրաստում" },
     members: [
       { type: "category", slug: "stand-mixers" },
-      { type: "family", name: "Hand Blenders" },
-      { type: "family", name: "Blenders" },
-      { type: "category", slug: "food-processors" },
-      { type: "family", name: "Kitchen Scales" },
+      { type: "category", slug: "hand-blenders" },
+      { type: "category", slug: "blenders" },
+      { type: "category", slug: "hand-mixers" },
+      { type: "category", slug: "kitchen-scales" },
     ],
   },
   {
@@ -105,8 +104,9 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
     section: "small",
     labels: { ru: "Настольная готовка", en: "Countertop cooking", hy: "Խոհարարություն" },
     members: [
-      { type: "family", name: "Countertop Combi Oven" },
-      { type: "category", slug: "portable-induction" },
+      { type: "category", slug: "tabletop-ovens" },
+      { type: "family", name: "Portable cookers" },
+      { type: "category", slug: "electric-barbecues" },
     ],
   },
 ];
