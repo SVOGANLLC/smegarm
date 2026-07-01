@@ -532,6 +532,86 @@ export async function fetchFacetsScoped(opts: {
   return { families: tally("family"), aesthetics: tally("aesthetic"), colours };
 }
 
+function tallyFacetRows(
+  data: Array<{
+    family?: string | null;
+    aesthetic?: string | null;
+    colour?: string | null;
+    colour_en?: string | null;
+    colour_hy?: string | null;
+  }>,
+): FacetCounts {
+  const tally = (key: "family" | "aesthetic" | "colour") => {
+    const m = new Map<string, number>();
+    for (const r of data) {
+      const v = (r[key] ?? "").trim();
+      if (!v) continue;
+      m.set(v, (m.get(v) ?? 0) + 1);
+    }
+    return Array.from(m.entries())
+      .map(([value, count]) => ({ value, count }))
+      .sort((a, b) => b.count - a.count);
+  };
+  const colourLabels = new Map<string, { en?: string | null; hy?: string | null }>();
+  for (const r of data) {
+    const v = (r.colour ?? "").trim();
+    if (!v) continue;
+    const cur = colourLabels.get(v) ?? {};
+    if (!cur.en && r.colour_en) cur.en = r.colour_en;
+    if (!cur.hy && r.colour_hy) cur.hy = r.colour_hy;
+    colourLabels.set(v, cur);
+  }
+  const colours = tally("colour").map((c) => ({
+    ...c,
+    value_en: colourLabels.get(c.value)?.en ?? null,
+    label_en: colourLabels.get(c.value)?.en ?? null,
+    label_hy: colourLabels.get(c.value)?.hy ?? null,
+  }));
+  return { families: tally("family"), aesthetics: tally("aesthetic"), colours };
+}
+
+/** Categories present in a curated nav-group (OR union of members). */
+export async function fetchCategoriesForNavGroup(
+  nf: NavGroupFilters,
+  opts: { inStock?: boolean } = {},
+): Promise<CategoryStat[]> {
+  let q = supabase
+    .from("products")
+    .select("category,category_en,category_hy")
+    .eq("is_published", true)
+    .not("category", "is", null);
+  q = applyNavGroupOr(q, nf);
+  if (opts.inStock) q = q.eq("availability", "in_stock");
+  const { data, error } = await q.limit(5000);
+  if (error) throw error;
+  return groupCategoryRows((data ?? []) as CategoryRow[]);
+}
+
+/** Facet counts for a curated nav-group (OR union of members). */
+export async function fetchFacetsForNavGroup(
+  nf: NavGroupFilters,
+  opts: { inStock?: boolean } = {},
+): Promise<FacetCounts> {
+  let q = supabase
+    .from("products")
+    .select("family,aesthetic,colour,colour_en,colour_hy")
+    .eq("is_published", true);
+  q = applyNavGroupOr(q, nf);
+  if (opts.inStock) q = q.eq("availability", "in_stock");
+  const { data, error } = await q.limit(5000);
+  if (error) throw error;
+  return tallyFacetRows((data ?? []) as Array<Record<string, string | null>>);
+}
+
+/** SKUs in a curated nav-group — for spec facet scoping. */
+export async function fetchSkusForNavGroup(nf: NavGroupFilters): Promise<string[]> {
+  let q = supabase.from("products").select("sku").eq("is_published", true);
+  q = applyNavGroupOr(q, nf);
+  const { data, error } = await q.limit(5000);
+  if (error) throw error;
+  return ((data ?? []) as Array<{ sku: string }>).map((r) => r.sku);
+}
+
 export type CatalogFilters = {
   category?: string;
   categoryIn?: string[];

@@ -6,10 +6,13 @@ import {
   fetchCatalog,
   fetchCategories,
   fetchCategoriesScoped,
+  fetchCategoriesForNavGroup,
   fetchColorSwatches,
   fetchFacets,
   fetchFacetsScoped,
+  fetchFacetsForNavGroup,
   fetchProductsBySkus,
+  fetchSkusForNavGroup,
   slugify,
 } from "@/lib/products";
 import { z } from "zod";
@@ -235,44 +238,46 @@ function CatalogPage() {
     (navGroupFilters?.categoryIn.length ? navGroupFilters.categoryIn : undefined) ??
     (sectionCategoryList?.length && !category ? sectionCategoryList : undefined);
 
+  const catalogScoped = !!(navGroupFilters || section || (effectiveFamilies?.length && !navGroupFilters) || (effectiveCategoryIn?.length && !navGroupFilters));
+
   const scopedCatsQuery = useQuery({
-    queryKey: ["catalog-categories-scoped", section ?? "", effectiveFamilies ?? null, effectiveCategoryIn ?? null],
+    queryKey: ["catalog-categories-scoped", section ?? "", navGroup ?? "", effectiveFamilies ?? null, effectiveCategoryIn ?? null, inStock ?? false],
     queryFn: () =>
-      fetchCategoriesScoped({
-        families: effectiveFamilies,
-        categoryIn: effectiveCategoryIn,
-      }),
-    enabled: !!(section || effectiveFamilies?.length || effectiveCategoryIn?.length),
+      navGroupFilters
+        ? fetchCategoriesForNavGroup(navGroupFilters, { inStock })
+        : fetchCategoriesScoped({
+            families: effectiveFamilies,
+            categoryIn: effectiveCategoryIn,
+            inStock,
+          }),
+    enabled: catalogScoped,
     staleTime: 5 * 60_000,
   });
 
   const sidebarCategories = sortCategoriesByOrder(
-    section || effectiveFamilies?.length || effectiveCategoryIn?.length
-      ? (scopedCatsQuery.data ?? [])
-      : sortedCategories,
+    catalogScoped ? (scopedCatsQuery.data ?? []) : sortedCategories,
     catalogOrder,
   );
 
   const scopedFacetsQuery = useQuery({
-    queryKey: ["facets-scoped", section ?? "", effectiveFamilies ?? null, effectiveCategoryIn ?? null, inStock ?? false],
+    queryKey: ["facets-scoped", section ?? "", navGroup ?? "", effectiveFamilies ?? null, effectiveCategoryIn ?? null, inStock ?? false],
     queryFn: () =>
-      fetchFacetsScoped({
-        families: effectiveFamilies,
-        categoryIn: effectiveCategoryIn,
-        inStock,
-      }),
-    enabled: !!(section || effectiveFamilies?.length || effectiveCategoryIn?.length),
+      navGroupFilters
+        ? fetchFacetsForNavGroup(navGroupFilters, { inStock })
+        : fetchFacetsScoped({
+            families: effectiveFamilies,
+            categoryIn: effectiveCategoryIn,
+            inStock,
+          }),
+    enabled: catalogScoped,
     staleTime: 60_000,
   });
 
-  const activeFacets =
-    section || effectiveFamilies?.length || effectiveCategoryIn?.length
-      ? scopedFacetsQuery.data
-      : facetsQuery.data;
+  const activeFacets = catalogScoped ? scopedFacetsQuery.data : facetsQuery.data;
 
   const groupByColor = shouldGroupCatalog(grouping.config, {
     categorySlug: category,
-    section: section as CatalogSection | undefined,
+    section: (section ?? navGroupDef?.section) as CatalogSection | undefined,
   });
   const modelGroupLabels = grouping.modelGroupLabels;
   const hideSpecFilters = !!model;
@@ -289,6 +294,7 @@ function CatalogPage() {
   const specFacetsQuery = useQuery({
     queryKey: [
       "spec-facets",
+      navGroup ?? "",
       effectiveCategoryIn ?? null,
       effectiveFamilies ?? null,
       colours,
@@ -296,15 +302,26 @@ function CatalogPage() {
       inStock ?? false,
       specRaw ?? "",
     ],
-    queryFn: () =>
-      fetchSpecFacets({
+    queryFn: async () => {
+      if (navGroupFilters) {
+        const skus = await fetchSkusForNavGroup(navGroupFilters);
+        return fetchSpecFacets({
+          skus,
+          colours: colours.length ? colours : undefined,
+          aesthetics: aesthetics.length ? aesthetics : undefined,
+          inStock,
+          active: specFilters,
+        });
+      }
+      return fetchSpecFacets({
         categories: effectiveCategoryIn,
         families: effectiveFamilies,
         colours: colours.length ? colours : undefined,
         aesthetics: aesthetics.length ? aesthetics : undefined,
         inStock,
         active: specFilters,
-      }),
+      });
+    },
     staleTime: 60_000,
   });
 
@@ -501,7 +518,12 @@ function CatalogPage() {
             </button>
           ))}
         </div>
-        {section && (
+        {navGroupOnly && navGroupTitle && (
+          <p className="mb-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            {t("catalog.sidebar.inCollection")}: {navGroupTitle}
+          </p>
+        )}
+        {section && !navGroupOnly && (
           <p className="mb-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
             {t("catalog.sidebar.inSection")}: {t(`catalog.section.${section}`)}
           </p>

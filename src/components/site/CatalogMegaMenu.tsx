@@ -100,7 +100,14 @@ function NavGroupBlock({
       : group.id;
   return (
     <div className="mb-4">
-      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-foreground/90">{title}</p>
+      <Link
+        to="/catalog"
+        search={{ navGroup: group.id }}
+        onClick={onNavigate}
+        className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.2em] text-foreground/90 transition hover:text-foreground"
+      >
+        {title}
+      </Link>
       <ul className="space-y-1 border-l border-border/60 pl-3">
         {group.items.map((item) => (
           <li key={item.id}>

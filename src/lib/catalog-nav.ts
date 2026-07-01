@@ -58,15 +58,7 @@ function groupDefToNavGroup(def: CatalogNavGroupDef, categories: CategoryStat[])
   return {
     id: def.id,
     labels: def.labels,
-    items: [
-      ...childItems,
-      {
-        id: `${def.id}-all`,
-        labelKey: "nav.catalog.groupAll",
-        to: "/catalog",
-        search: { section: def.section, navGroup: def.id },
-      },
-    ],
+    items: childItems,
   };
 }
 
