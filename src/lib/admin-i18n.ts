@@ -95,6 +95,20 @@ const E: Record<string, T3> = {
   "admin.home.published": ["Опубликовано", "Published", "Հրապարակված"],
   "admin.home.newInquiries": ["Новые заявки", "New inquiries", "Նոր դիմումներ"],
   "admin.home.totalInquiries": ["Всего заявок", "Total inquiries", "Ընդամենը դիմում"],
+  "admin.home.todayTitle": ["Сегодня", "Today", "Այսօր"],
+  "admin.home.todayIntro": ["Что требует внимания прямо сейчас.", "What needs your attention right now.", "Ինչ է պահանջում ուշադրություն հիմա։"],
+  "admin.home.actionNewOrders": ["Новые заказы", "New orders", "Նոր պատվերներ"],
+  "admin.home.actionNewInquiries": ["Новые заявки", "New inquiries", "Նոր դիմումներ"],
+  "admin.home.actionHiddenProducts": ["Скрытые товары", "Hidden products", "Թաքցված ապրանքներ"],
+  "admin.home.actionNoPrice": ["Без цены", "Missing price", "Առանց գին"],
+  "admin.home.allClear": ["Всё в порядке — новых задач нет.", "All clear — nothing urgent.", "Ամեն ինչ կարգին է։"],
+  "admin.home.open": ["Открыть", "Open", "Բացել"],
+
+  "admin.nav.section.today": ["Сегодня", "Today", "Այսօր"],
+  "admin.nav.section.sales": ["Продажи", "Sales", "Վաճառք"],
+  "admin.nav.section.catalog": ["Каталог", "Catalog", "Կատալոգ"],
+  "admin.nav.section.site": ["Сайт", "Site", "Կայք"],
+  "admin.nav.section.more": ["Ещё", "More", "Ավելին"],
 
   "admin.help.title": ["Справка", "Help", "Օգնություն"],
   "admin.help.intro": [

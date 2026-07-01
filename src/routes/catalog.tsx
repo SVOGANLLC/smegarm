@@ -213,7 +213,7 @@ function CatalogPage() {
 
   const sortedCategories = sortCategoriesByOrder(catsQuery.data ?? [], catalogOrder);
 
-  const sectionFamilyList = sectionFamilies(section);
+  const sectionFamilyList = sectionFamilies(q ? undefined : section);
   const accessoryRaw =
     section === "accessories" && catsQuery.data?.length
       ? resolveAccessoryCategoryRaw(catsQuery.data)
@@ -238,7 +238,9 @@ function CatalogPage() {
     (navGroupFilters?.categoryIn.length ? navGroupFilters.categoryIn : undefined) ??
     (sectionCategoryList?.length && !category ? sectionCategoryList : undefined);
 
-  const catalogScoped = !!(navGroupFilters || section || (effectiveFamilies?.length && !navGroupFilters) || (effectiveCategoryIn?.length && !navGroupFilters));
+  const catalogScoped =
+    !q &&
+    !!(navGroupFilters || section || (effectiveFamilies?.length && !navGroupFilters) || (effectiveCategoryIn?.length && !navGroupFilters));
 
   const scopedCatsQuery = useQuery({
     queryKey: ["catalog-categories-scoped", section ?? "", navGroup ?? "", effectiveFamilies ?? null, effectiveCategoryIn ?? null, inStock ?? false],
@@ -429,7 +431,14 @@ function CatalogPage() {
               const v = (e.target as HTMLInputElement).value.trim();
               navigate({
                 search: (prev: CatalogSearch) =>
-                  patchCatalogSearch(prev, { q: v || undefined, category: undefined, page: 1 }),
+                  patchCatalogSearch(prev, {
+                    q: v || undefined,
+                    category: undefined,
+                    section: undefined,
+                    navGroup: undefined,
+                    family: undefined,
+                    page: 1,
+                  }),
               });
             }
           }}
@@ -630,6 +639,7 @@ function CatalogPage() {
               {categoryLabel ??
                 familyTitle ??
                 navGroupTitle ??
+                (q ? `«${q}»` : undefined) ??
                 (section ? t(sectionTitleKey(section as CatalogSection)!) : t("catalog.all"))}
             </h1>
 

@@ -122,16 +122,45 @@ function useCatalogNavColumns(): CatalogNavColumn[] {
   return customNav ?? groupNav ?? dynamic ?? buildCatalogNavFromCategories(largeQ.data ?? [], smallQ.data ?? []);
 }
 
+function SubgroupsPanel({
+  largeGroups,
+  smallGroups,
+  onNavigate,
+}: {
+  largeGroups: CatalogNavGroup[];
+  smallGroups: CatalogNavGroup[];
+  onNavigate?: () => void;
+}) {
+  const { lang, t } = useI18n();
+  return (
+    <aside className="flex w-full shrink-0 flex-col border-t border-border/60 bg-secondary/25 pt-5 md:w-[min(42%,320px)] md:border-l md:border-t-0 md:pl-6 md:pt-0 lg:w-[300px]">
+      <p className="eyebrow mb-4 text-muted-foreground">{t("nav.catalog.subgroups")}</p>
+      <div className="max-h-[min(52vh,400px)] flex-1 overflow-y-auto pr-1">
+        <div className="grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2 md:grid-cols-1">
+          {largeGroups.map((g) => (
+            <NavGroupBlock key={g.id} group={g} lang={lang} t={t} onNavigate={onNavigate} compact />
+          ))}
+          {smallGroups.map((g) => (
+            <NavGroupBlock key={g.id} group={g} lang={lang} t={t} onNavigate={onNavigate} compact />
+          ))}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
 function NavGroupBlock({
   group,
   lang,
   t,
   onNavigate,
+  compact,
 }: {
   group: CatalogNavGroup;
   lang: "ru" | "en" | "hy";
   t: (k: string) => string;
   onNavigate?: () => void;
+  compact?: boolean;
 }) {
   const title = group.labels
     ? group.labels[lang] || group.labels.en || group.labels.ru || group.id
@@ -148,7 +177,7 @@ function NavGroupBlock({
       >
         {title}
       </Link>
-      <ul className="space-y-1 border-l border-border/60 pl-2.5">
+      <ul className={cn("space-y-1 border-l border-border/60", compact ? "pl-2" : "pl-2.5")}>
         {group.items.map((item) => (
           <li key={item.id}>
             <NavLink item={item} onClick={onNavigate} />
@@ -171,26 +200,6 @@ function SectionColumn({ col, onNavigate }: { col: CatalogNavColumn; onNavigate?
           </li>
         ))}
       </ul>
-    </div>
-  );
-}
-
-function SubgroupsColumn({
-  groups,
-  onNavigate,
-}: {
-  groups: CatalogNavGroup[];
-  onNavigate?: () => void;
-}) {
-  const { lang, t } = useI18n();
-  return (
-    <div className="min-w-[10rem] border-l border-border/50 pl-5 md:min-w-[11rem] md:pl-6">
-      <p className="eyebrow mb-3 text-muted-foreground">{t("nav.catalog.subgroups")}</p>
-      <div className="max-h-[min(50vh,360px)] space-y-4 overflow-y-auto pr-1">
-        {groups.map((g) => (
-          <NavGroupBlock key={g.id} group={g} lang={lang} t={t} onNavigate={onNavigate} />
-        ))}
-      </div>
     </div>
   );
 }
@@ -222,9 +231,11 @@ function NavColumns({ columns, onNavigate }: { columns: CatalogNavColumn[]; onNa
   const large = columns.find((c) => c.id === "large");
   const small = columns.find((c) => c.id === "small");
   const more = columns.find((c) => c.id === "more");
-  const splitSubgroups = !!(large?.groups?.length || small?.groups?.length);
+  const largeGroups = large?.groups ?? [];
+  const smallGroups = small?.groups ?? [];
+  const hasSubgroups = largeGroups.length > 0 || smallGroups.length > 0;
 
-  if (!splitSubgroups) {
+  if (!hasSubgroups) {
     return (
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 md:gap-8">
         {columns.map((col) => (
@@ -235,31 +246,26 @@ function NavColumns({ columns, onNavigate }: { columns: CatalogNavColumn[]; onNa
   }
 
   return (
-    <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-0">
-      {large && (
-        <div className="flex shrink-0 gap-0">
-          <SectionColumn col={large} onNavigate={onNavigate} />
-          {large.groups?.length ? <SubgroupsColumn groups={large.groups} onNavigate={onNavigate} /> : null}
+    <div className="flex flex-col gap-0 md:flex-row md:items-stretch">
+      <div className="min-w-0 flex-1 md:pr-6">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-6">
+          {large && <SectionColumn col={large} onNavigate={onNavigate} />}
+          {small && <SectionColumn col={small} onNavigate={onNavigate} />}
+          {more && (
+            <div>
+              <p className="eyebrow mb-3 text-muted-foreground">{t(more.titleKey)}</p>
+              <ul className="space-y-2">
+                {more.items.map((item) => (
+                  <li key={item.id}>
+                    <NavLink item={item} onClick={onNavigate} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
-      )}
-      {small && (
-        <div className="flex shrink-0 gap-0 lg:ml-8 lg:border-l lg:border-border/50 lg:pl-8">
-          <SectionColumn col={small} onNavigate={onNavigate} />
-          {small.groups?.length ? <SubgroupsColumn groups={small.groups} onNavigate={onNavigate} /> : null}
-        </div>
-      )}
-      {more && (
-        <div className="min-w-[8rem] lg:ml-8 lg:border-l lg:border-border/50 lg:pl-8">
-          <p className="eyebrow mb-3 text-muted-foreground">{t(more.titleKey)}</p>
-          <ul className="space-y-2">
-            {more.items.map((item) => (
-              <li key={item.id}>
-                <NavLink item={item} onClick={onNavigate} />
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      </div>
+      <SubgroupsPanel largeGroups={largeGroups} smallGroups={smallGroups} onNavigate={onNavigate} />
     </div>
   );
 }
@@ -317,17 +323,21 @@ export function CatalogMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 w-[min(100vw-1.5rem,1080px)] pt-2 md:pt-3">
-          <div className="max-h-[min(85vh,540px)] overflow-y-auto rounded-sm border border-border bg-background/98 p-4 shadow-xl backdrop-blur-xl md:p-6">
-            <Link
-              to="/catalog"
-              search={{}}
-              onClick={close}
-              className="mb-5 block font-serif text-base text-foreground hover:opacity-80 md:text-lg"
-            >
-              {t("nav.catalog.allProducts")} →
-            </Link>
-            <NavColumns columns={columns} onNavigate={close} />
+        <div className="absolute left-0 top-full z-50 w-[min(100vw-1.5rem,920px)] pt-2 md:pt-3">
+          <div className="overflow-hidden rounded-sm border border-border bg-background/98 shadow-xl backdrop-blur-xl">
+            <div className="border-b border-border/60 px-4 py-3 md:px-6">
+              <Link
+                to="/catalog"
+                search={{}}
+                onClick={close}
+                className="font-serif text-base text-foreground hover:opacity-80 md:text-lg"
+              >
+                {t("nav.catalog.allProducts")} →
+              </Link>
+            </div>
+            <div className="max-h-[min(85vh,520px)] overflow-y-auto p-4 md:p-6">
+              <NavColumns columns={columns} onNavigate={close} />
+            </div>
           </div>
         </div>
       )}
@@ -367,43 +377,37 @@ export function CatalogMobileNav({ onNavigate }: { onNavigate?: () => void }) {
           {large && (
             <div>
               <p className="eyebrow mb-2 text-muted-foreground">{t(large.titleKey)}</p>
-              <ul className="mb-3 space-y-2">
+              <ul className="space-y-2">
                 {large.items.map((item) => (
                   <li key={item.id}>
                     <NavLink item={item} onClick={onNavigate} />
                   </li>
                 ))}
               </ul>
-              {large.groups?.length ? (
-                <div className="grid grid-cols-1 gap-4 border-t border-border/50 pt-3 sm:grid-cols-2">
-                  <p className="eyebrow col-span-full text-muted-foreground">{t("nav.catalog.subgroups")}</p>
-                  {large.groups.map((g) => (
-                    <NavGroupBlock key={g.id} group={g} lang={lang} t={t} onNavigate={onNavigate} />
-                  ))}
-                </div>
-              ) : null}
             </div>
           )}
           {small && (
             <div>
               <p className="eyebrow mb-2 text-muted-foreground">{t(small.titleKey)}</p>
-              <ul className="mb-3 space-y-2">
+              <ul className="space-y-2">
                 {small.items.map((item) => (
                   <li key={item.id}>
                     <NavLink item={item} onClick={onNavigate} />
                   </li>
                 ))}
               </ul>
-              {small.groups?.length ? (
-                <div className="grid grid-cols-1 gap-4 border-t border-border/50 pt-3 sm:grid-cols-2">
-                  <p className="eyebrow col-span-full text-muted-foreground">{t("nav.catalog.subgroups")}</p>
-                  {small.groups.map((g) => (
-                    <NavGroupBlock key={g.id} group={g} lang={lang} t={t} onNavigate={onNavigate} />
-                  ))}
-                </div>
-              ) : null}
             </div>
           )}
+          {(large?.groups?.length || small?.groups?.length) ? (
+            <div className="rounded-sm border border-border/60 bg-secondary/20 p-4">
+              <p className="eyebrow mb-3 text-muted-foreground">{t("nav.catalog.subgroups")}</p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {[...(large?.groups ?? []), ...(small?.groups ?? [])].map((g) => (
+                  <NavGroupBlock key={g.id} group={g} lang={lang} t={t} onNavigate={onNavigate} compact />
+                ))}
+              </div>
+            </div>
+          ) : null}
           {more && (
             <div>
               <p className="eyebrow mb-2 text-muted-foreground">{t(more.titleKey)}</p>
