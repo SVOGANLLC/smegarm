@@ -6,119 +6,14 @@ import {
   labelForModelGroup,
   labelsWithContent,
   parseModelGroupLabels,
-  resolveModelGroupImage,
   serializeModelGroupLabels,
   skuModelPrefix,
   upsertModelGroupLabel,
   type ModelGroupLabel,
 } from "@/lib/model-group-labels";
-import { uploadAdminImage } from "@/lib/admin-upload";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { GroupLabelImageFields } from "@/components/admin/GroupLabelImageFields";
 
 type BlockValue = Record<string, Partial<Record<Lang, string>>>;
-
-function GroupCardImageFields({
-  row,
-  modelGroup,
-  sampleSku,
-  onUpdate,
-  onAutoSave,
-}: {
-  row: ModelGroupLabel;
-  modelGroup: string;
-  sampleSku: string;
-  onUpdate: (patch: Partial<Omit<ModelGroupLabel, "key">>) => void;
-  onAutoSave?: (patch: Partial<Omit<ModelGroupLabel, "key">>) => Promise<void>;
-}) {
-  const { t } = useI18n();
-  const [uploading, setUploading] = useState(false);
-  const heroSku = row.image_sku?.trim().toUpperCase() ?? "";
-
-  const heroProduct = useQuery({
-    queryKey: ["admin-group-hero-image", heroSku],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("sku, main_image, name")
-        .eq("sku", heroSku)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-    enabled: heroSku.length >= 3,
-    staleTime: 30_000,
-  });
-
-  const previewUrl = resolveModelGroupImage(row, {
-    variants: heroProduct.data ? [{ sku: heroProduct.data.sku, main_image: heroProduct.data.main_image }] : [],
-  });
-
-  return (
-    <div className="mt-3 space-y-3 rounded-sm border border-border/60 bg-secondary/20 p-3">
-      <p className="text-xs font-medium text-foreground">{t("admin.content.categories.modelGroupImagePreview")}</p>
-      <label className="block">
-        <span className="text-xs text-muted-foreground">{t("admin.content.categories.modelGroupImage")}</span>
-        <input
-          value={row.image ?? ""}
-          onChange={(e) => onUpdate({ image: e.target.value })}
-          placeholder="https://…"
-          className="mt-1 w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
-        />
-        <div className="mt-2">
-          <label className="inline-flex cursor-pointer items-center rounded-sm border border-border px-3 py-1.5 text-[10px] uppercase tracking-[0.14em] hover:border-foreground">
-            {uploading ? "…" : t("admin.partners.upload")}
-            <input
-              type="file"
-              accept="image/*"
-              className="sr-only"
-              disabled={uploading}
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                e.target.value = "";
-                if (!file) return;
-                setUploading(true);
-                try {
-                  const path = `model-groups/${modelGroup}`;
-                  const url = await uploadAdminImage(path, file, t);
-                  if (onAutoSave) await onAutoSave({ image: url });
-                  else onUpdate({ image: url });
-                  toast.success(t("admin.uploaded"));
-                } catch (err) {
-                  toast.error(err instanceof Error ? err.message : t("admin.error"));
-                } finally {
-                  setUploading(false);
-                }
-              }}
-            />
-          </label>
-        </div>
-      </label>
-
-      <label className="block">
-        <span className="text-xs text-muted-foreground">{t("admin.content.categories.modelGroupImageSku")}</span>
-        <input
-          value={row.image_sku ?? ""}
-          onChange={(e) => onUpdate({ image_sku: e.target.value.toUpperCase() })}
-          placeholder={sampleSku}
-          className="mt-1 w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-foreground"
-        />
-        <p className="mt-1 text-[11px] text-muted-foreground">{t("admin.content.categories.modelGroupImageSkuHint")}</p>
-        {heroSku.length >= 3 && heroProduct.isFetched && !heroProduct.data && (
-          <p className="mt-1 text-[11px] text-rose-600">{t("admin.content.categories.modelGroupImageSkuMissing")}</p>
-        )}
-      </label>
-
-      {previewUrl ? (
-        <img src={previewUrl} alt="" className="h-24 w-24 rounded-sm border border-border object-cover" />
-      ) : (
-        <div className="flex h-24 w-24 items-center justify-center rounded-sm border border-dashed border-border text-[10px] text-muted-foreground">
-          —
-        </div>
-      )}
-    </div>
-  );
-}
 
 export function ModelGroupLabelsEditor({
   value,
@@ -237,12 +132,13 @@ export function ModelGroupLabelsEditor({
                     </label>
                   ))}
                 </div>
-                <GroupCardImageFields
-                  row={row}
-                  modelGroup={g.model_group}
+                <GroupLabelImageFields
+                  groupKey={g.model_group}
+                  image={row.image ?? ""}
+                  imageSku={row.image_sku ?? ""}
                   sampleSku={g.sample_sku}
-                  onUpdate={(patch) => updateGroup(g.model_group, patch)}
-                  onAutoSave={(patch) => updateGroupAndSave(g.model_group, patch)}
+                  onChange={(patch) => updateGroup(g.model_group, patch)}
+                  onUploadSave={(patch) => updateGroupAndSave(g.model_group, patch)}
                 />
               </div>
             );

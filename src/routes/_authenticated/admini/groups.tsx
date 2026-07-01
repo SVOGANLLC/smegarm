@@ -11,19 +11,69 @@ import {
   searchProductsForGroup,
   type AdminVariantGroup,
 } from "@/lib/variant-groups";
-import { useSiteContentBlock } from "@/lib/site-content";
+import { useSiteContentBlock, siteContentQueryKey } from "@/lib/site-content";
 import {
   labelForModelGroup,
   parseModelGroupLabels,
   serializeModelGroupLabels,
   upsertModelGroupLabel,
 } from "@/lib/model-group-labels";
+import {
+  GroupLabelImageFields,
+  emptyGroupImage,
+  groupImageFromLabel,
+  type GroupImageState,
+} from "@/components/admin/GroupLabelImageFields";
 import { supabase } from "@/integrations/supabase/client";
 import { assertRowUpdated } from "@/lib/supabase-assert";
 
 type GroupNames = { ru: string; en: string; hy: string };
+type GroupDraft = GroupNames & GroupImageState;
 
 const emptyNames = (): GroupNames => ({ ru: "", en: "", hy: "" });
+const emptyDraft = (): GroupDraft => ({ ...emptyNames(), ...emptyGroupImage() });
+
+function draftFromLabel(row?: ReturnType<typeof labelForModelGroup>): GroupDraft {
+  const img = groupImageFromLabel(row);
+  return {
+    ru: row?.name_ru ?? "",
+    en: row?.name_en ?? "",
+    hy: row?.name_hy ?? "",
+    ...img,
+  };
+}
+
+async function persistGroupLabel(
+  labels: ReturnType<typeof parseModelGroupLabels>,
+  key: string,
+  draft: GroupDraft,
+) {
+  const next = upsertModelGroupLabel(labels, key, {
+    name_ru: draft.ru.trim() || undefined,
+    name_en: draft.en.trim() || undefined,
+    name_hy: draft.hy.trim() || undefined,
+    image: draft.image.trim() || undefined,
+    image_sku: draft.image_sku.trim().toUpperCase() || undefined,
+  });
+  const json = serializeModelGroupLabels(next);
+  const { data: existing, error: readErr } = await supabase
+    .from("site_content")
+    .select("value")
+    .eq("key", "categories")
+    .maybeSingle();
+  if (readErr) throw readErr;
+  const value = {
+    ...((existing?.value as Record<string, unknown>) ?? {}),
+    "config.modelGroupLabels": { ru: json, en: json, hy: json },
+  };
+  const { data, error } = await supabase
+    .from("site_content")
+    .upsert({ key: "categories", value }, { onConflict: "key" })
+    .select("key")
+    .maybeSingle();
+  if (error) throw error;
+  assertRowUpdated(data, "Failed to save");
+}
 
 function groupLabelTitle(labels: ReturnType<typeof parseModelGroupLabels>, key: string) {
   const row = labelForModelGroup(labels, key);
@@ -45,7 +95,7 @@ function VariantGroupsPage() {
   const [filter, setFilter] = useState("");
   const [newKey, setNewKey] = useState("");
   const [addSku, setAddSku] = useState("");
-  const [displayNames, setDisplayNames] = useState<GroupNames>(emptyNames);
+  const [groupDraft, setGroupDraft] = useState<GroupDraft>(emptyDraft);
 
   const groupsQ = useQuery({
     queryKey: ["admin-variant-groups"],
@@ -62,12 +112,7 @@ function VariantGroupsPage() {
   );
 
   const openGroup = (key: string) => {
-    const row = labelForModelGroup(labels, key);
-    setDisplayNames({
-      ru: row?.name_ru ?? "",
-      en: row?.name_en ?? "",
-      hy: row?.name_hy ?? "",
-    });
+    setGroupDraft(draftFromLabel(labelForModelGroup(labels, key)));
   };
 
   useEffect(() => {
@@ -112,37 +157,20 @@ function VariantGroupsPage() {
   });
 
   const saveLabel = useMutation({
-    mutationFn: async ({ key, names }: { key: string; names: GroupNames }) => {
-      const next = upsertModelGroupLabel(labels, key, {
-        name_ru: names.ru.trim() || undefined,
-        name_en: names.en.trim() || undefined,
-        name_hy: names.hy.trim() || undefined,
-      });
-      const json = serializeModelGroupLabels(next);
-      const { data: existing, error: readErr } = await supabase
-        .from("site_content")
-        .select("value")
-        .eq("key", "categories")
-        .maybeSingle();
-      if (readErr) throw readErr;
-      const value = {
-        ...((existing?.value as Record<string, unknown>) ?? {}),
-        "config.modelGroupLabels": { ru: json, en: json, hy: json },
-      };
-      const { data, error } = await supabase
-        .from("site_content")
-        .upsert({ key: "categories", value }, { onConflict: "key" })
-        .select("key")
-        .maybeSingle();
-      if (error) throw error;
-      assertRowUpdated(data, "Failed to save");
-    },
+    mutationFn: ({ key, draft }: { key: string; draft: GroupDraft }) => persistGroupLabel(labels, key, draft),
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: siteContentQueryKey });
       qc.invalidateQueries({ queryKey: ["site-content", "categories"] });
       toast.success(t("admin.saved"));
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const saveGroup = async (key: string, patch?: Partial<GroupDraft>) => {
+    const draft = patch ? { ...groupDraft, ...patch } : groupDraft;
+    if (patch) setGroupDraft(draft);
+    await saveLabel.mutateAsync({ key, draft });
+  };
 
   if (selectedKey) {
     if (groupsQ.isLoading) {
@@ -162,10 +190,11 @@ function VariantGroupsPage() {
           <p className="text-sm text-muted-foreground">{t("admin.groups.emptyGroup")}</p>
           <GroupDetailShell
             groupKey={selectedKey}
-            displayNames={displayNames}
-            onDisplayNamesChange={setDisplayNames}
-            onSaveName={() => saveLabel.mutate({ key: selectedKey, names: displayNames })}
-            savingName={saveLabel.isPending}
+            groupDraft={groupDraft}
+            onGroupDraftChange={setGroupDraft}
+            onSave={() => void saveGroup(selectedKey)}
+            onSaveImage={(patch) => saveGroup(selectedKey, patch)}
+            saving={saveLabel.isPending}
             addSku={addSku}
             onAddSkuChange={setAddSku}
             addResults={addSearchQ.data ?? []}
@@ -182,10 +211,12 @@ function VariantGroupsPage() {
     return (
       <GroupDetailShell
         groupKey={selected.key}
-        displayNames={displayNames}
-        onDisplayNamesChange={setDisplayNames}
-        onSaveName={() => saveLabel.mutate({ key: selected.key, names: displayNames })}
-        savingName={saveLabel.isPending}
+        groupDraft={groupDraft}
+        onGroupDraftChange={setGroupDraft}
+        onSave={() => void saveGroup(selected.key)}
+        onSaveImage={(patch) => saveGroup(selected.key, patch)}
+        saving={saveLabel.isPending}
+        sampleSku={selected.members[0]?.sku}
         addSku={addSku}
         onAddSkuChange={setAddSku}
         addResults={addSearchQ.data ?? []}
@@ -276,10 +307,12 @@ function VariantGroupsPage() {
 
 function GroupDetailShell({
   groupKey,
-  displayNames,
-  onDisplayNamesChange,
-  onSaveName,
-  savingName,
+  groupDraft,
+  onGroupDraftChange,
+  onSave,
+  onSaveImage,
+  saving,
+  sampleSku,
   addSku,
   onAddSkuChange,
   addResults,
@@ -293,10 +326,12 @@ function GroupDetailShell({
   colourCount = 0,
 }: {
   groupKey: string;
-  displayNames: GroupNames;
-  onDisplayNamesChange: (v: GroupNames) => void;
-  onSaveName: () => void;
-  savingName: boolean;
+  groupDraft: GroupDraft;
+  onGroupDraftChange: (v: GroupDraft) => void;
+  onSave: () => void;
+  onSaveImage: (patch: Partial<GroupImageState>) => void | Promise<void>;
+  saving: boolean;
+  sampleSku?: string;
   addSku: string;
   onAddSkuChange: (v: string) => void;
   addResults: Array<{ sku: string; name: string; colour: string | null; model_group: string | null }>;
@@ -339,17 +374,25 @@ function GroupDetailShell({
           <label key={lang} className="block">
             <span className="text-xs text-muted-foreground">{t(labelKey)}</span>
             <input
-              value={displayNames[lang]}
-              onChange={(e) => onDisplayNamesChange({ ...displayNames, [lang]: e.target.value })}
+              value={groupDraft[lang]}
+              onChange={(e) => onGroupDraftChange({ ...groupDraft, [lang]: e.target.value })}
               placeholder={groupKey}
               className="mt-1 w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
           </label>
         ))}
+        <GroupLabelImageFields
+          groupKey={groupKey}
+          image={groupDraft.image}
+          imageSku={groupDraft.image_sku}
+          sampleSku={sampleSku ?? members[0]?.sku}
+          onChange={(patch) => onGroupDraftChange({ ...groupDraft, ...patch })}
+          onUploadSave={async (patch) => onSaveImage(patch)}
+        />
         <button
           type="button"
-          onClick={onSaveName}
-          disabled={savingName}
+          onClick={onSave}
+          disabled={saving}
           className="w-full rounded-sm bg-foreground px-3 py-2 text-xs uppercase tracking-wider text-background disabled:opacity-50"
         >
           {t("admin.save")}
