@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, Upload, X } from "lucide-react";
+import { ArrowLeft, Copy, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { ProductCollectionsEditor } from "@/components/admin/ProductCollectionsEditor";
+import { ProductImageUploader } from "@/components/admin/ProductImageUploader";
+import { invalidateProductQueries } from "@/lib/admin-product-cache";
 import {
   normalizeEanForSave,
   parseSpecsText,
@@ -105,6 +107,8 @@ function EditProduct() {
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameSku, setRenameSku] = useState("");
   const hydratedSkuRef = useRef<string | null>(null);
+  const formDirtyRef = useRef(false);
+  const formRef = useRef<FormState | null>(null);
 
   const q = useQuery({
     queryKey: ["admin-product", sku],
@@ -114,17 +118,74 @@ function EditProduct() {
       return data;
     },
     refetchOnWindowFocus: false,
+    staleTime: 30_000,
   });
 
   useEffect(() => {
+    formRef.current = form;
+  }, [form]);
+
+  const applySavedRow = (saved: Record<string, unknown>) => {
+    const next = productToForm(saved);
+    setForm(next);
+    formRef.current = next;
+    qc.setQueryData(["admin-product", sku], saved);
+    hydratedSkuRef.current = sku;
+    formDirtyRef.current = false;
+    invalidateProductQueries(qc, sku);
+  };
+
+  useEffect(() => {
     hydratedSkuRef.current = null;
+    formDirtyRef.current = false;
   }, [sku]);
 
   useEffect(() => {
     if (!q.data || hydratedSkuRef.current === sku) return;
-    setForm(productToForm(q.data as Record<string, unknown>));
+    if (formDirtyRef.current) return;
+    const next = productToForm(q.data as Record<string, unknown>);
+    setForm(next);
+    formRef.current = next;
     hydratedSkuRef.current = sku;
   }, [sku, q.data]);
+
+  const markDirty = useCallback(() => {
+    formDirtyRef.current = true;
+  }, []);
+
+  const editForm = useCallback((patch: Partial<FormState> | ((prev: FormState) => FormState)) => {
+    formDirtyRef.current = true;
+    setForm((prev) => {
+      if (!prev) return prev;
+      return typeof patch === "function" ? patch(prev) : { ...prev, ...patch };
+    });
+  }, []);
+
+  const patchFields = useMutation({
+    mutationFn: async (fields: { main_image?: string; images?: string }) => {
+      const payload: Record<string, unknown> = {};
+      if (fields.main_image !== undefined) payload.main_image = fields.main_image.trim() || null;
+      if (fields.images !== undefined) {
+        payload.images = fields.images
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      }
+      const { data, error } = await supabase
+        .from("products")
+        .update(payload)
+        .eq("sku", sku)
+        .select("*")
+        .maybeSingle();
+      if (error) throw error;
+      return assertRowUpdated(data, t("admin.saveNoRow"));
+    },
+    onSuccess: (saved) => {
+      applySavedRow(saved as Record<string, unknown>);
+      toast.success(t("admin.saved"));
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
+  });
 
   const save = useMutation({
     mutationFn: async (f: FormState) => {
@@ -183,13 +244,7 @@ function EditProduct() {
       return assertRowUpdated(data, t("admin.saveNoRow"));
     },
     onSuccess: (saved) => {
-      const row = saved as Record<string, unknown>;
-      setForm(productToForm(row));
-      qc.setQueryData(["admin-product", sku], saved);
-      hydratedSkuRef.current = sku;
-      qc.invalidateQueries({ queryKey: ["admin-products"] });
-      qc.invalidateQueries({ queryKey: ["admin-today"] });
-      qc.invalidateQueries({ queryKey: ["product", sku] });
+      applySavedRow(saved as Record<string, unknown>);
       toast.success(t("admin.saved"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
@@ -415,21 +470,30 @@ function EditProduct() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          save.mutate(normalizeEanForSave(form));
+          const current = formRef.current;
+          if (!current) return;
+          save.mutate(normalizeEanForSave(current));
         }}
         className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]"
       >
         <div className="space-y-6">
-          <I18nContent sku={sku} form={form} setForm={setForm} />
+          <I18nContent sku={sku} form={form} setForm={editForm} />
           <Field label={t("admin.product.mainPhoto")}>
             <input
               value={form.main_image}
-              onChange={(e) => setForm({ ...form, main_image: e.target.value })}
+              onChange={(e) => {
+                markDirty();
+                setForm({ ...form, main_image: e.target.value });
+              }}
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
-            <ImageUploader
+            <ProductImageUploader
               sku={sku}
-              onUploaded={(url) => setForm((f) => (f ? { ...f, main_image: url } : f))}
+              onUploaded={async (url) => {
+                markDirty();
+                setForm((f) => (f ? { ...f, main_image: url } : f));
+                await patchFields.mutateAsync({ main_image: url });
+              }}
               label={t("admin.product.uploadMain")}
             />
             {form.main_image && (
@@ -437,24 +501,30 @@ function EditProduct() {
                 src={form.main_image}
                 alt=""
                 className="mt-3 h-32 w-32 rounded-sm border border-border object-cover"
+                key={form.main_image}
               />
             )}
           </Field>
           <Field label={t("admin.product.galleryHint")}>
             <textarea
               value={form.images}
-              onChange={(e) => setForm({ ...form, images: e.target.value })}
+              onChange={(e) => {
+                markDirty();
+                setForm({ ...form, images: e.target.value });
+              }}
               rows={6}
               className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-foreground"
             />
-            <ImageUploader
+            <ProductImageUploader
               sku={sku}
               multiple
-              onUploaded={(url) =>
-                setForm((f) =>
-                  f ? { ...f, images: (f.images ? f.images + "\n" : "") + url } : f,
-                )
-              }
+              onUploaded={async (url) => {
+                const base = formRef.current ?? form;
+                const images = (base.images ? `${base.images}\n` : "") + url;
+                markDirty();
+                setForm((f) => (f ? { ...f, images } : f));
+                await patchFields.mutateAsync({ images });
+              }}
               label={t("admin.product.addGallery")}
             />
             {form.images.trim() && (
@@ -514,7 +584,7 @@ function EditProduct() {
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
           </Field>
-          <SpecsFields form={form} setForm={setForm} />
+          <SpecsFields form={form} setForm={editForm} />
         </div>
 
         <aside className="space-y-6 rounded-sm border border-border p-6">
@@ -805,69 +875,5 @@ function I18nContent({
         </p>
       )}
     </div>
-  );
-}
-
-function ImageUploader({
-  sku,
-  onUploaded,
-  label,
-  multiple,
-}: {
-  sku: string;
-  onUploaded: (url: string) => void;
-  label: string;
-  multiple?: boolean;
-}) {
-  const { t } = useI18n();
-  const [busy, setBusy] = useState(false);
-  const handleFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    setBusy(true);
-    try {
-      for (const file of Array.from(files)) {
-        if (!file.type.startsWith("image/")) {
-          toast.error(t("admin.product.notImageFile", { name: file.name }));
-          continue;
-        }
-        if (file.size > 10 * 1024 * 1024) {
-          toast.error(t("admin.product.fileTooBig", { name: file.name }));
-          continue;
-        }
-        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-        const path = `${sku}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("product-media")
-          .upload(path, file, { contentType: file.type, upsert: false });
-        if (upErr) throw upErr;
-        const { data: signed, error: sErr } = await supabase.storage
-          .from("product-media")
-          .createSignedUrl(path, 60 * 60 * 24 * 365);
-        if (sErr || !signed?.signedUrl) throw sErr ?? new Error(t("admin.product.uploadUrlError"));
-        onUploaded(signed.signedUrl);
-      }
-      toast.success(t("admin.product.uploaded"));
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("admin.product.uploadError"));
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-sm border border-dashed border-border px-3 py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground hover:border-foreground hover:text-foreground">
-      <Upload className="h-3 w-3" />
-      {busy ? t("admin.loading") : label}
-      <input
-        type="file"
-        accept="image/*"
-        multiple={multiple}
-        className="hidden"
-        disabled={busy}
-        onChange={(e) => {
-          handleFiles(e.target.files);
-          e.target.value = "";
-        }}
-      />
-    </label>
   );
 }

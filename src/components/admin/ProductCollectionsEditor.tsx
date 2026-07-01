@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Plus, X } from "lucide-react";
 import { assertRowUpdated } from "@/lib/supabase-assert";
+import { invalidateProductQueries } from "@/lib/admin-product-cache";
 import { applyCollectionMembershipToProduct, isAutoCollectionSlug } from "@/lib/collection-auto-sync";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";

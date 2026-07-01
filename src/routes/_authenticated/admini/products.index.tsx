@@ -9,6 +9,7 @@ import { Eye, EyeOff, Pencil, Sparkles, Flame, Tag, Plus, X } from "lucide-react
 import { useI18n } from "@/lib/i18n";
 import { z } from "zod";
 import { assertRowUpdated } from "@/lib/supabase-assert";
+import { invalidateProductQueries } from "@/lib/admin-product-cache";
 
 const productsSearchSchema = z.object({
   noPrice: z.boolean().optional(),
@@ -130,9 +131,8 @@ function AdminProducts() {
       if (error) throw error;
       return assertRowUpdated(data, t("admin.saveNoRow"));
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-products"] });
-      qc.invalidateQueries({ queryKey: ["admin-today"] });
+    onSuccess: (_data, { sku }) => {
+      invalidateProductQueries(qc, sku);
       toast.success(t("admin.saved"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),

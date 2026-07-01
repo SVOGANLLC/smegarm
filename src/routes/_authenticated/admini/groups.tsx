@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, Plus, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
@@ -111,12 +111,18 @@ function VariantGroupsPage() {
     [groupsQ.data, selectedKey],
   );
 
+  const draftDirtyRef = useRef(false);
+
   const openGroup = (key: string) => {
-    setGroupDraft(draftFromLabel(labelForModelGroup(labels, key)));
+    const row = labelForModelGroup(labels, key);
+    setGroupDraft(draftFromLabel(row));
+    draftDirtyRef.current = false;
   };
 
   useEffect(() => {
-    if (selectedKey) openGroup(selectedKey);
+    if (!selectedKey) return;
+    if (draftDirtyRef.current) return;
+    openGroup(selectedKey);
   }, [selectedKey, labels]);
 
   const filtered = useMemo(() => {
@@ -159,6 +165,7 @@ function VariantGroupsPage() {
   const saveLabel = useMutation({
     mutationFn: ({ key, draft }: { key: string; draft: GroupDraft }) => persistGroupLabel(labels, key, draft),
     onSuccess: () => {
+      draftDirtyRef.current = false;
       qc.invalidateQueries({ queryKey: siteContentQueryKey });
       qc.invalidateQueries({ queryKey: ["site-content", "categories"] });
       toast.success(t("admin.saved"));
@@ -191,7 +198,10 @@ function VariantGroupsPage() {
           <GroupDetailShell
             groupKey={selectedKey}
             groupDraft={groupDraft}
-            onGroupDraftChange={setGroupDraft}
+            onGroupDraftChange={(v) => {
+              draftDirtyRef.current = true;
+              setGroupDraft(v);
+            }}
             onSave={() => void saveGroup(selectedKey)}
             onSaveImage={(patch) => saveGroup(selectedKey, patch)}
             saving={saveLabel.isPending}
@@ -212,7 +222,10 @@ function VariantGroupsPage() {
       <GroupDetailShell
         groupKey={selected.key}
         groupDraft={groupDraft}
-        onGroupDraftChange={setGroupDraft}
+        onGroupDraftChange={(v) => {
+          draftDirtyRef.current = true;
+          setGroupDraft(v);
+        }}
         onSave={() => void saveGroup(selected.key)}
         onSaveImage={(patch) => saveGroup(selected.key, patch)}
         saving={saveLabel.isPending}
