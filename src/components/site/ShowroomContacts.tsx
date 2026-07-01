@@ -1,24 +1,23 @@
 import { MapPin, Phone, Mail, MessageCircle } from "lucide-react";
 import type { ReactNode } from "react";
 import { useI18n } from "@/lib/i18n";
+import { googleMapsDirectionsUrl, googleMapsPlaceUrl } from "@/lib/showroom-map";
 import { Reveal, SectionHeader } from "./Section";
 import { SmegWordmark } from "./SmegWordmark";
-
-const MAP_EMBED_URL =
-  "https://maps.google.com/maps?q=40.164568,44.508932&z=17&hl=ru&output=embed";
-
-const MAP_LINK_URL = "https://www.google.com/maps/search/?api=1&query=40.164568,44.508932";
+import { ShowroomMapEmbed } from "./ShowroomMapEmbed";
 
 function ContactRow({
   icon,
   label,
   href,
   external,
+  title,
 }: {
   icon: ReactNode;
   label: string;
   href?: string;
   external?: boolean;
+  title?: string;
 }) {
   const inner = (
     <span className="flex items-center gap-4 text-foreground/85">
@@ -34,6 +33,7 @@ function ContactRow({
         <a
           href={href}
           className="smeg-underline"
+          title={title}
           {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
         >
           {inner}
@@ -61,7 +61,13 @@ export function ShowroomContacts({ className, plainEyebrow }: { className?: stri
             <Reveal delay={0.08}>
               <p className="mt-6 max-w-md text-base text-muted-foreground md:text-lg">{t("section.dealer.body")}</p>
               <ul className="mt-8 space-y-5">
-                <ContactRow icon={<MapPin className="h-4 w-4" />} label={t("section.dealer.address")} />
+                <ContactRow
+                  icon={<MapPin className="h-4 w-4" />}
+                  label={t("section.dealer.address")}
+                  href={googleMapsDirectionsUrl()}
+                  external
+                  title={t("hoc.contact.directions")}
+                />
                 <ContactRow icon={<Phone className="h-4 w-4" />} label="+374 60 68 00 88" href="tel:+37460680088" />
                 <ContactRow icon={<Phone className="h-4 w-4" />} label="+374 98 58 00 85" href="tel:+37498580085" />
                 <ContactRow
@@ -73,7 +79,7 @@ export function ShowroomContacts({ className, plainEyebrow }: { className?: stri
                 <ContactRow icon={<Mail className="h-4 w-4" />} label="smeg@smeg.am" href="mailto:smeg@smeg.am" />
               </ul>
               <a
-                href={MAP_LINK_URL}
+                href={googleMapsPlaceUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-8 inline-block text-xs uppercase tracking-[0.18em] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
@@ -83,14 +89,7 @@ export function ShowroomContacts({ className, plainEyebrow }: { className?: stri
             </Reveal>
           </div>
           <Reveal delay={0.12}>
-            <div className="relative aspect-[4/3] overflow-hidden rounded-sm border border-border bg-secondary lg:aspect-auto lg:min-h-[360px]">
-              <iframe
-                title={t("hoc.contact.mapTitle")}
-                src={MAP_EMBED_URL}
-                className="h-full w-full min-h-[280px] grayscale-[40%]"
-                loading="lazy"
-              />
-            </div>
+            <ShowroomMapEmbed title={t("hoc.contact.mapTitle")} className="lg:min-h-[360px] [&_iframe]:min-h-[280px]" />
           </Reveal>
         </div>
       </div>

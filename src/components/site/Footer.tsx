@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Instagram, Facebook, MessageCircle, Youtube } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { googleMapsDirectionsUrl } from "@/lib/showroom-map";
 import smegLogoBlack from "@/assets/smeg-logo.png.asset.json";
 
 function SocialLink({ href, label, children }: { href: string; label: string; children: ReactNode }) {
@@ -30,7 +31,7 @@ function PhoneRow({ href, children }: { href: string; children: ReactNode }) {
 export function Footer() {
   const { t } = useI18n();
   return (
-    <footer id="contact" className="bg-foreground text-background">
+    <footer className="bg-foreground text-background">
       <div className="mx-auto max-w-[1400px] px-6 py-10 md:px-10 md:py-14">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-12 md:gap-8">
           <div className="md:col-span-5">
@@ -67,11 +68,19 @@ export function Footer() {
 
           <div className="md:col-span-4">
             <p className="eyebrow text-background/50">{t("footer.address")}</p>
-            <p data-ck="footer.address.line1" className="mt-3 text-sm text-background/80">
-              {t("footer.address.line1")}
-              <br />
-              <span data-ck="footer.address.line2">{t("footer.address.line2")}</span>
-            </p>
+            <a
+              href={googleMapsDirectionsUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={t("hoc.contact.directions")}
+              className="smeg-underline mt-3 block text-sm text-background/80"
+            >
+              <span data-ck="footer.address.line1">
+                {t("footer.address.line1")}
+                <br />
+                <span data-ck="footer.address.line2">{t("footer.address.line2")}</span>
+              </span>
+            </a>
           </div>
         </div>
 

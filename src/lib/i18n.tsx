@@ -314,6 +314,7 @@ const dicts: Record<Lang, Dict> = {
     "hoc.link.manualGrinder": "Ручные машины с кофемолкой",
     "hoc.link.allEspresso": "Все эспрессо-машины",
     "hoc.contact.openMap": "Открыть на карте",
+    "hoc.contact.directions": "Построить маршрут",
     "hoc.contact.mapTitle": "Smeg Armenia Showroom",
   },
   en: {
@@ -618,6 +619,7 @@ const dicts: Record<Lang, Dict> = {
     "hoc.link.manualGrinder": "Manual machines with grinder",
     "hoc.link.allEspresso": "All espresso machines",
     "hoc.contact.openMap": "Open on map",
+    "hoc.contact.directions": "Get directions",
     "hoc.contact.mapTitle": "Smeg Armenia Showroom",
   },
   hy: {
@@ -922,6 +924,7 @@ const dicts: Record<Lang, Dict> = {
     "hoc.link.manualGrinder": "Ձեռքի մեքենաներ սրճաղացով",
     "hoc.link.allEspresso": "Բոլոր էսպրեսո մեքենաները",
     "hoc.contact.openMap": "Բացել քարտեզում",
+    "hoc.contact.directions": "Կառուցել երթուղի",
     "hoc.contact.mapTitle": "Smeg Armenia Showroom",
   },
 };
