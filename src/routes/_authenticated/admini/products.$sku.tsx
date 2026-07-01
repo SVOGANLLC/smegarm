@@ -177,17 +177,16 @@ function EditProduct() {
           specs_hy: parseSpecsText(f.specs_hy),
         })
         .eq("sku", sku)
-        .select("sku, price_amd, price_old, discount_percent, name, is_published")
+        .select("*")
         .maybeSingle();
       if (error) throw error;
       return assertRowUpdated(data, t("admin.saveNoRow"));
     },
     onSuccess: (saved) => {
-      hydratedSkuRef.current = null;
-      qc.setQueryData(["admin-product", sku], (prev: unknown) =>
-        prev && typeof prev === "object" ? { ...(prev as Record<string, unknown>), ...saved } : saved,
-      );
-      qc.invalidateQueries({ queryKey: ["admin-product", sku] });
+      const row = saved as Record<string, unknown>;
+      setForm(productToForm(row));
+      qc.setQueryData(["admin-product", sku], saved);
+      hydratedSkuRef.current = sku;
       qc.invalidateQueries({ queryKey: ["admin-products"] });
       qc.invalidateQueries({ queryKey: ["admin-today"] });
       qc.invalidateQueries({ queryKey: ["product", sku] });

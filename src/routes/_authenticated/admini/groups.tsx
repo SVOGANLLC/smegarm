@@ -21,6 +21,15 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { assertRowUpdated } from "@/lib/supabase-assert";
 
+type GroupNames = { ru: string; en: string; hy: string };
+
+const emptyNames = (): GroupNames => ({ ru: "", en: "", hy: "" });
+
+function groupLabelTitle(labels: ReturnType<typeof parseModelGroupLabels>, key: string) {
+  const row = labelForModelGroup(labels, key);
+  return row?.name_ru || row?.name_en || row?.name_hy || key;
+}
+
 export const Route = createFileRoute("/_authenticated/admini/groups")({
   validateSearch: (s: Record<string, unknown>) => ({
     key: typeof s.key === "string" ? s.key : undefined,
@@ -36,7 +45,7 @@ function VariantGroupsPage() {
   const [filter, setFilter] = useState("");
   const [newKey, setNewKey] = useState("");
   const [addSku, setAddSku] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [displayNames, setDisplayNames] = useState<GroupNames>(emptyNames);
 
   const groupsQ = useQuery({
     queryKey: ["admin-variant-groups"],
@@ -54,7 +63,11 @@ function VariantGroupsPage() {
 
   const openGroup = (key: string) => {
     const row = labelForModelGroup(labels, key);
-    setDisplayName(row?.name_ru || row?.name_en || "");
+    setDisplayNames({
+      ru: row?.name_ru ?? "",
+      en: row?.name_en ?? "",
+      hy: row?.name_hy ?? "",
+    });
   };
 
   useEffect(() => {
@@ -99,8 +112,12 @@ function VariantGroupsPage() {
   });
 
   const saveLabel = useMutation({
-    mutationFn: async ({ key, name }: { key: string; name: string }) => {
-      const next = upsertModelGroupLabel(labels, key, { name_ru: name, name_en: name, name_hy: name });
+    mutationFn: async ({ key, names }: { key: string; names: GroupNames }) => {
+      const next = upsertModelGroupLabel(labels, key, {
+        name_ru: names.ru.trim() || undefined,
+        name_en: names.en.trim() || undefined,
+        name_hy: names.hy.trim() || undefined,
+      });
       const json = serializeModelGroupLabels(next);
       const { data: existing, error: readErr } = await supabase
         .from("site_content")
@@ -145,9 +162,9 @@ function VariantGroupsPage() {
           <p className="text-sm text-muted-foreground">{t("admin.groups.emptyGroup")}</p>
           <GroupDetailShell
             groupKey={selectedKey}
-            displayName={displayName}
-            onDisplayNameChange={setDisplayName}
-            onSaveName={() => saveLabel.mutate({ key: selectedKey, name: displayName.trim() })}
+            displayNames={displayNames}
+            onDisplayNamesChange={setDisplayNames}
+            onSaveName={() => saveLabel.mutate({ key: selectedKey, names: displayNames })}
             savingName={saveLabel.isPending}
             addSku={addSku}
             onAddSkuChange={setAddSku}
@@ -165,9 +182,9 @@ function VariantGroupsPage() {
     return (
       <GroupDetailShell
         groupKey={selected.key}
-        displayName={displayName}
-        onDisplayNameChange={setDisplayName}
-        onSaveName={() => saveLabel.mutate({ key: selected.key, name: displayName.trim() })}
+        displayNames={displayNames}
+        onDisplayNamesChange={setDisplayNames}
+        onSaveName={() => saveLabel.mutate({ key: selected.key, names: displayNames })}
         savingName={saveLabel.isPending}
         addSku={addSku}
         onAddSkuChange={setAddSku}
@@ -239,7 +256,7 @@ function VariantGroupsPage() {
               className="flex items-center gap-3 border-b border-border px-4 py-4 transition last:border-b-0 hover:bg-secondary/40"
             >
               <div className="min-w-0 flex-1">
-                <p className="font-medium">{labelForModelGroup(labels, g.key)?.name_ru || g.key}</p>
+                <p className="font-medium">{groupLabelTitle(labels, g.key)}</p>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">
                   {g.key} · {g.product_count} {t("admin.groups.items")} · {g.colour_count} {t("admin.groups.colours")}
                 </p>
@@ -259,8 +276,8 @@ function VariantGroupsPage() {
 
 function GroupDetailShell({
   groupKey,
-  displayName,
-  onDisplayNameChange,
+  displayNames,
+  onDisplayNamesChange,
   onSaveName,
   savingName,
   addSku,
@@ -276,8 +293,8 @@ function GroupDetailShell({
   colourCount = 0,
 }: {
   groupKey: string;
-  displayName: string;
-  onDisplayNameChange: (v: string) => void;
+  displayNames: GroupNames;
+  onDisplayNamesChange: (v: GroupNames) => void;
   onSaveName: () => void;
   savingName: boolean;
   addSku: string;
@@ -312,24 +329,31 @@ function GroupDetailShell({
         {manual ? ` · ${t("admin.groups.manual")}` : productCount > 0 ? ` · ${t("admin.groups.auto")}` : ""}
       </p>
 
-      <div className="mt-6 rounded-xl border border-border bg-background p-4">
-        <label className="block text-xs text-muted-foreground">{t("admin.groups.displayName")}</label>
-        <div className="mt-1 flex gap-2">
-          <input
-            value={displayName}
-            onChange={(e) => onDisplayNameChange(e.target.value)}
-            placeholder={groupKey}
-            className="min-w-0 flex-1 rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
-          />
-          <button
-            type="button"
-            onClick={onSaveName}
-            disabled={savingName}
-            className="shrink-0 rounded-sm bg-foreground px-3 py-2 text-xs uppercase tracking-wider text-background disabled:opacity-50"
-          >
-            {t("admin.save")}
-          </button>
-        </div>
+      <div className="mt-6 rounded-xl border border-border bg-background p-4 space-y-3">
+        <p className="eyebrow text-muted-foreground">{t("admin.groups.displayName")}</p>
+        {([
+          ["ru", "admin.groups.nameRu"],
+          ["en", "admin.groups.nameEn"],
+          ["hy", "admin.groups.nameHy"],
+        ] as const).map(([lang, labelKey]) => (
+          <label key={lang} className="block">
+            <span className="text-xs text-muted-foreground">{t(labelKey)}</span>
+            <input
+              value={displayNames[lang]}
+              onChange={(e) => onDisplayNamesChange({ ...displayNames, [lang]: e.target.value })}
+              placeholder={groupKey}
+              className="mt-1 w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+            />
+          </label>
+        ))}
+        <button
+          type="button"
+          onClick={onSaveName}
+          disabled={savingName}
+          className="w-full rounded-sm bg-foreground px-3 py-2 text-xs uppercase tracking-wider text-background disabled:opacity-50"
+        >
+          {t("admin.save")}
+        </button>
       </div>
 
       {members.length > 0 && (
