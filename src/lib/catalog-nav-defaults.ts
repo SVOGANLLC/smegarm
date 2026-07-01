@@ -76,7 +76,7 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
     labels: { ru: "Вода", en: "Water", hy: "Ջուր" },
     members: [
       { type: "family", name: "Insulated bottle" },
-      { type: "category", slug: "soda-makers" },
+      { type: "family", name: "Soda Maker" },
     ],
   },
   {

@@ -31,6 +31,7 @@ import { Route as AuthenticatedAdminiProductsRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminiPartnersRouteImport } from './routes/_authenticated/admini/partners'
 import { Route as AuthenticatedAdminiOrdersRouteImport } from './routes/_authenticated/admini/orders'
 import { Route as AuthenticatedAdminiNotificationsRouteImport } from './routes/_authenticated/admini/notifications'
+import { Route as AuthenticatedAdminiMenuRouteImport } from './routes/_authenticated/admini/menu'
 import { Route as AuthenticatedAdminiInquiriesRouteImport } from './routes/_authenticated/admini/inquiries'
 import { Route as AuthenticatedAdminiHelpRouteImport } from './routes/_authenticated/admini/help'
 import { Route as AuthenticatedAdminiContentRouteImport } from './routes/_authenticated/admini/content'
@@ -158,6 +159,11 @@ const AuthenticatedAdminiNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AuthenticatedAdminiRouteRoute,
   } as any)
+const AuthenticatedAdminiMenuRoute = AuthenticatedAdminiMenuRouteImport.update({
+  id: '/menu',
+  path: '/menu',
+  getParentRoute: () => AuthenticatedAdminiRouteRoute,
+} as any)
 const AuthenticatedAdminiInquiriesRoute =
   AuthenticatedAdminiInquiriesRouteImport.update({
     id: '/inquiries',
@@ -229,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/admini/content': typeof AuthenticatedAdminiContentRoute
   '/admini/help': typeof AuthenticatedAdminiHelpRoute
   '/admini/inquiries': typeof AuthenticatedAdminiInquiriesRoute
+  '/admini/menu': typeof AuthenticatedAdminiMenuRoute
   '/admini/notifications': typeof AuthenticatedAdminiNotificationsRoute
   '/admini/orders': typeof AuthenticatedAdminiOrdersRoute
   '/admini/partners': typeof AuthenticatedAdminiPartnersRoute
@@ -260,6 +267,7 @@ export interface FileRoutesByTo {
   '/admini/content': typeof AuthenticatedAdminiContentRoute
   '/admini/help': typeof AuthenticatedAdminiHelpRoute
   '/admini/inquiries': typeof AuthenticatedAdminiInquiriesRoute
+  '/admini/menu': typeof AuthenticatedAdminiMenuRoute
   '/admini/notifications': typeof AuthenticatedAdminiNotificationsRoute
   '/admini/orders': typeof AuthenticatedAdminiOrdersRoute
   '/admini/partners': typeof AuthenticatedAdminiPartnersRoute
@@ -293,6 +301,7 @@ export interface FileRoutesById {
   '/_authenticated/admini/content': typeof AuthenticatedAdminiContentRoute
   '/_authenticated/admini/help': typeof AuthenticatedAdminiHelpRoute
   '/_authenticated/admini/inquiries': typeof AuthenticatedAdminiInquiriesRoute
+  '/_authenticated/admini/menu': typeof AuthenticatedAdminiMenuRoute
   '/_authenticated/admini/notifications': typeof AuthenticatedAdminiNotificationsRoute
   '/_authenticated/admini/orders': typeof AuthenticatedAdminiOrdersRoute
   '/_authenticated/admini/partners': typeof AuthenticatedAdminiPartnersRoute
@@ -327,6 +336,7 @@ export interface FileRouteTypes {
     | '/admini/content'
     | '/admini/help'
     | '/admini/inquiries'
+    | '/admini/menu'
     | '/admini/notifications'
     | '/admini/orders'
     | '/admini/partners'
@@ -358,6 +368,7 @@ export interface FileRouteTypes {
     | '/admini/content'
     | '/admini/help'
     | '/admini/inquiries'
+    | '/admini/menu'
     | '/admini/notifications'
     | '/admini/orders'
     | '/admini/partners'
@@ -390,6 +401,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admini/content'
     | '/_authenticated/admini/help'
     | '/_authenticated/admini/inquiries'
+    | '/_authenticated/admini/menu'
     | '/_authenticated/admini/notifications'
     | '/_authenticated/admini/orders'
     | '/_authenticated/admini/partners'
@@ -581,6 +593,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminiNotificationsRouteImport
       parentRoute: typeof AuthenticatedAdminiRouteRoute
     }
+    '/_authenticated/admini/menu': {
+      id: '/_authenticated/admini/menu'
+      path: '/menu'
+      fullPath: '/admini/menu'
+      preLoaderRoute: typeof AuthenticatedAdminiMenuRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
     '/_authenticated/admini/inquiries': {
       id: '/_authenticated/admini/inquiries'
       path: '/inquiries'
@@ -669,6 +688,7 @@ interface AuthenticatedAdminiRouteRouteChildren {
   AuthenticatedAdminiContentRoute: typeof AuthenticatedAdminiContentRoute
   AuthenticatedAdminiHelpRoute: typeof AuthenticatedAdminiHelpRoute
   AuthenticatedAdminiInquiriesRoute: typeof AuthenticatedAdminiInquiriesRoute
+  AuthenticatedAdminiMenuRoute: typeof AuthenticatedAdminiMenuRoute
   AuthenticatedAdminiNotificationsRoute: typeof AuthenticatedAdminiNotificationsRoute
   AuthenticatedAdminiOrdersRoute: typeof AuthenticatedAdminiOrdersRoute
   AuthenticatedAdminiPartnersRoute: typeof AuthenticatedAdminiPartnersRoute
@@ -684,6 +704,7 @@ const AuthenticatedAdminiRouteRouteChildren: AuthenticatedAdminiRouteRouteChildr
     AuthenticatedAdminiContentRoute: AuthenticatedAdminiContentRoute,
     AuthenticatedAdminiHelpRoute: AuthenticatedAdminiHelpRoute,
     AuthenticatedAdminiInquiriesRoute: AuthenticatedAdminiInquiriesRoute,
+    AuthenticatedAdminiMenuRoute: AuthenticatedAdminiMenuRoute,
     AuthenticatedAdminiNotificationsRoute:
       AuthenticatedAdminiNotificationsRoute,
     AuthenticatedAdminiOrdersRoute: AuthenticatedAdminiOrdersRoute,

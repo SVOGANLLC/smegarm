@@ -701,8 +701,8 @@ function applyCatalogFilters(q: CatalogQuery, f: CatalogFilters, skuIn?: string[
   const explicitSkus = f.skuIn?.length ? f.skuIn : skuIn;
   if (explicitSkus?.length) q = q.in("sku", explicitSkus);
 
-  const hasNarrowFilter = !!(f.categoryIn?.length || f.families?.length || f.category);
-  if (f.navGroupFilters && !hasNarrowFilter) {
+  // Nav-group подборки: OR across members — never AND category ∩ family.
+  if (f.navGroupFilters) {
     q = applyNavGroupOr(q, f.navGroupFilters);
   } else {
     if (f.categoryIn?.length) q = q.in("category", f.categoryIn);

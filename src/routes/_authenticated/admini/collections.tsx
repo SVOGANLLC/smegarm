@@ -394,7 +394,7 @@ function CollectionEditorCard({
   };
 
   const saveTextsOnBlur = () => {
-    if (dirty && !isSaving) void saveTexts();
+    /* single save button at bottom */
   };
 
   const fieldClass =
@@ -439,19 +439,6 @@ function CollectionEditorCard({
             )}
           </p>
           <p className="text-xs text-muted-foreground">{t("admin.collections.namesHint")}</p>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              disabled={isSaving || !dirty}
-              onClick={() => void saveTexts()}
-              className="rounded-sm bg-foreground px-4 py-2 text-xs uppercase tracking-[0.16em] text-background disabled:opacity-40"
-            >
-              {isSaving ? t("admin.loading") : t("admin.collections.saveTexts")}
-            </button>
-            {dirty && (
-              <span className="text-xs text-amber-700 dark:text-amber-400">{t("admin.collections.unsaved")}</span>
-            )}
-          </div>
           <div className="grid gap-2 sm:grid-cols-2">
             <label className="block">
               <span className={labelClass}>{t("admin.collections.nameEn")}</span>
@@ -586,6 +573,19 @@ function CollectionEditorCard({
               }}
             />
           </label>
+          <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
+            <button
+              type="button"
+              disabled={isSaving || !dirty}
+              onClick={() => void saveTexts()}
+              className="rounded-sm bg-foreground px-6 py-2.5 text-xs uppercase tracking-[0.16em] text-background disabled:opacity-40"
+            >
+              {isSaving ? t("admin.loading") : t("admin.save")}
+            </button>
+            {dirty && (
+              <span className="text-xs text-amber-700 dark:text-amber-400">{t("admin.collections.unsaved")}</span>
+            )}
+          </div>
           <CollectionProducts collectionId={c.id} collectionSlug={c.slug} t={t} />
         </div>
         <div className="flex flex-col items-end gap-3">

@@ -16,10 +16,13 @@ import {
   X,
   Handshake,
   CircleHelp,
+  Search,
+  LayoutGrid,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n, type Lang } from "@/lib/i18n";
 import { AdminThemeSwitch } from "@/components/admin/AdminThemeSwitch";
+import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
 import { getAdminTheme, initAdminTheme, type AdminTheme } from "@/lib/admin-theme";
 
 type NavItem = { to: string; labelKey: string; icon: typeof Home; exact?: boolean; adminOnly?: boolean };
@@ -30,6 +33,7 @@ const mainNav: NavItem[] = [
   { to: "/admini/inquiries", labelKey: "admin.nav.inquiries", icon: Inbox },
   { to: "/admini/products", labelKey: "admin.nav.products", icon: Package },
   { to: "/admini/collections", labelKey: "admin.nav.collections", icon: Layers },
+  { to: "/admini/menu", labelKey: "admin.nav.menuGroups", icon: LayoutGrid, adminOnly: true },
   { to: "/admini/content", labelKey: "admin.nav.content", icon: FileText, adminOnly: true },
 ];
 
@@ -131,6 +135,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="admin-shell min-h-screen bg-background text-foreground" data-admin-theme={theme}>
+      <AdminCommandPalette />
       <div className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur md:hidden">
         <button
           onClick={() => setOpen(true)}
@@ -189,7 +194,20 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <LogOut className="h-4 w-4" /> {t("admin.nav.signOut")}
           </button>
         </aside>
-        <main className="min-w-0 p-4 sm:p-6 md:p-8">{children}</main>
+        <main className="min-w-0 p-4 sm:p-6 md:p-8">
+          <div className="mb-6 hidden md:flex md:justify-end">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event("admin-open-search"))}
+              className="inline-flex items-center gap-2 rounded-sm border border-border px-3 py-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <Search className="h-3.5 w-3.5" />
+              {t("admin.search.open")}
+              <kbd className="rounded border border-border px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
+            </button>
+          </div>
+          {children}
+        </main>
       </div>
     </div>
   );

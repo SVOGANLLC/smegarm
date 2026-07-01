@@ -343,8 +343,8 @@ function CatalogPage() {
     queryKey: ["catalog", currentCat?.slug ?? null, family ?? "", section ?? "", navGroup ?? "", groupByColor, q ?? "", colours, aesthetics, theme ?? "", flag ?? "", inStock ?? false, sort ?? "", specRaw ?? "", page, shuffleKey],
     queryFn: () =>
       fetchCatalog({
-        categoryIn: effectiveCategoryIn,
-        families: effectiveFamilies,
+        categoryIn: navGroupFilters ? undefined : effectiveCategoryIn,
+        families: navGroupFilters ? undefined : effectiveFamilies,
         search: q || undefined,
         colours: colours.length ? colours : undefined,
         aesthetics: aesthetics.length ? aesthetics : undefined,

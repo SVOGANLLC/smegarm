@@ -67,17 +67,54 @@ export function navGroupLabel(group: CatalogNavGroupDef, lang: Lang): string {
 
 const CATEGORY_SLUG_ALIASES: Record<string, string> = {
   oven: "ovens",
+  ovens: "ovens",
   "food-processor": "food-processors",
+  "food-processors": "food-processors",
   knives: "knife-sets",
   "knife-block": "knife-sets",
+  "knife-sets": "knife-sets",
+  "stand-mixer": "stand-mixers",
+  "stand-mixers": "stand-mixers",
+  kettles: "kettles",
+  toasters: "toasters",
+  hoods: "hoods",
+  "wine-coolers": "wine-coolers",
+  "soda-makers": "soda-makers",
+  cookware: "cookware",
+  taps: "taps",
+  "built-in-coffee-machines": "built-in-coffee-machines",
+  "portable-induction": "portable-induction",
+  "countertop-ovens": "countertop-ovens",
+  "blast-chillers": "blast-chillers",
 };
+
+/** DB may use slightly different family spellings. */
+const FAMILY_ALIASES: Record<string, string[]> = {
+  "Soda makers": ["Soda Maker"],
+  "Insulated bottle": ["Insulated bottle", "Non insulated bottle"],
+  Blenders: ["Blenders"],
+  Toaster: ["Toaster"],
+  Kettles: ["Kettles"],
+};
+
+function expandFamilies(names: string[]): string[] {
+  const out = new Set<string>();
+  for (const name of names) {
+    const trimmed = name.trim();
+    if (!trimmed) continue;
+    out.add(trimmed);
+    for (const alt of FAMILY_ALIASES[trimmed] ?? []) out.add(alt);
+  }
+  return Array.from(out);
+}
 
 function findCategoryStat(slug: string, categories: CategoryStat[]): CategoryStat | undefined {
   const normalized = CATEGORY_SLUG_ALIASES[slug] ?? slug;
   return (
     categories.find((c) => c.slug === normalized) ??
     categories.find((c) => c.slug === slug) ??
-    categories.find((c) => slugify(c.category) === normalized)
+    categories.find((c) => c.slug === slug.toLowerCase()) ??
+    categories.find((c) => slugify(c.category_en ?? c.category) === normalized)
   );
 }
 
@@ -102,7 +139,9 @@ export function resolveNavGroupFilters(
   for (const m of group.members) {
     if (m.type === "sku") skus.add(m.sku.trim().toUpperCase());
     if (m.type === "model_group") modelGroups.add(m.key.trim());
-    if (m.type === "family") families.add(m.name.trim());
+    if (m.type === "family") {
+      for (const fam of expandFamilies(m.name)) families.add(fam);
+    }
     if (m.type === "category") {
       for (const raw of categoryRawFromSlug(m.slug, categories)) categoryIn.add(raw);
     }
