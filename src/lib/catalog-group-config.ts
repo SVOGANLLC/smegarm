@@ -68,6 +68,32 @@ export function shouldGroupCatalog(
   return true;
 }
 
+export type CatalogDisplayFilters = {
+  colours?: string[];
+  aesthetics?: string[];
+  search?: string;
+  hasSpecFilters?: boolean;
+  flag?: string;
+  inStock?: boolean;
+  theme?: string;
+};
+
+/** Flat grid when any facet/search narrows the result set (colour filter must not group variants). */
+export function shouldGroupCatalogDisplay(
+  config: CatalogGroupConfig,
+  opts: { categorySlug?: string; section?: CatalogSection } | undefined,
+  filters: CatalogDisplayFilters,
+): boolean {
+  if (filters.colours?.length) return false;
+  if (filters.aesthetics?.length) return false;
+  if (filters.search?.trim()) return false;
+  if (filters.hasSpecFilters) return false;
+  if (filters.flag) return false;
+  if (filters.inStock) return false;
+  if (filters.theme) return false;
+  return shouldGroupCatalog(config, opts);
+}
+
 export function serializeGroupByColor(enabled: boolean): string {
   return enabled ? "true" : "false";
 }

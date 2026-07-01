@@ -21,7 +21,7 @@ import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useI18n, getI18nDefaults } from "@/lib/i18n";
 import { categoryLabel as catLabel, familyLabel } from "@/lib/category-i18n";
 import { parseCatalogOrder, sortCategoriesByOrder } from "@/lib/category-order";
-import { parseCatalogGroupConfig, shouldGroupCatalog } from "@/lib/catalog-group-config";
+import { parseCatalogGroupConfig, shouldGroupCatalogDisplay } from "@/lib/catalog-group-config";
 import { parseModelGroupLabels, resolveModelGroupLabel } from "@/lib/model-group-labels";
 import { sectionCategories, sectionFamilies, sectionTitleKey, resolveAccessoryCategoryRaw, type CatalogSection } from "@/lib/catalog-sections";
 import { getEffectiveNavGroups } from "@/lib/catalog-nav";
@@ -275,10 +275,22 @@ function CatalogPage() {
 
   const activeFacets = catalogScoped ? scopedFacetsQuery.data : facetsQuery.data;
 
-  const groupByColor = shouldGroupCatalog(grouping.config, {
-    categorySlug: category,
-    section: (section ?? navGroupDef?.section) as CatalogSection | undefined,
-  });
+  const groupByColor = shouldGroupCatalogDisplay(
+    grouping.config,
+    {
+      categorySlug: category,
+      section: (section ?? navGroupDef?.section) as CatalogSection | undefined,
+    },
+    {
+      colours,
+      aesthetics,
+      search: q,
+      hasSpecFilters: countActiveSpecFilters(specFilters) > 0,
+      flag,
+      inStock,
+      theme,
+    },
+  );
   const modelGroupLabels = grouping.modelGroupLabels;
   const hideSpecFilters = !!model;
 
@@ -346,7 +358,7 @@ function CatalogPage() {
         skuIn: navGroupFilters?.skus.length ? navGroupFilters.skus : undefined,
         navGroupFilters: navGroupFilters ?? undefined,
       }),
-    enabled: !category || !!categoryRawList || !!navGroup || !!section || !!family,
+    enabled: !category || !!categoryRawList || !!navGroup || !!section || !!family || !!q,
   });
 
   const swatchHex = (canonical: string) =>

@@ -650,6 +650,36 @@ function shuffleArray<T>(items: T[], seed?: number): T[] {
 
 type CatalogQuery = ReturnType<ReturnType<typeof supabase.from>["select"]>;
 
+async function filterSkusByFacets(
+  skus: string[],
+  f: Pick<CatalogFilters, "colours" | "aesthetics" | "families" | "categoryIn" | "theme" | "inStock" | "flag">,
+): Promise<string[]> {
+  const hasFacet =
+    f.colours?.length ||
+    f.aesthetics?.length ||
+    f.families?.length ||
+    f.categoryIn?.length ||
+    f.theme ||
+    f.inStock ||
+    f.flag;
+  if (!hasFacet || !skus.length) return skus;
+
+  let q = supabase.from("products").select("sku").in("sku", skus).eq("is_published", true);
+  if (f.colours?.length) q = q.in("colour", f.colours);
+  if (f.aesthetics?.length) q = q.in("aesthetic", f.aesthetics);
+  if (f.families?.length) q = q.in("family", f.families);
+  if (f.categoryIn?.length) q = q.in("category", f.categoryIn);
+  if (f.theme) q = q.eq("theme_key", f.theme);
+  if (f.inStock) q = q.eq("availability", "in_stock");
+  if (f.flag === "sale") q = q.not("price_old", "is", null);
+  else if (f.flag) q = q.eq(f.flag, true);
+
+  const { data, error } = await q;
+  if (error) throw error;
+  const allowed = new Set(((data ?? []) as Array<{ sku: string }>).map((r) => r.sku));
+  return skus.filter((s) => allowed.has(s));
+}
+
 function applyNavGroupOr(q: CatalogQuery, nf: NavGroupFilters): CatalogQuery {
   if (nf.skus.length) return q.in("sku", nf.skus);
   const parts: string[] = [];
@@ -715,6 +745,9 @@ async function fetchGroupedCatalog(
       const allowed = new Set(specSkuIn);
       skus = skus.filter((s) => allowed.has(s));
     }
+    if (!skus.length) return { items: [], total: 0 };
+
+    skus = await filterSkusByFacets(skus, f);
     if (!skus.length) return { items: [], total: 0 };
 
     const { data, error } = await supabase
@@ -808,20 +841,15 @@ export async function fetchCatalog(f: CatalogFilters): Promise<{ items: CatalogD
     }
     if (!ranked.length) return { items: [], total: 0 };
 
-    const pageSkus = ranked.slice(offset, offset + limit).map((r) => r.sku);
-    if (!pageSkus.length) return { items: [], total: ranked.length };
+    const orderedSkus = ranked.map((r) => r.sku);
+    const filteredSkus = await filterSkusByFacets(orderedSkus, f);
+    const total = filteredSkus.length;
+    if (!total) return { items: [], total: 0 };
 
-    let pq = supabase.from("products").select(PRODUCT_COLS).in("sku", pageSkus).eq("is_published", true);
-    if (f.colours?.length) pq = pq.in("colour", f.colours);
-    if (f.aesthetics?.length) pq = pq.in("aesthetic", f.aesthetics);
-    if (f.families?.length) pq = pq.in("family", f.families);
-    if (f.categoryIn?.length) pq = pq.in("category", f.categoryIn);
-    if (f.theme) pq = pq.eq("theme_key", f.theme);
-    if (f.inStock) pq = pq.eq("availability", "in_stock");
-    if (f.flag === "sale") pq = pq.not("price_old", "is", null);
-    else if (f.flag) pq = pq.eq(f.flag, true);
+    const pageSkus = filteredSkus.slice(offset, offset + limit);
+    if (!pageSkus.length) return { items: [], total };
 
-    const { data, error } = await pq;
+    const { data, error } = await supabase.from("products").select(PRODUCT_COLS).in("sku", pageSkus).eq("is_published", true);
     if (error) throw error;
     const bySku = new Map(((data ?? []) as Product[]).map((p) => [p.sku, p]));
     let items = pageSkus.map((sku) => bySku.get(sku)).filter((p): p is Product => !!p);
@@ -830,7 +858,7 @@ export async function fetchCatalog(f: CatalogFilters): Promise<{ items: CatalogD
     else if (f.sort === "price-desc") items.sort((a, b) => (b.price_amd ?? 0) - (a.price_amd ?? 0));
     else items = shuffleArray(items, f.shuffleSeed);
 
-    return { items, total: ranked.length };
+    return { items, total };
   }
 
   if (!f.sort) {
