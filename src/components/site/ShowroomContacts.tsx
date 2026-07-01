@@ -5,9 +5,9 @@ import { Reveal, SectionHeader } from "./Section";
 import { SmegWordmark } from "./SmegWordmark";
 
 const MAP_EMBED_URL =
-  "https://www.openstreetmap.org/export/embed.html?bbox=44.504432%2C40.162068%2C44.513432%2C40.167068&layer=mapnik&marker=40.164568%2C44.508932";
+  "https://maps.google.com/maps?q=40.164568,44.508932&z=17&hl=ru&output=embed";
 
-const MAP_LINK_URL = "https://www.openstreetmap.org/?mlat=40.164568&mlon=44.508932#map=17/40.164568/44.508932";
+const MAP_LINK_URL = "https://www.google.com/maps/search/?api=1&query=40.164568,44.508932";
 
 function ContactRow({
   icon,

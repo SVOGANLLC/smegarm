@@ -373,6 +373,7 @@ const E: Record<string, T3> = {
   "admin.products.colSku": ["Артикул / название", "SKU / name", "Արտիկուլ / անվանում"],
   "admin.products.colCategory": ["Категория", "Category", "Կատեգորիա"],
   "admin.products.colPrice": ["Цена", "Price", "Գին"],
+  "admin.products.enterPrice": ["Введите цену", "Enter price", "Մուտքագրեք գին"],
   "admin.products.colStock": ["Остаток", "Stock", "Մնացորդ"],
   "admin.products.colAvail": ["Наличие", "Availability", "Առկայություն"],
   "admin.products.colBadges": ["Метки", "Badges", "Պիտակներ"],

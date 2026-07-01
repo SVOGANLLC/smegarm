@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Pencil, Sparkles, Flame, Tag, Plus, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { z } from "zod";
+import { assertRowUpdated } from "@/lib/supabase-assert";
 
 const productsSearchSchema = z.object({
   noPrice: z.boolean().optional(),
@@ -114,6 +115,25 @@ function AdminProducts() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-products"] });
       qc.invalidateQueries({ queryKey: ["admin-stats"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
+  });
+
+  const savePrice = useMutation({
+    mutationFn: async ({ sku, price_amd }: { sku: string; price_amd: number | null }) => {
+      const { data, error } = await supabase
+        .from("products")
+        .update({ price_amd })
+        .eq("sku", sku)
+        .select("sku, price_amd")
+        .maybeSingle();
+      if (error) throw error;
+      return assertRowUpdated(data, t("admin.saveNoRow"));
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-products"] });
+      qc.invalidateQueries({ queryKey: ["admin-today"] });
+      toast.success(t("admin.saved"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
@@ -303,7 +323,13 @@ function AdminProducts() {
                 </td>
                 <td className="p-3 text-muted-foreground">{p.category}</td>
                 <td className="p-3">
-                  {p.price_amd ? p.price_amd.toLocaleString("ru-RU") : <span className="text-muted-foreground">—</span>}
+                  <PriceCell
+                    sku={p.sku}
+                    price={p.price_amd}
+                    highlight={!!noPrice}
+                    saving={savePrice.isPending}
+                    onSave={(price_amd) => savePrice.mutate({ sku: p.sku, price_amd })}
+                  />
                   {p.discount_percent > 0 && (
                     <span className="ml-2 rounded-full bg-foreground px-2 py-0.5 text-[10px] text-background">
                       -{p.discount_percent}%
@@ -392,6 +418,71 @@ function AdminProducts() {
         </div>
       )}
     </div>
+  );
+}
+
+function PriceCell({
+  sku,
+  price,
+  highlight,
+  saving,
+  onSave,
+}: {
+  sku: string;
+  price: number | null;
+  highlight?: boolean;
+  saving?: boolean;
+  onSave: (price: number | null) => void;
+}) {
+  const { t } = useI18n();
+  const [val, setVal] = useState(price != null ? String(price) : "");
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    setVal(price != null ? String(price) : "");
+    setDirty(false);
+  }, [sku, price]);
+
+  const commit = () => {
+    if (!dirty) return;
+    const trimmed = val.trim();
+    const next = trimmed ? parseInt(trimmed, 10) : null;
+    if (trimmed && (next == null || Number.isNaN(next) || next < 0)) {
+      toast.error(t("admin.product.priceInvalid"));
+      setVal(price != null ? String(price) : "");
+      setDirty(false);
+      return;
+    }
+    if (next === price) {
+      setDirty(false);
+      return;
+    }
+    onSave(next);
+    setDirty(false);
+  };
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      value={val}
+      disabled={saving}
+      placeholder={highlight ? t("admin.products.enterPrice") : "—"}
+      onChange={(e) => {
+        setVal(e.target.value.replace(/[^0-9]/g, ""));
+        setDirty(true);
+      }}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          commit();
+        }
+      }}
+      className={`w-28 rounded-sm border bg-background px-2 py-1.5 text-sm outline-none focus:border-foreground ${
+        highlight && !price ? "border-amber-500/60" : "border-border"
+      }`}
+    />
   );
 }
 

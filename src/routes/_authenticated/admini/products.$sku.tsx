@@ -117,6 +117,10 @@ function EditProduct() {
   });
 
   useEffect(() => {
+    hydratedSkuRef.current = null;
+  }, [sku]);
+
+  useEffect(() => {
     if (!q.data || hydratedSkuRef.current === sku) return;
     setForm(productToForm(q.data as Record<string, unknown>));
     hydratedSkuRef.current = sku;
@@ -173,15 +177,19 @@ function EditProduct() {
           specs_hy: parseSpecsText(f.specs_hy),
         })
         .eq("sku", sku)
-        .select("*")
+        .select("sku, price_amd, price_old, discount_percent, name, is_published")
         .maybeSingle();
       if (error) throw error;
       return assertRowUpdated(data, t("admin.saveNoRow"));
     },
     onSuccess: (saved) => {
-      setForm(productToForm(saved as Record<string, unknown>));
-      qc.setQueryData(["admin-product", sku], saved);
+      hydratedSkuRef.current = null;
+      qc.setQueryData(["admin-product", sku], (prev: unknown) =>
+        prev && typeof prev === "object" ? { ...(prev as Record<string, unknown>), ...saved } : saved,
+      );
+      qc.invalidateQueries({ queryKey: ["admin-product", sku] });
       qc.invalidateQueries({ queryKey: ["admin-products"] });
+      qc.invalidateQueries({ queryKey: ["admin-today"] });
       qc.invalidateQueries({ queryKey: ["product", sku] });
       toast.success(t("admin.saved"));
     },

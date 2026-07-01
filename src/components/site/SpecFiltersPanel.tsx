@@ -10,6 +10,9 @@ import {
   type SpecRangeFacet,
 } from "@/lib/spec-filters";
 
+/** Hidden from catalog sidebar — too noisy or low value for shoppers. */
+const HIDDEN_SPEC_SLUGS = new Set(["energy_class", "power_source"]);
+
 type Props = {
   facets: SpecFacet[];
   active: SpecFilters;
@@ -21,6 +24,7 @@ type Props = {
 export function SpecFiltersPanel({ facets, active, onToggleEnum, onSetRange, onClearField }: Props) {
   const { lang, t } = useI18n();
   const visible = facets.filter((f) => {
+    if (HIDDEN_SPEC_SLUGS.has(f.slug)) return false;
     if (f.type === "enum") return f.values.length > 0;
     return f.count > 0;
   });
