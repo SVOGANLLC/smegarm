@@ -20,8 +20,8 @@ export function ColorSwitcher({
 }) {
   const { lang, t } = useI18n();
   const { data: variants } = useQuery({
-    queryKey: ["variants", modelGroup],
-    queryFn: () => (modelGroup ? fetchProductVariants(modelGroup) : Promise.resolve([])),
+    queryKey: ["variants", modelGroup, currentSku],
+    queryFn: () => (modelGroup ? fetchProductVariants(modelGroup, currentSku) : Promise.resolve([])),
     enabled: !!modelGroup,
     staleTime: 5 * 60_000,
   });

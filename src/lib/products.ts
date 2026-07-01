@@ -7,6 +7,8 @@ import {
   dedupeVariants,
   normalizeShuffleSeed,
   sortGroups,
+  variantGroupKey,
+  variantMatchesGroupKey,
   type GroupSkuRow,
 } from "@/lib/catalog-grouping";
 
@@ -408,11 +410,24 @@ export async function fetchTheme(key: string): Promise<Theme | null> {
 const VARIANT_COLS =
   "sku,colour,colour_en,colour_hy,main_image,price_amd,model_group,name,name_en,name_hy,availability,stock_qty,stock_reserved,lead_time_days";
 
-export async function fetchProductVariants(modelGroup: string): Promise<Variant[]> {
+export async function fetchProductVariants(modelGroup: string, sku?: string): Promise<Variant[]> {
+  const key = sku ? variantGroupKey({ sku, model_group: modelGroup }) : modelGroup;
+  if (/^HBAC\d+$/i.test(key)) {
+    const { data, error } = await supabase
+      .from("products")
+      .select(VARIANT_COLS)
+      .ilike("sku", `${key}%`)
+      .eq("is_published", true)
+      .not("colour", "is", null)
+      .order("sku", { ascending: true })
+      .limit(40);
+    if (error) throw error;
+    return dedupeVariants((data ?? []) as Variant[]);
+  }
   const { data, error } = await supabase
     .from("products")
     .select(VARIANT_COLS)
-    .eq("model_group", modelGroup)
+    .eq("model_group", key)
     .eq("is_published", true)
     .not("colour", "is", null)
     .order("sku", { ascending: true })
@@ -426,24 +441,37 @@ export async function fetchVariantsByModelGroups(modelGroups: string[]): Promise
   const out = new Map<string, Variant[]>();
   if (!unique.length) return out;
 
-  const { data, error } = await supabase
-    .from("products")
-    .select(VARIANT_COLS)
-    .in("model_group", unique)
-    .eq("is_published", true)
-    .not("colour", "is", null)
-    .order("sku", { ascending: true });
-  if (error) throw error;
+  const standardKeys = unique.filter((k) => !/^HBAC\d+$/i.test(k));
+  const hbacKeys = unique.filter((k) => /^HBAC\d+$/i.test(k));
+  const allRows: Variant[] = [];
 
-  for (const row of (data ?? []) as Variant[]) {
-    const mg = row.model_group;
-    if (!mg) continue;
-    const list = out.get(mg) ?? [];
-    list.push(row);
-    out.set(mg, list);
+  if (standardKeys.length) {
+    const { data, error } = await supabase
+      .from("products")
+      .select(VARIANT_COLS)
+      .in("model_group", standardKeys)
+      .eq("is_published", true)
+      .not("colour", "is", null)
+      .order("sku", { ascending: true });
+    if (error) throw error;
+    allRows.push(...((data ?? []) as Variant[]));
   }
-  for (const [mg, list] of out) {
-    out.set(mg, dedupeVariants(list));
+
+  for (const prefix of hbacKeys) {
+    const { data, error } = await supabase
+      .from("products")
+      .select(VARIANT_COLS)
+      .ilike("sku", `${prefix}%`)
+      .eq("is_published", true)
+      .not("colour", "is", null)
+      .order("sku", { ascending: true });
+    if (error) throw error;
+    allRows.push(...((data ?? []) as Variant[]));
+  }
+
+  for (const key of unique) {
+    const rows = allRows.filter((v) => variantMatchesGroupKey(v, key));
+    out.set(key, dedupeVariants(rows));
   }
   return out;
 }
@@ -784,9 +812,7 @@ async function fetchGroupedCatalog(
     .eq("is_published", true);
   if (pErr) throw pErr;
 
-  const modelGroups = pageGroups
-    .map((g) => rowsBySku.get(g.representativeSku)?.model_group ?? "")
-    .filter(Boolean);
+  const modelGroups = pageGroups.map((g) => g.key).filter(Boolean);
   const variantsMap = await fetchVariantsByModelGroups(modelGroups);
 
   const bySku = new Map(((products ?? []) as Product[]).map((p) => [p.sku, p]));
@@ -794,11 +820,9 @@ async function fetchGroupedCatalog(
     .map((g) => {
       const p = bySku.get(g.representativeSku);
       if (!p) return null;
-      const mg = p.model_group?.trim();
+      const mg = g.key;
       const groupSkuSet = new Set(g.skus);
-      const variants = mg
-        ? variantsMap.get(mg)?.filter((v) => groupSkuSet.has(v.sku))
-        : undefined;
+      const variants = mg ? variantsMap.get(mg)?.filter((v) => groupSkuSet.has(v.sku)) : undefined;
       const variantCount = variants?.length ?? 1;
       return {
         ...p,

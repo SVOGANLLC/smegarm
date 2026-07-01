@@ -15,14 +15,31 @@ export type ProductGroup = {
 };
 
 export function groupKeyFor(row: GroupSkuRow): string {
-  const mg = row.model_group?.trim();
-  if (mg) return mg;
   const sku = row.sku.toUpperCase();
   const hbac = sku.match(/^(HBAC\d+)/);
   if (hbac) return hbac[1];
+
+  const mg = row.model_group?.trim();
+  if (mg) {
+    if (/^HBAC\d+$/i.test(mg)) return mg.toUpperCase();
+    const prefix = mg.match(/^(HBAC\d+)\|/i);
+    if (prefix) return prefix[1].toUpperCase();
+    return mg;
+  }
+
   if (sku.startsWith("KLF03") && sku.endsWith("MEU")) return "KLF03-MATT";
   if (sku.startsWith("KLF03")) return "KLF03-GLOSS";
   return row.sku;
+}
+
+/** Canonical key for colour-variant lookups (catalog cards, PDP swatches). */
+export function variantGroupKey(row: { sku: string; model_group?: string | null }): string {
+  return groupKeyFor({ sku: row.sku, model_group: row.model_group ?? null, price_amd: null });
+}
+
+export function variantMatchesGroupKey(v: { sku: string; model_group?: string | null }, key: string): boolean {
+  if (variantGroupKey(v) === key) return true;
+  return v.model_group === key;
 }
 
 /** Pick one SKU per model_group; lowest price, then alphabetical. */
