@@ -35,5 +35,11 @@ BEGIN
 END;
 $$;
 
--- Recompute HBAC rows via trigger
-UPDATE public.products SET sku = sku WHERE sku ~* '^HBAC[0-9]+';
+-- Recompute HBAC rows via trigger (family column is in trigger OF list)
+UPDATE public.products SET family = family WHERE sku ~* '^HBAC[0-9]+';
+
+-- Recompute model_group when SKU prefix changes
+DROP TRIGGER IF EXISTS trg_products_compute_derived ON public.products;
+CREATE TRIGGER trg_products_compute_derived
+  BEFORE INSERT OR UPDATE OF sku, name, family, colour, aesthetic ON public.products
+  FOR EACH ROW EXECUTE FUNCTION products_compute_derived();
