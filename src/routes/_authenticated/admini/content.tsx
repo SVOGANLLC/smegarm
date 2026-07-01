@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useRef, useState } from "react";
@@ -17,14 +17,6 @@ export const Route = createFileRoute("/_authenticated/admini/content")({
   },
   component: ContentPage,
 });
-
-type TabId = "homepage" | "house-of-coffee" | "contacts";
-
-const TABS: { id: TabId; labelKey: string }[] = [
-  { id: "homepage", labelKey: "admin.content.tab.homepage" },
-  { id: "house-of-coffee", labelKey: "admin.content.tab.hoc" },
-  { id: "contacts", labelKey: "admin.content.tab.contacts" },
-];
 
 const HOMEPAGE_BLOCKS: ContentBlock[] = [
   {
@@ -122,12 +114,20 @@ const CONTACT_BLOCKS: ContentBlock[] = [
   },
 ];
 
+type SectionId = ContentBlock["key"] | "house-of-coffee";
+
+const SECTIONS: { id: SectionId; labelKey: string; group: "site" | "contacts" | "hoc" }[] = [
+  ...HOMEPAGE_BLOCKS.map((b) => ({ id: b.key as SectionId, labelKey: b.labelKey, group: "site" as const })),
+  ...CONTACT_BLOCKS.map((b) => ({ id: b.key as SectionId, labelKey: b.labelKey, group: "contacts" as const })),
+  { id: "house-of-coffee", labelKey: "admin.content.tab.hoc", group: "hoc" },
+];
+
 type BlockValue = Record<string, Partial<Record<Lang, string>>>;
 
 function ContentPage() {
   const { t } = useI18n();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<TabId>("homepage");
+  const [section, setSection] = useState<SectionId>("hero");
   const q = useQuery({
     queryKey: ["site-content"],
     queryFn: async () => {
@@ -173,7 +173,7 @@ function ContentPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["site-content"] });
       qc.invalidateQueries({ queryKey: siteContentQueryKey });
-      toast.success(t("admin.content.savedRefresh"));
+      toast.success(t("admin.saved"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
@@ -190,90 +190,123 @@ function ContentPage() {
     });
   };
 
-  const updateStyle = (i18nKey: string, patch: Partial<import("@/lib/content-styles").ContentStyle>) => {
-    setStyles((prev) => {
-      const cur = { ...(prev[i18nKey] ?? {}) };
-      for (const [k, v] of Object.entries(patch)) {
-        if (v === "" || v == null) delete (cur as Record<string, unknown>)[k];
-        else (cur as Record<string, unknown>)[k] = v;
-      }
-      const next = { ...prev };
-      if (Object.keys(cur).length === 0) delete next[i18nKey];
-      else next[i18nKey] = cur;
-      return next;
-    });
-  };
-
   const persistBlock = async (key: string, value: BlockValue) => {
     setState((prev) => ({ ...prev, [key]: value }));
     await save.mutateAsync({ key, value, styles });
   };
 
-  const activeBlocks = tab === "homepage" ? HOMEPAGE_BLOCKS : tab === "contacts" ? CONTACT_BLOCKS : [];
+  const activeBlock =
+    section === "house-of-coffee"
+      ? null
+      : [...HOMEPAGE_BLOCKS, ...CONTACT_BLOCKS].find((b) => b.key === section) ?? HOMEPAGE_BLOCKS[0];
   const hocValue = state["house-of-coffee"] ?? {};
 
   return (
-    <div>
-      <h1 className="font-serif text-4xl">{t("admin.content.title")}</h1>
-      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{t("admin.content.desc")}</p>
+    <div className="mx-auto max-w-4xl">
+      <h1 className="font-serif text-3xl">{t("admin.content.title")}</h1>
+      <p className="mt-2 text-sm text-muted-foreground">{t("admin.content.simpleDesc")}</p>
+      <p className="mt-2 text-xs text-muted-foreground">
+        {t("admin.content.categories.menuHint")}{" "}
+        <Link to="/admini/menu" className="underline hover:text-foreground">
+          {t("admin.nav.menuGroups")}
+        </Link>
+      </p>
 
-      <div className="mt-8 flex flex-wrap gap-2 border-b border-border pb-4">
-        {TABS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => setTab(item.id)}
-            className={`rounded-full px-5 py-2 text-xs uppercase tracking-[0.16em] transition ${
-              tab === item.id ? "bg-foreground text-background" : "bg-secondary text-foreground/70 hover:text-foreground"
-            }`}
-          >
-            {t(item.labelKey)}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-8 space-y-6">
-        {tab === "house-of-coffee" && (
-          <>
-            <HouseOfCoffeeEditor
-              value={hocValue}
-              onChange={(next) => setState((prev) => ({ ...prev, "house-of-coffee": next }))}
-              onPersist={async (next) => {
-                setState((prev) => ({ ...prev, "house-of-coffee": next }));
-                await save.mutateAsync({ key: "house-of-coffee", value: next, styles });
-              }}
-            />
+      <div className="mt-8 grid gap-8 md:grid-cols-[200px_1fr]">
+        <nav className="space-y-4">
+          <div>
+            <p className="mb-2 px-2 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{t("admin.content.group.site")}</p>
+            <ul className="space-y-0.5">
+              {SECTIONS.filter((s) => s.group === "site").map((s) => (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => setSection(s.id)}
+                    className={`w-full rounded-sm px-3 py-2 text-left text-sm transition ${
+                      section === s.id ? "bg-foreground text-background" : "text-foreground/70 hover:bg-secondary"
+                    }`}
+                  >
+                    {t(s.labelKey)}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="mb-2 px-2 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{t("admin.content.group.contacts")}</p>
+            <ul className="space-y-0.5">
+              {SECTIONS.filter((s) => s.group === "contacts").map((s) => (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => setSection(s.id)}
+                    className={`w-full rounded-sm px-3 py-2 text-left text-sm transition ${
+                      section === s.id ? "bg-foreground text-background" : "text-foreground/70 hover:bg-secondary"
+                    }`}
+                  >
+                    {t(s.labelKey)}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="mb-2 px-2 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{t("admin.content.tab.hoc")}</p>
             <button
-              onClick={() => save.mutate({ key: "house-of-coffee", value: hocValue, styles })}
-              className="rounded-sm bg-foreground px-6 py-3 text-xs uppercase tracking-[0.2em] text-background hover:opacity-90"
+              type="button"
+              onClick={() => setSection("house-of-coffee")}
+              className={`w-full rounded-sm px-3 py-2 text-left text-sm transition ${
+                section === "house-of-coffee" ? "bg-foreground text-background" : "text-foreground/70 hover:bg-secondary"
+              }`}
             >
-              {t("admin.hoc.save")}
+              {t("admin.content.tab.hoc")}
             </button>
-          </>
-        )}
+          </div>
+        </nav>
 
-        {activeBlocks.map((b) => {
-          const v = state[b.key] ?? {};
-          return (
-            <div key={b.key}>
-              <ContentBlockEditor
-                block={b}
-                value={v}
-                styles={styles}
-                onFieldChange={(i18nKey, lang, value) => updateField(b.key, i18nKey, lang, value)}
-                onStyleChange={updateStyle}
-                onValueReplace={(next) => setState((prev) => ({ ...prev, [b.key]: next }))}
-                onPersist={(next) => persistBlock(b.key, next)}
+        <div>
+          {section === "house-of-coffee" ? (
+            <>
+              <HouseOfCoffeeEditor
+                value={hocValue}
+                onChange={(next) => setState((prev) => ({ ...prev, "house-of-coffee": next }))}
+                onPersist={async (next) => {
+                  setState((prev) => ({ ...prev, "house-of-coffee": next }));
+                  await save.mutateAsync({ key: "house-of-coffee", value: next, styles });
+                }}
               />
               <button
-                onClick={() => void persistBlock(b.key, state[b.key] ?? {})}
-                className="mt-4 rounded-sm bg-foreground px-5 py-2 text-xs uppercase tracking-[0.2em] text-background hover:opacity-90"
+                type="button"
+                disabled={save.isPending}
+                onClick={() => save.mutate({ key: "house-of-coffee", value: hocValue, styles })}
+                className="mt-6 w-full rounded-sm bg-foreground py-3 text-xs uppercase tracking-[0.18em] text-background disabled:opacity-50 sm:w-auto sm:px-10"
               >
-                {t("admin.content.saveBlock")}
+                {save.isPending ? t("admin.loading") : t("admin.save")}
               </button>
-            </div>
-          );
-        })}
+            </>
+          ) : activeBlock ? (
+            <>
+              <ContentBlockEditor
+                block={activeBlock}
+                value={state[activeBlock.key] ?? {}}
+                styles={styles}
+                simple
+                onFieldChange={(i18nKey, lang, value) => updateField(activeBlock.key, i18nKey, lang, value)}
+                onStyleChange={() => {}}
+                onValueReplace={(next) => setState((prev) => ({ ...prev, [activeBlock.key]: next }))}
+                onPersist={(next) => persistBlock(activeBlock.key, next)}
+              />
+              <button
+                type="button"
+                disabled={save.isPending}
+                onClick={() => void persistBlock(activeBlock.key, state[activeBlock.key] ?? {})}
+                className="mt-6 w-full rounded-sm bg-foreground py-3 text-xs uppercase tracking-[0.18em] text-background disabled:opacity-50 sm:w-auto sm:px-10"
+              >
+                {save.isPending ? t("admin.loading") : t("admin.save")}
+              </button>
+            </>
+          ) : null}
+        </div>
       </div>
     </div>
   );

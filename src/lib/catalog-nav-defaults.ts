@@ -6,7 +6,7 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
   {
     id: "major-cooking",
     section: "large",
-    labels: { ru: "Приготовление", en: "Cooking", hy: "Խոհանոց" },
+    labels: { ru: "Духовки и варка", en: "Cooking", hy: "Խոհանոց" },
     members: [
       { type: "family", name: "Oven" },
       { type: "family", name: "Hob" },
@@ -82,7 +82,7 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
   {
     id: "food-prep",
     section: "small",
-    labels: { ru: "Приготовление", en: "Food preparation", hy: "Պատրաստում" },
+    labels: { ru: "Миксеры и блендеры", en: "Food preparation", hy: "Պատրաստում" },
     members: [
       { type: "category", slug: "stand-mixers" },
       { type: "family", name: "Hand Blenders" },
@@ -103,7 +103,7 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
   {
     id: "cooking-small",
     section: "small",
-    labels: { ru: "Готовка", en: "Cooking", hy: "Խոհարարություն" },
+    labels: { ru: "Настольная готовка", en: "Countertop cooking", hy: "Խոհարարություն" },
     members: [
       { type: "family", name: "Countertop Combi Oven" },
       { type: "category", slug: "portable-induction" },

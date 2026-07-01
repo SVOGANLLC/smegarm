@@ -458,6 +458,14 @@ const E: Record<string, T3> = {
 
   // Content editor
   "admin.content.title": ["Контент сайта", "Site content", "Կայքի բովանդակություն"],
+  "admin.content.simpleDesc": [
+    "Выберите раздел слева, отредактируйте тексты на трёх языках и нажмите «Сохранить».",
+    "Pick a section on the left, edit texts in three languages, then Save.",
+    "Ընտրեք բաժինը ձախից, խմբագրեք տեքստերը և սեղմեք «Պահպել»։",
+  ],
+  "admin.content.group.site": ["Главная страница", "Homepage", "Գլխավոր"],
+  "admin.content.group.contacts": ["Контакты", "Contacts", "Կապ"],
+  "admin.content.categories.menuHint": ["Подборки в меню каталога редактируются в", "Catalog menu collections are edited in", "Կատալոգի ընտրանքները՝"],
   "admin.content.desc": [
     "Тексты и изображения страниц. Выберите раздел вкладкой сверху. Пустое поле = текст по умолчанию.",
     "Page copy and images. Pick a section with the tabs above. Empty field = default text.",

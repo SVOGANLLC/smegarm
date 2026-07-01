@@ -11,6 +11,7 @@ export const Route = createFileRoute("/_authenticated/admini/")({
 
 type RowProps = {
   to: string;
+  search?: { noPrice?: boolean; hidden?: boolean };
   label: string;
   hint?: string;
   count?: number;
@@ -18,10 +19,11 @@ type RowProps = {
   icon: typeof ShoppingCart;
 };
 
-function MenuRow({ to, label, hint, count, urgent, icon: Icon }: RowProps) {
+function MenuRow({ to, search, label, hint, count, urgent, icon: Icon }: RowProps) {
   return (
     <Link
       to={to}
+      search={search}
       className="flex items-center gap-4 border-b border-border px-4 py-4 transition last:border-b-0 hover:bg-secondary/40"
     >
       <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />
@@ -116,6 +118,7 @@ function AdminHome() {
             {(s?.hidden ?? 0) > 0 && (
               <MenuRow
                 to="/admini/products"
+                search={{ hidden: true }}
                 icon={Package}
                 label={t("admin.home.actionHiddenProducts")}
                 count={s?.hidden}
@@ -124,6 +127,7 @@ function AdminHome() {
             {(s?.noPrice ?? 0) > 0 && (
               <MenuRow
                 to="/admini/products"
+                search={{ noPrice: true }}
                 icon={Package}
                 label={t("admin.home.actionNoPrice")}
                 count={s?.noPrice}

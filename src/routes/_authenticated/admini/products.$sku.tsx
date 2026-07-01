@@ -4,8 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, Copy, Upload, X } from "lucide-react";
-import { useServerFn } from "@tanstack/react-start";
-import { translateProduct } from "@/lib/translate.functions";
 import { useI18n } from "@/lib/i18n";
 import { ProductCollectionsEditor } from "@/components/admin/ProductCollectionsEditor";
 import {
@@ -749,37 +747,12 @@ function I18nContent({
 }) {
   const { t } = useI18n();
   const [tab, setTab] = useState<"ru" | "en" | "hy">("ru");
-  const translate = useServerFn(translateProduct);
-  const [busy, setBusy] = useState(false);
 
   const fields: Record<"ru" | "en" | "hy", { nameKey: keyof FormState; descKey: keyof FormState; labelKey: string }> = {
     ru: { nameKey: "name", descKey: "description", labelKey: "admin.content.langRu" },
     en: { nameKey: "name_en", descKey: "description_en", labelKey: "admin.content.langEn" },
     hy: { nameKey: "name_hy", descKey: "description_hy", labelKey: "admin.content.langHy" },
   };
-
-  async function runAI() {
-    setBusy(true);
-    try {
-      await translate({ data: { sku, overwrite: true } });
-      toast.success(t("admin.product.translateDone"));
-      // Reload form values from server
-      const { data } = await supabase.from("products").select("name_en,description_en,name_hy,description_hy").eq("sku", sku).maybeSingle();
-      if (data) {
-        setForm({
-          ...form,
-          name_en: data.name_en ?? form.name_en,
-          description_en: data.description_en ?? form.description_en,
-          name_hy: data.name_hy ?? form.name_hy,
-          description_hy: data.description_hy ?? form.description_hy,
-        });
-      }
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("admin.product.translateError"));
-    } finally {
-      setBusy(false);
-    }
-  }
 
   const f = fields[tab];
 
@@ -800,14 +773,6 @@ function I18nContent({
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={runAI}
-          disabled={busy}
-          className="rounded-sm border border-border px-3 py-1.5 text-xs uppercase tracking-[0.14em] hover:border-foreground disabled:opacity-50"
-        >
-          {busy ? "AI…" : t("admin.product.translateAi")}
-        </button>
       </div>
       <Field label={t("admin.product.nameLang", { lang: t(f.labelKey) })}>
         <input

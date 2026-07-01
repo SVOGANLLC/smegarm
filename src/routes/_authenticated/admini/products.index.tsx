@@ -3,12 +3,19 @@ type ToggleableField = "is_published" | "is_bestseller" | "is_new" | "is_special
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Eye, EyeOff, Pencil, Sparkles, Flame, Tag, Plus } from "lucide-react";
+import { Eye, EyeOff, Pencil, Sparkles, Flame, Tag, Plus, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { z } from "zod";
+
+const productsSearchSchema = z.object({
+  noPrice: z.boolean().optional(),
+  hidden: z.boolean().optional(),
+});
 
 export const Route = createFileRoute("/_authenticated/admini/products/")({
+  validateSearch: (s) => productsSearchSchema.parse(s),
   component: AdminProducts,
 });
 
@@ -17,14 +24,20 @@ const PAGE = 30;
 function AdminProducts() {
   const { t } = useI18n();
   const qc = useQueryClient();
-  const navigate = useNavigate();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { noPrice, hidden } = Route.useSearch();
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [category, setCategory] = useState<string>("");
-  const [visibility, setVisibility] = useState<"all" | "published" | "hidden">("all");
+  const [visibility, setVisibility] = useState<"all" | "published" | "hidden">(hidden ? "hidden" : "all");
   const [availability, setAvailability] = useState<string>("");
   const [flagFilter, setFlagFilter] = useState<"" | "is_bestseller" | "is_new" | "is_special_offer" | "is_featured">("");
   const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    setVisibility(hidden ? "hidden" : "all");
+    setPage(1);
+  }, [hidden, noPrice]);
 
   const categories = useQuery({
     queryKey: ["admin-product-categories"],
@@ -42,7 +55,7 @@ function AdminProducts() {
   });
 
   const list = useQuery({
-    queryKey: ["admin-products", q, page, category, visibility, availability, flagFilter],
+    queryKey: ["admin-products", q, page, category, visibility, availability, flagFilter, noPrice ?? false, hidden ?? false],
     queryFn: async () => {
       const term = q.trim();
       let skuFilter: string[] | null = null;
@@ -67,9 +80,13 @@ function AdminProducts() {
         .order("name", { ascending: true })
         .range((page - 1) * PAGE, page * PAGE - 1);
       if (skuFilter) qb = qb.in("sku", skuFilter);
-      if (category) qb = qb.eq("category", category);
-      if (visibility === "published") qb = qb.eq("is_published", true);
-      else if (visibility === "hidden") qb = qb.eq("is_published", false);
+      if (noPrice) {
+        qb = qb.eq("is_published", true).is("price_amd", null);
+      } else {
+        if (category) qb = qb.eq("category", category);
+        if (visibility === "published") qb = qb.eq("is_published", true);
+        else if (visibility === "hidden") qb = qb.eq("is_published", false);
+      }
       if (availability) qb = qb.eq("availability", availability);
       if (flagFilter) qb = qb.eq(flagFilter, true);
       const { data, count, error } = await qb;
@@ -133,8 +150,10 @@ function AdminProducts() {
     setAvailability("");
     setFlagFilter("");
     setPage(1);
+    navigate({ search: {} });
   };
-  const activeFilters = [category, visibility !== "all" ? visibility : "", availability, flagFilter].filter(Boolean).length;
+  const activeFilters =
+    [category, visibility !== "all" ? visibility : "", availability, flagFilter, noPrice ? "noPrice" : "", hidden ? "hidden" : ""].filter(Boolean).length;
 
   return (
     <div>
@@ -163,6 +182,37 @@ function AdminProducts() {
           </button>
         </div>
       </div>
+
+      {(noPrice || hidden) && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {noPrice && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/50 px-3 py-1.5 text-xs">
+              {t("admin.home.actionNoPrice")}
+              <button
+                type="button"
+                onClick={() => navigate({ search: (prev) => ({ ...prev, noPrice: undefined }) })}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label={t("admin.products.resetFilters", { n: 1 })}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </span>
+          )}
+          {hidden && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/50 px-3 py-1.5 text-xs">
+              {t("admin.home.actionHiddenProducts")}
+              <button
+                type="button"
+                onClick={() => navigate({ search: (prev) => ({ ...prev, hidden: undefined }) })}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label={t("admin.products.resetFilters", { n: 1 })}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="mt-6 flex flex-wrap items-center gap-2 rounded-sm border border-border bg-secondary/40 p-3">
         <select

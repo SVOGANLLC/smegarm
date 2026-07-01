@@ -26,6 +26,7 @@ export function ContentBlockEditor({
   onStyleChange,
   onValueReplace,
   onPersist,
+  simple = false,
 }: {
   block: ContentBlock;
   value: BlockValue;
@@ -34,6 +35,7 @@ export function ContentBlockEditor({
   onStyleChange: (i18nKey: string, patch: Partial<ContentStyle>) => void;
   onValueReplace?: (next: BlockValue) => void;
   onPersist?: (next: BlockValue) => Promise<void>;
+  simple?: boolean;
 }) {
   const { t } = useI18n();
   const defaults = getI18nDefaults();
@@ -41,7 +43,7 @@ export function ContentBlockEditor({
   const [showStyles, setShowStyles] = useState<Record<string, boolean>>({});
 
   return (
-    <div className="rounded-sm border border-border">
+    <div className="rounded-xl border border-border">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -69,16 +71,20 @@ export function ContentBlockEditor({
                   </label>
                 ))}
               </div>
-              <button
-                type="button"
-                onClick={() => setShowStyles((p) => ({ ...p, [f.i18nKey]: !p[f.i18nKey] }))}
-                className="mt-3 text-[10px] uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground"
-              >
-                {showStyles[f.i18nKey] ? "− " : "+ "}
-                {t("admin.content.styleTitle")}
-              </button>
-              {showStyles[f.i18nKey] && (
-                <StyleEditor value={styles[f.i18nKey] ?? {}} onChange={(patch) => onStyleChange(f.i18nKey, patch)} />
+              {!simple && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowStyles((p) => ({ ...p, [f.i18nKey]: !p[f.i18nKey] }))}
+                    className="mt-3 text-[10px] uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground"
+                  >
+                    {showStyles[f.i18nKey] ? "− " : "+ "}
+                    {t("admin.content.styleTitle")}
+                  </button>
+                  {showStyles[f.i18nKey] && (
+                    <StyleEditor value={styles[f.i18nKey] ?? {}} onChange={(patch) => onStyleChange(f.i18nKey, patch)} />
+                  )}
+                </>
               )}
             </div>
           ))}

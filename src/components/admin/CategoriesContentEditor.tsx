@@ -9,17 +9,14 @@ import {
   serializeSmallCategories,
 } from "@/lib/categories-config";
 import { useI18n } from "@/lib/i18n";
-import { CatalogCategoryOrderEditor } from "@/components/admin/CatalogCategoryOrderEditor";
-import { CatalogGroupingEditor } from "@/components/admin/CatalogGroupingEditor";
-import { ModelGroupLabelsEditor } from "@/components/admin/ModelGroupLabelsEditor";
-import { CatalogNavEditor } from "@/components/admin/CatalogNavEditor";
+import { Link } from "@tanstack/react-router";
 
 type BlockValue = Record<string, Partial<Record<Lang, string>>>;
 
+/** Homepage category section texts + main cards only (menu groups → /admini/menu). */
 export function CategoriesContentEditor({
   value,
   onChange,
-  onPersist,
 }: {
   value: BlockValue;
   onChange: (next: BlockValue) => void;
@@ -50,7 +47,14 @@ export function CategoriesContentEditor({
   };
 
   return (
-    <div className="mt-6 space-y-6 rounded-sm border border-dashed border-border bg-secondary/20 p-4">
+    <div className="mt-6 space-y-6 rounded-xl border border-dashed border-border bg-secondary/20 p-4">
+      <p className="text-xs text-muted-foreground">
+        {t("admin.content.categories.menuHint")}{" "}
+        <Link to="/admini/menu" className="underline hover:text-foreground">
+          {t("admin.nav.menuGroups")}
+        </Link>
+      </p>
+
       <div>
         <h3 className="text-sm font-medium">{t("admin.content.categories.mainTitle")}</h3>
         <p className="mt-1 text-xs text-muted-foreground">{t("admin.content.categories.mainDesc")}</p>
@@ -98,26 +102,27 @@ export function CategoriesContentEditor({
         );
       })}
 
-      <div>
-        <label className="block">
-          <span className="text-sm font-medium">{t("admin.content.categories.smallTitle")}</span>
-          <p className="mt-1 text-xs text-muted-foreground">{t("admin.content.categories.smallDesc")}</p>
-          <textarea
-            rows={8}
-            value={small.join("\n")}
-            onChange={(e) => setConfig("config.smallCategories", serializeSmallCategories(
-              e.target.value.split("\n").map((s) => s.trim()).filter(Boolean),
-            ))}
-            placeholder={DEFAULT_SMALL_CATEGORIES.join("\n")}
-            className="mt-3 w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-foreground"
-          />
-        </label>
-      </div>
-
-      <CatalogNavEditor value={value} onChange={onChange} />
-      <CatalogCategoryOrderEditor value={value} onChange={onChange} />
-      <CatalogGroupingEditor value={value} onChange={onChange} />
-      <ModelGroupLabelsEditor value={value} onChange={onChange} onPersist={onPersist} />
+      <label className="block">
+        <span className="text-sm font-medium">{t("admin.content.categories.smallTitle")}</span>
+        <p className="mt-1 text-xs text-muted-foreground">{t("admin.content.categories.smallDesc")}</p>
+        <textarea
+          rows={6}
+          value={small.join("\n")}
+          onChange={(e) =>
+            setConfig(
+              "config.smallCategories",
+              serializeSmallCategories(
+                e.target.value
+                  .split("\n")
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+              ),
+            )
+          }
+          placeholder={DEFAULT_SMALL_CATEGORIES.join("\n")}
+          className="mt-3 w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-foreground"
+        />
+      </label>
     </div>
   );
 }

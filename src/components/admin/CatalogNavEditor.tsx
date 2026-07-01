@@ -109,8 +109,6 @@ export function CatalogNavEditor({
     persist(next);
   };
 
-  const loadDefaults = () => persist(DEFAULT_CATALOG_NAV_GROUPS);
-
   return (
     <div className="rounded-xl border border-border bg-secondary/20 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -119,13 +117,6 @@ export function CatalogNavEditor({
           <p className="mt-1 text-xs text-muted-foreground">{t("admin.content.nav.desc")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={loadDefaults}
-            className="rounded-sm border border-border px-3 py-1.5 text-xs uppercase tracking-wider hover:border-foreground"
-          >
-            {t("admin.content.nav.loadDefaults")}
-          </button>
           <button
             type="button"
             onClick={addGroup}
