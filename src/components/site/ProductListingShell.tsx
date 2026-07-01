@@ -267,7 +267,7 @@ export function ProductListingShell({ products, search, onSearchChange, groupByC
         <aside className="hidden md:block md:sticky md:top-28 md:self-start md:max-h-[calc(100vh-8rem)] md:overflow-y-auto md:pr-2">
           {filters}
         </aside>
-        <section>
+        <section className="light-section rounded-sm p-4 md:p-8">
           {search.model && modelProductsQuery.isLoading ? (
             <p className="text-sm text-muted-foreground">{t("catalog.loading")}</p>
           ) : search.model && modelProductsQuery.data?.length ? (
@@ -289,6 +289,7 @@ export function ProductListingShell({ products, search, onSearchChange, groupByC
             <p className="text-sm text-muted-foreground">{t("catalog.nothing")}</p>
           ) : (
             <ProductGrid
+              bare
               items={displayItems}
               swatchHex={doGroup ? swatchHex : undefined}
               onChooseColor={doGroup ? openModelColors : undefined}

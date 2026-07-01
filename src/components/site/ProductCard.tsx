@@ -193,11 +193,14 @@ export function ProductGrid({
   swatchHex,
   onChooseColor,
   modelGroupLabels,
+  bare = false,
 }: {
   items: Array<ProductCardType & { variants?: import("@/lib/products").Variant[]; priceFrom?: number | null; variantCount?: number; model_group?: string | null }>;
   swatchHex?: (canonical: string) => string;
   onChooseColor?: (item: ProductCardType & { variants?: Variant[]; model_group?: string | null }) => void;
   modelGroupLabels?: import("@/lib/model-group-labels").ModelGroupLabel[];
+  /** Skip outer light-section when parent already provides it */
+  bare?: boolean;
 }) {
   const { lang } = useI18n();
   if (!items.length) return null;
@@ -214,8 +217,8 @@ export function ProductGrid({
     };
   };
 
-  return (
-    <div className="light-section rounded-sm p-4 md:p-8">
+  const grid = (
+    <>
       <HorizontalScroll className="md:hidden">
         {items.map((p) => (
           <HorizontalScrollItem key={p.sku}>
@@ -245,6 +248,10 @@ export function ProductGrid({
           />
         ))}
       </div>
-    </div>
+    </>
   );
+
+  if (bare) return grid;
+
+  return <div className="light-section rounded-sm p-4 md:p-8">{grid}</div>;
 }

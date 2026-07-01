@@ -24,48 +24,21 @@ import { getAdminTheme, initAdminTheme, type AdminTheme } from "@/lib/admin-them
 
 type NavItem = { to: string; labelKey: string; icon: typeof Home; exact?: boolean; adminOnly?: boolean };
 
-type NavSection = { id: string; labelKey: string; items: NavItem[] };
+const mainNav: NavItem[] = [
+  { to: "/admini", labelKey: "admin.nav.home", icon: Home, exact: true },
+  { to: "/admini/orders", labelKey: "admin.nav.orders", icon: ShoppingCart },
+  { to: "/admini/inquiries", labelKey: "admin.nav.inquiries", icon: Inbox },
+  { to: "/admini/products", labelKey: "admin.nav.products", icon: Package },
+  { to: "/admini/collections", labelKey: "admin.nav.collections", icon: Layers },
+  { to: "/admini/content", labelKey: "admin.nav.content", icon: FileText, adminOnly: true },
+];
 
-const navSections: NavSection[] = [
-  {
-    id: "today",
-    labelKey: "admin.nav.section.today",
-    items: [{ to: "/admini", labelKey: "admin.nav.overview", icon: Home, exact: true }],
-  },
-  {
-    id: "sales",
-    labelKey: "admin.nav.section.sales",
-    items: [
-      { to: "/admini/orders", labelKey: "admin.nav.orders", icon: ShoppingCart },
-      { to: "/admini/inquiries", labelKey: "admin.nav.inquiries", icon: Inbox },
-    ],
-  },
-  {
-    id: "catalog",
-    labelKey: "admin.nav.section.catalog",
-    items: [
-      { to: "/admini/products", labelKey: "admin.nav.products", icon: Package },
-      { to: "/admini/collections", labelKey: "admin.nav.collections", icon: Layers },
-    ],
-  },
-  {
-    id: "site",
-    labelKey: "admin.nav.section.site",
-    items: [
-      { to: "/admini/content", labelKey: "admin.nav.content", icon: FileText, adminOnly: true },
-      { to: "/admini/partners", labelKey: "admin.nav.partners", icon: Handshake, adminOnly: true },
-    ],
-  },
-  {
-    id: "more",
-    labelKey: "admin.nav.section.more",
-    items: [
-      { to: "/admini/team", labelKey: "admin.nav.team", icon: Users, adminOnly: true },
-      { to: "/admini/notifications", labelKey: "admin.nav.notifications", icon: Bell },
-      { to: "/admini/tools", labelKey: "admin.nav.tools", icon: Wrench, adminOnly: true },
-      { to: "/admini/help", labelKey: "admin.nav.help", icon: CircleHelp },
-    ],
-  },
+const extraNav: NavItem[] = [
+  { to: "/admini/partners", labelKey: "admin.nav.partners", icon: Handshake, adminOnly: true },
+  { to: "/admini/team", labelKey: "admin.nav.team", icon: Users, adminOnly: true },
+  { to: "/admini/notifications", labelKey: "admin.nav.notifications", icon: Bell },
+  { to: "/admini/tools", labelKey: "admin.nav.tools", icon: Wrench, adminOnly: true },
+  { to: "/admini/help", labelKey: "admin.nav.help", icon: CircleHelp },
 ];
 
 function LangSwitch() {
@@ -87,19 +60,41 @@ function LangSwitch() {
   );
 }
 
+function NavLinks({ items, pathname, onNavigate }: { items: NavItem[]; pathname: string; onNavigate?: () => void }) {
+  const { t } = useI18n();
+  return (
+    <div className="space-y-0.5">
+      {items.map((n) => {
+        const active = n.exact ? pathname === n.to : pathname.startsWith(n.to);
+        return (
+          <Link
+            key={n.to}
+            to={n.to}
+            onClick={onNavigate}
+            className={`flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm transition-colors ${
+              active
+                ? "bg-foreground text-background"
+                : "text-foreground/70 hover:bg-secondary hover:text-foreground"
+            }`}
+          >
+            <n.icon className="h-4 w-4 shrink-0" />
+            {t(n.labelKey)}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { t } = useI18n();
   const ctx = useRouteContext({ from: "/_authenticated/admini" }) as { role?: "admin" | "manager" };
   const role = ctx.role ?? "admin";
-  const sections = navSections
-    .map((section) => ({
-      ...section,
-      items: section.items.filter((n) => !n.adminOnly || role === "admin"),
-    }))
-    .filter((section) => section.items.length > 0);
-  const flatItems = sections.flatMap((s) => s.items);
+  const primary = mainNav.filter((n) => !n.adminOnly || role === "admin");
+  const extra = extraNav.filter((n) => !n.adminOnly || role === "admin");
+  const allItems = [...primary, ...extra];
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState<AdminTheme>("dark");
   useEffect(() => {
@@ -131,7 +126,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     navigate({ to: "/auth", replace: true });
   }
 
-  const currentLabel = flatItems.find((n) => (n.exact ? pathname === n.to : pathname.startsWith(n.to)));
+  const currentLabel = allItems.find((n) => (n.exact ? pathname === n.to : pathname.startsWith(n.to)));
   const currentTitle = currentLabel ? t(currentLabel.labelKey) : t("admin.nav.brand");
 
   return (
@@ -153,7 +148,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <LogOut className="h-4 w-4" />
         </button>
       </div>
-      <div className="grid min-h-screen grid-cols-1 md:grid-cols-[240px_1fr]">
+      <div className="grid min-h-screen grid-cols-1 md:grid-cols-[220px_1fr]">
         {open && (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm md:hidden" onClick={() => setOpen(false)} />
         )}
@@ -174,44 +169,27 @@ export function AdminShell({ children }: { children: ReactNode }) {
               <X className="h-4 w-4" />
             </button>
           </div>
-          <nav className="mt-8 space-y-6">
-            {sections.map((section) => (
-              <div key={section.id}>
-                <p className="mb-2 px-3 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                  {t(section.labelKey)}
+          <nav className="mt-8">
+            <NavLinks items={primary} pathname={pathname} onNavigate={() => setOpen(false)} />
+            {extra.length > 0 && (
+              <div className="mt-6 border-t border-border pt-6">
+                <p className="mb-2 px-3 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                  {t("admin.nav.extra")}
                 </p>
-                <div className="space-y-0.5">
-                  {section.items.map((n) => {
-                    const active = n.exact ? pathname === n.to : pathname.startsWith(n.to);
-                    return (
-                      <Link
-                        key={n.to}
-                        to={n.to}
-                        className={`flex items-center gap-3 rounded-sm px-3 py-2 text-sm transition-colors ${
-                          active
-                            ? "bg-foreground text-background"
-                            : "text-foreground/70 hover:bg-secondary hover:text-foreground"
-                        }`}
-                      >
-                        <n.icon className="h-4 w-4 shrink-0" />
-                        {t(n.labelKey)}
-                      </Link>
-                    );
-                  })}
-                </div>
+                <NavLinks items={extra} pathname={pathname} onNavigate={() => setOpen(false)} />
               </div>
-            ))}
+            )}
           </nav>
           <LangSwitch />
           <AdminThemeSwitch />
           <button
             onClick={signOut}
-            className="mt-4 flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm text-foreground/60 hover:bg-secondary hover:text-foreground"
+            className="mt-4 flex w-full items-center gap-3 rounded-sm px-3 py-2.5 text-sm text-foreground/60 hover:bg-secondary hover:text-foreground"
           >
             <LogOut className="h-4 w-4" /> {t("admin.nav.signOut")}
           </button>
         </aside>
-        <main className="min-w-0 p-4 sm:p-6 md:p-10">{children}</main>
+        <main className="min-w-0 p-4 sm:p-6 md:p-8">{children}</main>
       </div>
     </div>
   );

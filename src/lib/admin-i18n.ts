@@ -46,6 +46,7 @@ const E: Record<string, T3> = {
   "admin.yes": ["Да", "Yes", "Այո"],
 
   // Nav
+  "admin.nav.home": ["Главная", "Home", "Գլխավոր"],
   "admin.nav.overview": ["Обзор", "Overview", "Ակնորս"],
   "admin.nav.orders": ["Заказы", "Orders", "Պատվերներ"],
   "admin.nav.inquiries": ["Заявки", "Inquiries", "Դիմումներ"],
@@ -62,6 +63,7 @@ const E: Record<string, T3> = {
   "admin.nav.signOut": ["Выйти", "Sign out", "Դուրս գալ"],
   "admin.nav.signedOut": ["Вы вышли", "Signed out", "Դուրս եք գալիս"],
   "admin.nav.brand": ["Admin", "Admin", "Admin"],
+  "admin.nav.extra": ["Дополнительно", "More", "Ավելին"],
   "admin.theme.title": ["Тема", "Theme", "Թեմա"],
   "admin.theme.light": ["Белая", "White", "Սպիտակ"],
   "admin.theme.gray": ["Серая", "Gray", "Մոխրագույն"],
@@ -101,8 +103,14 @@ const E: Record<string, T3> = {
   "admin.home.actionNewInquiries": ["Новые заявки", "New inquiries", "Նոր դիմումներ"],
   "admin.home.actionHiddenProducts": ["Скрытые товары", "Hidden products", "Թաքցված ապրանքներ"],
   "admin.home.actionNoPrice": ["Без цены", "Missing price", "Առանց գին"],
-  "admin.home.allClear": ["Всё в порядке — новых задач нет.", "All clear — nothing urgent.", "Ամեն ինչ կարգին է։"],
+  "admin.home.allClear": ["Новых заказов и заявок нет.", "No new orders or inquiries.", "Նոր պատվերներ և դիմումներ չկան։"],
   "admin.home.open": ["Открыть", "Open", "Բացել"],
+  "admin.home.simpleIntro": ["Выберите раздел.", "Pick a section.", "Ընտրեք բաժին։"],
+  "admin.home.ordersHint": ["Оплата и доставка", "Payments & delivery", "Վճարում և առաքում"],
+  "admin.home.inquiriesHint": ["Вопросы с сайта", "Questions from the site", "Հարցեր կայքից"],
+  "admin.home.productsHint": ["Цены, фото, наличие", "Prices, photos, stock", "Գներ, լուսանկարներ, առկայություն"],
+  "admin.home.collectionsHint": ["50's, D&G и другие", "50's, D&G and more", "50's, D&G և այլն"],
+  "admin.home.contentHint": ["Тексты и меню сайта", "Site texts & menu", "Կայքի տեքստեր և մենյու"],
 
   "admin.nav.section.today": ["Сегодня", "Today", "Այսօր"],
   "admin.nav.section.sales": ["Продажи", "Sales", "Վաճառք"],

@@ -3,7 +3,6 @@ import type { CategoryStat } from "@/lib/products";
 import { LARGE_FAMILIES, SMALL_FAMILIES } from "@/lib/catalog-sections";
 import {
   type CatalogNavGroupDef,
-  membersToNavItems,
   parseCatalogNavGroups,
 } from "@/lib/catalog-nav-groups";
 import { DEFAULT_CATALOG_NAV_GROUPS, buildDefaultNavColumns } from "@/lib/catalog-nav-defaults";
@@ -48,18 +47,92 @@ function categoryToNavItem(cat: CategoryStat): CatalogNavItem {
   };
 }
 
-function groupDefToNavGroup(def: CatalogNavGroupDef, categories: CategoryStat[]): CatalogNavGroup {
-  const childItems = membersToNavItems(def, categories).map((item) => ({
-    id: item.id,
-    labels: item.labels,
-    to: "/catalog",
-    search: item.search,
-  }));
+function groupDefToNavGroup(def: CatalogNavGroupDef, _categories: CategoryStat[]): CatalogNavGroup {
   return {
     id: def.id,
     labels: def.labels,
-    items: childItems,
+    items: [],
   };
+}
+
+/** Category slugs referenced by nav-group members (for section menus). */
+export function categorySlugsFromGroups(groupDefs: CatalogNavGroupDef[], section: "large" | "small"): string[] {
+  const slugs = new Set<string>();
+  for (const g of groupDefs) {
+    if (g.section !== section) continue;
+    for (const m of g.members) {
+      if (m.type === "category") slugs.add(m.slug);
+    }
+  }
+  return Array.from(slugs);
+}
+
+export function categoryRawForSlugs(slugs: string[], all: CategoryStat[]): string[] {
+  const raw = new Set<string>();
+  for (const s of slugs) {
+    const cat =
+      all.find((c) => c.slug === s) ?? all.find((c) => c.slug === s.toLowerCase());
+    if (cat) cat.raw.forEach((r) => raw.add(r));
+  }
+  return Array.from(raw);
+}
+
+export function mergeCategoryStats(...lists: CategoryStat[][]): CategoryStat[] {
+  const map = new Map<string, CategoryStat>();
+  for (const list of lists) {
+    for (const c of list) {
+      const prev = map.get(c.slug);
+      if (!prev || c.count > prev.count) map.set(c.slug, c);
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => b.count - a.count);
+}
+
+/** Mega-menu: подборки (flat) + категории крупной/мелкой техники из БД. */
+export function buildCatalogMegaMenuNav(
+  groupDefs: CatalogNavGroupDef[],
+  largeCats: CategoryStat[],
+  smallCats: CategoryStat[],
+): CatalogNavColumn[] {
+  const collectionItems: CatalogNavItem[] = groupDefs.map((g) => ({
+    id: `collection-${g.id}`,
+    labels: g.labels,
+    to: "/catalog",
+    search: { navGroup: g.id },
+  }));
+
+  return [
+    {
+      id: "collections",
+      titleKey: "nav.catalog.subgroups",
+      items: collectionItems,
+    },
+    {
+      id: "large",
+      titleKey: "catalog.section.large",
+      items: [
+        ...largeCats.map(categoryToNavItem),
+        { id: "large-all", labelKey: "nav.catalog.allLarge", to: "/catalog", search: { section: "large" } },
+      ],
+    },
+    {
+      id: "small",
+      titleKey: "catalog.section.small",
+      items: [
+        ...smallCats.map(categoryToNavItem),
+        { id: "small-all", labelKey: "nav.catalog.allSmall", to: "/catalog", search: { section: "small" } },
+      ],
+    },
+    {
+      id: "more",
+      titleKey: "nav.catalog.more",
+      items: [
+        { id: "accessories", labelKey: "catalog.section.accessories", to: "/catalog", search: { section: "accessories" } },
+        { id: "sale", labelKey: "nav.catalog.sale", to: "/sale" },
+        { id: "collections", labelKey: "nav.collections", to: "/#collections" },
+      ],
+    },
+  ];
 }
 
 /** Build mega-menu from subgroup definitions + live categories. */
