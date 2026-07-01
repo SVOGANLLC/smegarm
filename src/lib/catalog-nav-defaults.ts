@@ -10,7 +10,7 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
     members: [
       { type: "family", name: "Oven" },
       { type: "family", name: "Hob" },
-      { type: "family", name: "Hood" },
+      { type: "category", slug: "hoods" },
       { type: "family", name: "Cooker" },
       { type: "family", name: "Microwave" },
       { type: "category", slug: "countertop-ovens" },
@@ -23,8 +23,8 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
     members: [
       { type: "family", name: "Refrigerator" },
       { type: "family", name: "Freezers" },
-      { type: "family", name: "Wine cooler" },
-      { type: "family", name: "Blast Chiller" },
+      { type: "category", slug: "wine-coolers" },
+      { type: "category", slug: "blast-chillers" },
     ],
   },
   {
@@ -36,7 +36,7 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
       { type: "family", name: "Washing Machine" },
       { type: "family", name: "Washer dryer" },
       { type: "family", name: "Sink" },
-      { type: "family", name: "Taps" },
+      { type: "category", slug: "taps" },
     ],
   },
   {
@@ -84,10 +84,10 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
     section: "small",
     labels: { ru: "Приготовление", en: "Food preparation", hy: "Պատրաստում" },
     members: [
-      { type: "family", name: "Stand Mixer" },
+      { type: "category", slug: "stand-mixers" },
       { type: "family", name: "Hand Blenders" },
       { type: "family", name: "Blenders" },
-      { type: "family", name: "Food Processor" },
+      { type: "category", slug: "food-processors" },
       { type: "family", name: "Kitchen Scales" },
     ],
   },
@@ -96,8 +96,8 @@ export const DEFAULT_CATALOG_NAV_GROUPS: CatalogNavGroupDef[] = [
     section: "small",
     labels: { ru: "Посуда", en: "Kitchenware", hy: "Խոսում" },
     members: [
-      { type: "family", name: "Cookware" },
-      { type: "category", slug: "knives" },
+      { type: "category", slug: "cookware" },
+      { type: "category", slug: "knife-sets" },
     ],
   },
   {

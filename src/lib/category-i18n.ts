@@ -44,6 +44,66 @@ export const CATEGORY_LABELS: Record<string, { ru: string; en: string; hy: strin
   "Electric barbecues": { ru: "Электрические грили", en: "Electric barbecues", hy: "Էլեկտրական բարբեքյուներ" },
   "Blast chillers": { ru: "Шокеры (быстрое охлаждение)", en: "Blast chillers", hy: "Արագ սառեցուցիչներ" },
   "Kitchen scales": { ru: "Кухонные весы", en: "Kitchen scales", hy: "Խոհանոցային կշեռքներ" },
+  "Food processors": { ru: "Кухонные комбайны", en: "Food processors", hy: "Խոհանոցային կոմբայններ" },
+  "Built-in coffee machines": {
+    ru: "Встраиваемые кофемашины",
+    en: "Built-in coffee machines",
+    hy: "Ներկառուցվող սուրճի մեքենաներ",
+  },
+  "Countertop combi ovens": {
+    ru: "Настольные комбинированные печи",
+    en: "Countertop combi ovens",
+    hy: "Սեղանադիր կոմբի վառարաններ",
+  },
+  "Portable induction": { ru: "Портативные индукционные плиты", en: "Portable induction", hy: "Դյուրակիր ինդուկցիոն" },
+};
+
+/** DB `family` values → localized menu labels. */
+export const FAMILY_LABELS: Record<string, { ru: string; en: string; hy: string }> = {
+  Refrigerator: { ru: "Холодильники", en: "Refrigerators", hy: "Սառնարաններ" },
+  Oven: { ru: "Духовые шкафы", en: "Ovens", hy: "Ջեռոցներ" },
+  Hob: { ru: "Варочные панели", en: "Hobs", hy: "Այրման մակերեսներ" },
+  Cooker: { ru: "Плиты", en: "Cookers", hy: "Խոհանոցային վառարաններ" },
+  Dishwashers: { ru: "Посудомоечные машины", en: "Dishwashers", hy: "Սպասք լվացող մեքենաներ" },
+  Sink: { ru: "Мойки", en: "Sinks", hy: "Լվացարաններ" },
+  Microwave: { ru: "Микроволновые печи", en: "Microwave ovens", hy: "Միկրոալիքային վառարաններ" },
+  Freezers: { ru: "Морозильники", en: "Freezers", hy: "Սառցարաններ" },
+  Drawer: { ru: "Встраиваемые ящики", en: "Built-in drawers", hy: "Ներկառուցվող դարակներ" },
+  "Washing Machine": { ru: "Стиральные машины", en: "Washing machines", hy: "Լվացքի մեքենաներ" },
+  "Washer dryer": { ru: "Стирально-сушильные машины", en: "Washer dryers", hy: "Լվացք-չորանոց մեքենաներ" },
+  "Countertop Combi Oven": {
+    ru: "Настольные комбинированные печи",
+    en: "Countertop combi ovens",
+    hy: "Սեղանադիր կոմբի վառարաններ",
+  },
+  Hood: { ru: "Вытяжки", en: "Hoods", hy: "Օդաքարշներ" },
+  "Wine cooler": { ru: "Винные шкафы", en: "Wine coolers", hy: "Գինու պահարաններ" },
+  "Blast Chiller": { ru: "Шокеры", en: "Blast chillers", hy: "Արագ սառեցուցիչներ" },
+  Taps: { ru: "Смесители", en: "Taps", hy: "Ծորակներ" },
+  Kettles: { ru: "Чайники", en: "Kettles", hy: "Թեյնիկներ" },
+  Toaster: { ru: "Тостеры", en: "Toasters", hy: "Տոստերներ" },
+  Blenders: { ru: "Блендеры", en: "Blenders", hy: "Բլենդերներ" },
+  "Hand Blenders": { ru: "Погружные блендеры", en: "Hand blenders", hy: "Ձեռքի բլենդերներ" },
+  "Espresso Coffee Machine": { ru: "Кофемашины", en: "Espresso coffee machines", hy: "Էսպրեսո սուրճի մեքենաներ" },
+  "Drip filter Coffee Machine": {
+    ru: "Капельные кофеварки",
+    en: "Drip filter coffee machines",
+    hy: "Կաթեցման սուրճի մեքենաներ",
+  },
+  "Coffee Grinder": { ru: "Кофемолки", en: "Coffee grinders", hy: "Սրճաղացներ" },
+  "Milk Frother": { ru: "Капучинаторы", en: "Milk frothers", hy: "Կաթի փրփրեցուցիչներ" },
+  "Kitchen Scales": { ru: "Кухонные весы", en: "Kitchen scales", hy: "Խոհանոցային կշեռքներ" },
+  "Citrus Juicer": { ru: "Соковыжималки", en: "Citrus juicers", hy: "Ցիտրուսի հյութահան" },
+  "Insulated bottle": { ru: "Термосы", en: "Insulated bottles", hy: "Թերմոսներ" },
+  "Stand Mixer": { ru: "Планетарные миксеры", en: "Stand mixers", hy: "Կոմբայն հարիչներ" },
+  "Food Processor": { ru: "Кухонные комбайны", en: "Food processors", hy: "Խոհանոցային կոմբայններ" },
+  "Hand Mixer": { ru: "Ручные миксеры", en: "Hand mixers", hy: "Ձեռքի հարիչներ" },
+  Cookware: { ru: "Посуда", en: "Cookware", hy: "Խոհանոցային սպասք" },
+  "Built-in Coffee machines": {
+    ru: "Встраиваемые кофемашины",
+    en: "Built-in coffee machines",
+    hy: "Ներկառուցվող սուրճի մեքենաներ",
+  },
 };
 
 /** Normalize DB category values to a single English canonical key for grouping/filtering. */
@@ -77,4 +137,11 @@ export function categoryLabel(
   const m = CATEGORY_LABELS[canonical];
   if (m) return m[lang] ?? canonical;
   return canonical;
+}
+
+/** Localized label for a DB `family` value (catalog mega-menu). */
+export function familyLabel(family: string, lang: Lang): string {
+  const m = FAMILY_LABELS[family];
+  if (m) return m[lang] ?? family;
+  return categoryLabel(family, lang);
 }

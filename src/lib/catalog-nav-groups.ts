@@ -2,6 +2,7 @@ import type { Lang } from "@/lib/i18n";
 import type { CategoryStat } from "@/lib/products";
 import { slugify } from "@/lib/products";
 import type { CatalogSection } from "@/lib/catalog-sections";
+import { familyLabel } from "@/lib/category-i18n";
 
 export type NavGroupMember =
   | { type: "category"; slug: string }
@@ -64,11 +65,24 @@ export function navGroupLabel(group: CatalogNavGroupDef, lang: Lang): string {
   return group.labels[lang] || group.labels.en || group.labels.ru || group.id;
 }
 
-function categoryRawFromSlug(slug: string, categories: CategoryStat[]): string[] {
-  const normalized = slug.toLowerCase();
-  const hit =
+const CATEGORY_SLUG_ALIASES: Record<string, string> = {
+  oven: "ovens",
+  "food-processor": "food-processors",
+  knives: "knife-sets",
+  "knife-block": "knife-sets",
+};
+
+function findCategoryStat(slug: string, categories: CategoryStat[]): CategoryStat | undefined {
+  const normalized = CATEGORY_SLUG_ALIASES[slug] ?? slug;
+  return (
     categories.find((c) => c.slug === normalized) ??
-    categories.find((c) => slugify(c.category) === normalized);
+    categories.find((c) => c.slug === slug) ??
+    categories.find((c) => slugify(c.category) === normalized)
+  );
+}
+
+function categoryRawFromSlug(slug: string, categories: CategoryStat[]): string[] {
+  const hit = findCategoryStat(slug, categories);
   return hit?.raw ?? [];
 }
 
@@ -136,7 +150,7 @@ export function membersToNavItems(
 
   for (const m of group.members) {
     if (m.type === "category") {
-      const cat = categories.find((c) => c.slug === m.slug) ?? categories.find((c) => slugify(c.category) === m.slug);
+      const cat = findCategoryStat(m.slug, categories);
       if (!cat || seen.has(`cat:${cat.slug}`)) continue;
       seen.add(`cat:${cat.slug}`);
       items.push({
@@ -146,15 +160,19 @@ export function membersToNavItems(
           en: cat.category_en ?? cat.category,
           hy: cat.category_hy ?? cat.category,
         },
-        search: { section: group.section, category: cat.slug, navGroup: group.id },
+        search: { category: cat.slug },
       });
     }
     if (m.type === "family" && !seen.has(`fam:${m.name}`)) {
       seen.add(`fam:${m.name}`);
       items.push({
         id: `${group.id}-fam-${slugify(m.name)}`,
-        labels: { ru: m.name, en: m.name, hy: m.name },
-        search: { section: group.section, family: m.name, navGroup: group.id },
+        labels: {
+          ru: familyLabel(m.name, "ru"),
+          en: familyLabel(m.name, "en"),
+          hy: familyLabel(m.name, "hy"),
+        },
+        search: { family: m.name },
       });
     }
   }

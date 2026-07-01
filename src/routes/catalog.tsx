@@ -16,7 +16,7 @@ import { z } from "zod";
 import { useMemo, useState } from "react";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useI18n, getI18nDefaults } from "@/lib/i18n";
-import { categoryLabel as catLabel } from "@/lib/category-i18n";
+import { categoryLabel as catLabel, familyLabel } from "@/lib/category-i18n";
 import { parseCatalogOrder, sortCategoriesByOrder } from "@/lib/category-order";
 import { parseCatalogGroupConfig, shouldGroupCatalog } from "@/lib/catalog-group-config";
 import { parseModelGroupLabels, resolveModelGroupLabel } from "@/lib/model-group-labels";
@@ -109,7 +109,13 @@ function CatalogNotFoundView() {
 
 const PAGE_SIZE = 36;
 
-const CATEGORY_SLUG_ALIASES: Record<string, string> = { oven: "ovens" };
+const CATEGORY_SLUG_ALIASES: Record<string, string> = {
+  oven: "ovens",
+  "food-processor": "food-processors",
+  "food-processors": "food-processors",
+  knives: "knife-sets",
+  "knife-block": "knife-sets",
+};
 
 function findCategoryBySlug(
   categories: Awaited<ReturnType<typeof fetchCategories>>,
@@ -194,8 +200,13 @@ function CatalogPage() {
       })
     : undefined;
 
+  const familyTitle = family ? familyLabel(family, lang) : undefined;
+
   const navGroupDef = navGroup ? navGroupDefs.find((g) => g.id === navGroup) : undefined;
   const navGroupTitle = navGroupDef ? navGroupLabel(navGroupDef, lang) : undefined;
+
+  /** Nav-group OR filter applies only for «вся группа» links — not when a category/family is picked. */
+  const navGroupOnly = !!navGroup && !category && !family;
 
   const sortedCategories = sortCategoriesByOrder(catsQuery.data ?? [], catalogOrder);
 
@@ -208,15 +219,17 @@ function CatalogPage() {
     ? accessoryRaw
     : sectionCategories(section);
   const navGroupFilters = useMemo(() => {
-    if (!navGroup || !catsQuery.data) return null;
+    if (!navGroupOnly || !catsQuery.data) return null;
     return resolveNavGroupFilters(navGroup, navGroupDefs, catsQuery.data);
-  }, [navGroup, navGroupDefs, catsQuery.data]);
+  }, [navGroupOnly, navGroup, navGroupDefs, catsQuery.data]);
 
   const effectiveFamilies = family
     ? [family]
-    : navGroupFilters?.families.length
-      ? navGroupFilters.families
-      : sectionFamilyList;
+    : category
+      ? undefined
+      : navGroupFilters?.families.length
+        ? navGroupFilters.families
+        : sectionFamilyList;
   const effectiveCategoryIn =
     categoryRawList ??
     (navGroupFilters?.categoryIn.length ? navGroupFilters.categoryIn : undefined) ??
@@ -262,7 +275,7 @@ function CatalogPage() {
     section: section as CatalogSection | undefined,
   });
   const modelGroupLabels = grouping.modelGroupLabels;
-  const hideSpecFilters = !!model || groupByColor;
+  const hideSpecFilters = !!model;
 
   // colour value (canonical) → localized label for current lang
   const colourLabel = (value: string) => {
@@ -316,7 +329,7 @@ function CatalogPage() {
         skuIn: navGroupFilters?.skus.length ? navGroupFilters.skus : undefined,
         navGroupFilters: navGroupFilters ?? undefined,
       }),
-    enabled: !category || !!categoryRawList || !!navGroup || !!section,
+    enabled: !category || !!categoryRawList || !!navGroup || !!section || !!family,
   });
 
   const swatchHex = (canonical: string) =>
@@ -461,8 +474,8 @@ function CatalogPage() {
 
       <FacetGroup label={t("facet.categories")} defaultOpen>
         <button
-          onClick={() => navigate({ search: (prev: CatalogSearch) => patchCatalogSearch(prev, { category: undefined, section: undefined, page: 1 }) })}
-          className={`block w-full text-left text-sm ${!category && !section ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
+          onClick={() => navigate({ search: (prev: CatalogSearch) => patchCatalogSearch(prev, { category: undefined, section: undefined, navGroup: undefined, family: undefined, page: 1 }) })}
+          className={`block w-full text-left text-sm ${!category && !section && !navGroup && !family ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
         >
           {t("facet.all")}
         </button>
@@ -476,6 +489,8 @@ function CatalogPage() {
                     patchCatalogSearch(prev, {
                       section: section === s ? undefined : s,
                       category: undefined,
+                      navGroup: undefined,
+                      family: undefined,
                       page: 1,
                     }),
                 })
@@ -498,7 +513,13 @@ function CatalogPage() {
               onClick={() =>
                 navigate({
                   search: (prev: CatalogSearch) =>
-                    patchCatalogSearch(prev, { category: c.slug, section: undefined, page: 1 }),
+                    patchCatalogSearch(prev, {
+                      category: c.slug,
+                      section: undefined,
+                      navGroup: undefined,
+                      family: undefined,
+                      page: 1,
+                    }),
                 })
               }
               className={`flex w-full items-baseline justify-between text-left text-sm transition ${category === c.slug ? "font-medium text-foreground" : "text-foreground/60 hover:text-foreground"}`}
@@ -573,6 +594,7 @@ function CatalogPage() {
             <p className="eyebrow text-muted-foreground">{t("catalog.title")}</p>
             <h1 className="mt-2 font-serif text-2xl leading-tight sm:text-3xl md:mt-3 md:text-6xl">
               {categoryLabel ??
+                familyTitle ??
                 navGroupTitle ??
                 (section ? t(sectionTitleKey(section as CatalogSection)!) : t("catalog.all"))}
             </h1>

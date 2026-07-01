@@ -590,12 +590,16 @@ function applyCatalogFilters(q: CatalogQuery, f: CatalogFilters, skuIn?: string[
   q = q.eq("is_published", true);
   const explicitSkus = f.skuIn?.length ? f.skuIn : skuIn;
   if (explicitSkus?.length) q = q.in("sku", explicitSkus);
-  if (f.navGroupFilters) q = applyNavGroupOr(q, f.navGroupFilters);
-  else {
+
+  const hasNarrowFilter = !!(f.categoryIn?.length || f.families?.length || f.category);
+  if (f.navGroupFilters && !hasNarrowFilter) {
+    q = applyNavGroupOr(q, f.navGroupFilters);
+  } else {
     if (f.categoryIn?.length) q = q.in("category", f.categoryIn);
     else if (f.category) q = q.eq("category", f.category);
     if (f.families?.length) q = q.in("family", f.families);
   }
+
   if (f.aesthetics?.length) q = q.in("aesthetic", f.aesthetics);
   if (f.colours?.length) q = q.in("colour", f.colours);
   if (f.theme) q = q.eq("theme_key", f.theme);
