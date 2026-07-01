@@ -8,7 +8,7 @@ import type { ContentStylesMap } from "@/lib/content-styles";
 import { ContentBlockEditor, type ContentBlock } from "@/components/admin/ContentBlockEditor";
 import { HouseOfCoffeeEditor } from "@/components/admin/HouseOfCoffeeEditor";
 import { assertRowUpdated } from "@/lib/supabase-assert";
-import { siteContentQueryKey } from "@/lib/site-content";
+import { invalidateSiteContentQueries } from "@/lib/site-content";
 
 export const Route = createFileRoute("/_authenticated/admini/content")({
   beforeLoad: ({ context }) => {
@@ -145,9 +145,10 @@ function ContentPage() {
 
   const [state, setState] = useState<Record<string, BlockValue>>({});
   const [styles, setStyles] = useState<ContentStylesMap>({});
+  const draftDirtyRef = useRef(false);
   const hydratedRef = useRef(false);
   useEffect(() => {
-    if (!q.data || hydratedRef.current) return;
+    if (!q.data || draftDirtyRef.current || hydratedRef.current) return;
     setState(q.data.map);
     setStyles(q.data.styles);
     hydratedRef.current = true;
@@ -171,14 +172,15 @@ function ContentPage() {
       assertRowUpdated(row2, t("admin.writeNoRow"));
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["site-content"] });
-      qc.invalidateQueries({ queryKey: siteContentQueryKey });
+      draftDirtyRef.current = false;
+      invalidateSiteContentQueries(qc);
       toast.success(t("admin.saved"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
 
   const updateField = (block: string, i18nKey: string, lang: Lang, value: string) => {
+    draftDirtyRef.current = true;
     setState((prev) => {
       const next = { ...prev };
       const blockVal = { ...(next[block] ?? {}) };
@@ -191,6 +193,7 @@ function ContentPage() {
   };
 
   const persistBlock = async (key: string, value: BlockValue) => {
+    draftDirtyRef.current = true;
     setState((prev) => ({ ...prev, [key]: value }));
     await save.mutateAsync({ key, value, styles });
   };
@@ -269,7 +272,10 @@ function ContentPage() {
             <>
               <HouseOfCoffeeEditor
                 value={hocValue}
-                onChange={(next) => setState((prev) => ({ ...prev, "house-of-coffee": next }))}
+                onChange={(next) => {
+                  draftDirtyRef.current = true;
+                  setState((prev) => ({ ...prev, "house-of-coffee": next }));
+                }}
                 onPersist={async (next) => {
                   setState((prev) => ({ ...prev, "house-of-coffee": next }));
                   await save.mutateAsync({ key: "house-of-coffee", value: next, styles });
@@ -293,7 +299,10 @@ function ContentPage() {
                 simple
                 onFieldChange={(i18nKey, lang, value) => updateField(activeBlock.key, i18nKey, lang, value)}
                 onStyleChange={() => {}}
-                onValueReplace={(next) => setState((prev) => ({ ...prev, [activeBlock.key]: next }))}
+                onValueReplace={(next) => {
+                  draftDirtyRef.current = true;
+                  setState((prev) => ({ ...prev, [activeBlock.key]: next }));
+                }}
                 onPersist={(next) => persistBlock(activeBlock.key, next)}
               />
               <button

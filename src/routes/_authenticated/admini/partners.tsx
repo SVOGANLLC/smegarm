@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Eye, EyeOff, Trash2, Upload, ArrowUp, ArrowDown } from "lucide-react";
+import { uploadAdminImage } from "@/lib/admin-upload";
 import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/admini/partners")({
@@ -23,25 +24,6 @@ type Partner = {
   sort_order: number;
   is_published: boolean;
 };
-
-async function uploadLogo(
-  file: File,
-  t: (key: string, vars?: Record<string, string | number>) => string,
-): Promise<string> {
-  if (!file.type.startsWith("image/")) throw new Error(t("admin.notImage"));
-  if (file.size > 5 * 1024 * 1024) throw new Error(t("admin.tooLarge5mb"));
-  const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-  const path = `partners/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const { error: upErr } = await supabase.storage
-    .from("product-media")
-    .upload(path, file, { contentType: file.type, upsert: false });
-  if (upErr) throw upErr;
-  const { data: signed, error: sErr } = await supabase.storage
-    .from("product-media")
-    .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
-  if (sErr || !signed?.signedUrl) throw sErr ?? new Error(t("admin.urlFailed"));
-  return signed.signedUrl;
-}
 
 function AdminPartners() {
   const { t } = useI18n();
@@ -184,7 +166,7 @@ function PartnerRow({
     if (!file) return;
     setUploading(true);
     try {
-      const url = await uploadLogo(file, t);
+      const url = await uploadAdminImage(`partners/${p.id}`, file, t);
       onUpdate({ logo_url: url });
       toast.success(t("admin.partners.logoUploaded"));
     } catch (e) {
@@ -200,7 +182,12 @@ function PartnerRow({
         <div className="flex w-full flex-col items-center gap-2 md:w-48">
           <div className="flex h-28 w-full items-center justify-center rounded-sm border border-dashed border-border bg-secondary/30">
             {p.logo_url ? (
-              <img src={p.logo_url} alt={p.name} className="max-h-24 max-w-full object-contain" />
+              <img
+                src={p.logo_url}
+                alt={p.name}
+                key={p.logo_url}
+                className="max-h-24 max-w-full object-contain"
+              />
             ) : (
               <span className="text-xs text-muted-foreground">{t("admin.partners.noLogo")}</span>
             )}

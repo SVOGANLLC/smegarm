@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 import { CatalogNavEditor } from "@/components/admin/CatalogNavEditor";
 import { assertRowUpdated } from "@/lib/supabase-assert";
-import { siteContentQueryKey } from "@/lib/site-content";
+import { invalidateSiteContentQueries } from "@/lib/site-content";
 
 export const Route = createFileRoute("/_authenticated/admini/menu")({
   beforeLoad: ({ context }) => {
@@ -31,9 +31,10 @@ function AdminMenuPage() {
   });
 
   const [draft, setDraft] = useState<BlockValue>({});
+  const draftDirtyRef = useRef(false);
   const hydrated = useRef(false);
   useEffect(() => {
-    if (!q.data || hydrated.current) return;
+    if (!q.data || draftDirtyRef.current || hydrated.current) return;
     setDraft(q.data);
     hydrated.current = true;
   }, [q.data]);
@@ -49,8 +50,8 @@ function AdminMenuPage() {
       assertRowUpdated(row, t("admin.writeNoRow"));
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["site-content"] });
-      qc.invalidateQueries({ queryKey: siteContentQueryKey });
+      draftDirtyRef.current = false;
+      invalidateSiteContentQueries(qc);
       toast.success(t("admin.saved"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
@@ -66,7 +67,13 @@ function AdminMenuPage() {
       ) : (
         <>
           <div className="mt-8">
-            <CatalogNavEditor value={draft} onChange={setDraft} />
+            <CatalogNavEditor
+              value={draft}
+              onChange={(next) => {
+                draftDirtyRef.current = true;
+                setDraft(next);
+              }}
+            />
           </div>
           <button
             type="button"

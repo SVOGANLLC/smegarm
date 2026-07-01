@@ -110,7 +110,7 @@ export function GroupLabelImageFields({
       </label>
 
       {previewUrl ? (
-        <img src={previewUrl} alt="" className="h-24 w-24 rounded-sm border border-border object-cover" />
+        <img src={previewUrl} alt="" key={previewUrl} className="h-24 w-24 rounded-sm border border-border object-cover" />
       ) : (
         <div className="flex h-24 w-24 items-center justify-center rounded-sm border border-dashed border-border text-[10px] text-muted-foreground">
           —

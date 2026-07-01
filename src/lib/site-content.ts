@@ -1,3 +1,4 @@
+import type { QueryClient } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { collectGoogleFonts, stylesToCss, type ContentStylesMap } from "@/lib/content-styles";
@@ -12,6 +13,18 @@ export type SiteContentBundle = {
 };
 
 export const siteContentQueryKey = ["site-content-bundle"] as const;
+
+/** Invalidate admin + storefront caches after site_content changes (menu, groups, homepage). */
+export function invalidateSiteContentQueries(qc: QueryClient) {
+  qc.invalidateQueries({ queryKey: ["site-content"] });
+  qc.invalidateQueries({ queryKey: siteContentQueryKey });
+  qc.invalidateQueries({ queryKey: ["site-content", "categories"] });
+  qc.invalidateQueries({ queryKey: ["catalog"] });
+  qc.invalidateQueries({ queryKey: ["catalog-categories"] });
+  qc.invalidateQueries({ queryKey: ["listing-variants"] });
+  qc.invalidateQueries({ queryKey: ["model-color-products"] });
+  qc.invalidateQueries({ queryKey: ["admin-variant-groups"] });
+}
 
 export function buildSiteContentBundle(
   rows: Array<{ key: string; value: unknown }>,

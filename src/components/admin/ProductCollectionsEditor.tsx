@@ -60,7 +60,7 @@ export function ProductCollectionsEditor({ sku }: { sku: string }) {
   const meta = productMeta.data;
 
   const invalidate = (slug?: string) => {
-    qc.invalidateQueries({ queryKey: ["product-collections", sku] });
+    invalidateProductQueries(qc, sku);
     qc.invalidateQueries({ queryKey: ["admin-collection-products"] });
     qc.invalidateQueries({ queryKey: ["admin-collections"] });
     qc.invalidateQueries({ queryKey: ["collections-list"] });
@@ -93,9 +93,6 @@ export function ProductCollectionsEditor({ sku }: { sku: string }) {
     onSuccess: (col) => {
       setPickId("");
       invalidate(col.slug);
-      qc.invalidateQueries({ queryKey: ["product-collection-meta", sku] });
-      qc.invalidateQueries({ queryKey: ["admin-product", sku] });
-      qc.invalidateQueries({ queryKey: ["product", sku] });
       toast.success(t("admin.collections.productAdded"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
@@ -121,9 +118,6 @@ export function ProductCollectionsEditor({ sku }: { sku: string }) {
     },
     onSuccess: (col) => {
       invalidate(col.slug);
-      qc.invalidateQueries({ queryKey: ["product-collection-meta", sku] });
-      qc.invalidateQueries({ queryKey: ["admin-product", sku] });
-      qc.invalidateQueries({ queryKey: ["product", sku] });
       const wasAuto = meta && isAutoCollectionSlug(col.slug, meta);
       if (wasAuto) {
         toast.message(t("admin.collections.productRemoved"), {

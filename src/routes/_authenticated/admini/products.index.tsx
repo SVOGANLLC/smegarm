@@ -113,8 +113,8 @@ function AdminProducts() {
       const { error } = await supabase.from("products").update(update).eq("sku", sku);
       if (error) throw error;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-products"] });
+    onSuccess: (_data, { sku }) => {
+      invalidateProductQueries(qc, sku);
       qc.invalidateQueries({ queryKey: ["admin-stats"] });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),

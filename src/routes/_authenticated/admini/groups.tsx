@@ -11,7 +11,7 @@ import {
   searchProductsForGroup,
   type AdminVariantGroup,
 } from "@/lib/variant-groups";
-import { useSiteContentBlock, siteContentQueryKey } from "@/lib/site-content";
+import { useSiteContentBlock, invalidateSiteContentQueries } from "@/lib/site-content";
 import {
   labelForModelGroup,
   parseModelGroupLabels,
@@ -147,6 +147,7 @@ function VariantGroupsPage() {
     mutationFn: ({ sku, groupKey }: { sku: string; groupKey: string }) => assignProductToVariantGroup(sku, groupKey),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-variant-groups"] });
+      invalidateSiteContentQueries(qc);
       setAddSku("");
       toast.success(t("admin.groups.added"));
     },
@@ -157,6 +158,7 @@ function VariantGroupsPage() {
     mutationFn: (sku: string) => removeProductFromVariantGroup(sku),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-variant-groups"] });
+      invalidateSiteContentQueries(qc);
       toast.success(t("admin.groups.removed"));
     },
     onError: (e: Error) => toast.error(e.message),
@@ -166,8 +168,7 @@ function VariantGroupsPage() {
     mutationFn: ({ key, draft }: { key: string; draft: GroupDraft }) => persistGroupLabel(labels, key, draft),
     onSuccess: () => {
       draftDirtyRef.current = false;
-      qc.invalidateQueries({ queryKey: siteContentQueryKey });
-      qc.invalidateQueries({ queryKey: ["site-content", "categories"] });
+      invalidateSiteContentQueries(qc);
       toast.success(t("admin.saved"));
     },
     onError: (e: Error) => toast.error(e.message),

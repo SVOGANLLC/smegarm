@@ -84,6 +84,7 @@ function CoverPreview({ url, name }: { url: string | null; name: string }) {
     <img
       src={url}
       alt={name}
+      key={url}
       className={`h-24 w-24 shrink-0 rounded-sm border border-border bg-[#1a1a1a] ${
         isLogo ? "object-contain p-2" : "object-cover"
       }`}
