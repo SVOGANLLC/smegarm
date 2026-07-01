@@ -1,0 +1,163 @@
+import type { Lang } from "@/lib/i18n";
+import type { CategoryStat } from "@/lib/products";
+import { slugify } from "@/lib/products";
+import type { CatalogSection } from "@/lib/catalog-sections";
+
+export type NavGroupMember =
+  | { type: "category"; slug: string }
+  | { type: "family"; name: string }
+  | { type: "model_group"; key: string }
+  | { type: "sku"; sku: string };
+
+export type CatalogNavGroupDef = {
+  id: string;
+  section: CatalogSection;
+  labels: Partial<Record<Lang, string>>;
+  members: NavGroupMember[];
+};
+
+export type NavGroupFilters = {
+  skus: string[];
+  modelGroups: string[];
+  families: string[];
+  categoryIn: string[];
+  section?: CatalogSection;
+};
+
+type BlockValue = Record<string, Partial<Record<Lang, string>>>;
+
+function readConfigString(block: BlockValue | undefined, key: string): string {
+  const field = block?.[key];
+  if (!field) return "";
+  return (field.ru || field.hy || field.en || "").trim();
+}
+
+export function parseCatalogNavGroups(block: BlockValue | undefined): CatalogNavGroupDef[] {
+  const raw = readConfigString(block, "config.groups");
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((row) => {
+        const r = row as Record<string, unknown>;
+        const id = String(r.id ?? "").trim();
+        if (!id) return null;
+        const section = (r.section as CatalogSection) || "small";
+        const labels = (r.labels as Partial<Record<Lang, string>>) ?? {};
+        const members = Array.isArray(r.members)
+          ? (r.members as NavGroupMember[]).filter((m) => m && typeof m === "object" && "type" in m)
+          : [];
+        return { id, section, labels, members } satisfies CatalogNavGroupDef;
+      })
+      .filter((x): x is CatalogNavGroupDef => !!x);
+  } catch {
+    return [];
+  }
+}
+
+export function serializeCatalogNavGroups(groups: CatalogNavGroupDef[]): string {
+  return JSON.stringify(groups, null, 2);
+}
+
+export function navGroupLabel(group: CatalogNavGroupDef, lang: Lang): string {
+  return group.labels[lang] || group.labels.en || group.labels.ru || group.id;
+}
+
+function categoryRawFromSlug(slug: string, categories: CategoryStat[]): string[] {
+  const normalized = slug.toLowerCase();
+  const hit =
+    categories.find((c) => c.slug === normalized) ??
+    categories.find((c) => slugify(c.category) === normalized);
+  return hit?.raw ?? [];
+}
+
+export function resolveNavGroupFilters(
+  groupId: string,
+  groups: CatalogNavGroupDef[],
+  categories: CategoryStat[],
+): NavGroupFilters | null {
+  const group = groups.find((g) => g.id === groupId);
+  if (!group) return null;
+
+  const skus = new Set<string>();
+  const modelGroups = new Set<string>();
+  const families = new Set<string>();
+  const categoryIn = new Set<string>();
+
+  for (const m of group.members) {
+    if (m.type === "sku") skus.add(m.sku.trim().toUpperCase());
+    if (m.type === "model_group") modelGroups.add(m.key.trim());
+    if (m.type === "family") families.add(m.name.trim());
+    if (m.type === "category") {
+      for (const raw of categoryRawFromSlug(m.slug, categories)) categoryIn.add(raw);
+    }
+  }
+
+  return {
+    skus: Array.from(skus),
+    modelGroups: Array.from(modelGroups),
+    families: Array.from(families),
+    categoryIn: Array.from(categoryIn),
+    section: group.section,
+  };
+}
+
+/** Products matching a nav group (union of members). */
+export function productMatchesNavGroup(
+  row: { sku: string; model_group?: string | null; family?: string | null; category?: string | null },
+  filters: NavGroupFilters,
+  categories: CategoryStat[],
+): boolean {
+  if (filters.skus.length) return filters.skus.includes(row.sku.toUpperCase());
+
+  let any = false;
+  if (filters.modelGroups.length && row.model_group && filters.modelGroups.includes(row.model_group)) {
+    any = true;
+  }
+  if (filters.families.length && row.family && filters.families.includes(row.family)) {
+    any = true;
+  }
+  if (filters.categoryIn.length && row.category && filters.categoryIn.includes(row.category)) {
+    any = true;
+  }
+  if (!filters.modelGroups.length && !filters.families.length && !filters.categoryIn.length) {
+    return false;
+  }
+  return any;
+}
+
+export function membersToNavItems(
+  group: CatalogNavGroupDef,
+  categories: CategoryStat[],
+): Array<{ id: string; labels: Partial<Record<Lang, string>>; search: Record<string, string> }> {
+  const items: Array<{ id: string; labels: Partial<Record<Lang, string>>; search: Record<string, string> }> = [];
+  const seen = new Set<string>();
+
+  for (const m of group.members) {
+    if (m.type === "category") {
+      const cat = categories.find((c) => c.slug === m.slug) ?? categories.find((c) => slugify(c.category) === m.slug);
+      if (!cat || seen.has(`cat:${cat.slug}`)) continue;
+      seen.add(`cat:${cat.slug}`);
+      items.push({
+        id: `${group.id}-${cat.slug}`,
+        labels: {
+          ru: cat.category_ru ?? cat.category,
+          en: cat.category_en ?? cat.category,
+          hy: cat.category_hy ?? cat.category,
+        },
+        search: { section: group.section, category: cat.slug, navGroup: group.id },
+      });
+    }
+    if (m.type === "family" && !seen.has(`fam:${m.name}`)) {
+      seen.add(`fam:${m.name}`);
+      items.push({
+        id: `${group.id}-fam-${slugify(m.name)}`,
+        labels: { ru: m.name, en: m.name, hy: m.name },
+        search: { section: group.section, family: m.name, navGroup: group.id },
+      });
+    }
+  }
+
+  return items;
+}

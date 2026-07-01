@@ -27,7 +27,7 @@ export type CatalogGroupConfig = {
 const DEFAULT_SECTIONS: GroupSectionToggles = {
   large: true,
   small: true,
-  accessories: false,
+  accessories: true,
 };
 
 export function parseCatalogGroupConfig(block: BlockValue | undefined): CatalogGroupConfig {

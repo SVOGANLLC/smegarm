@@ -16,7 +16,13 @@ export type ProductGroup = {
 
 export function groupKeyFor(row: GroupSkuRow): string {
   const mg = row.model_group?.trim();
-  return mg ? mg : row.sku;
+  if (mg) return mg;
+  const sku = row.sku.toUpperCase();
+  const hbac = sku.match(/^(HBAC\d+)/);
+  if (hbac) return hbac[1];
+  if (sku.startsWith("KLF03") && sku.endsWith("MEU")) return "KLF03-MATT";
+  if (sku.startsWith("KLF03")) return "KLF03-GLOSS";
+  return row.sku;
 }
 
 /** Pick one SKU per model_group; lowest price, then alphabetical. */

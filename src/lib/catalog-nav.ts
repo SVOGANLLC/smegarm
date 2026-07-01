@@ -1,6 +1,12 @@
 import type { Lang } from "@/lib/i18n";
 import type { CategoryStat } from "@/lib/products";
 import { LARGE_FAMILIES, SMALL_FAMILIES } from "@/lib/catalog-sections";
+import {
+  type CatalogNavGroupDef,
+  membersToNavItems,
+  parseCatalogNavGroups,
+} from "@/lib/catalog-nav-groups";
+import { DEFAULT_CATALOG_NAV_GROUPS, buildDefaultNavColumns } from "@/lib/catalog-nav-defaults";
 
 export type CatalogNavItem = {
   id: string;
@@ -10,11 +16,22 @@ export type CatalogNavItem = {
   labels?: Partial<Record<Lang, string>>;
   to: string;
   search?: Record<string, string | undefined>;
+  /** Nested links under a group header */
+  children?: CatalogNavItem[];
+};
+
+export type CatalogNavGroup = {
+  id: string;
+  labelKey?: string;
+  labels?: Partial<Record<Lang, string>>;
+  items: CatalogNavItem[];
 };
 
 export type CatalogNavColumn = {
   id: string;
   titleKey: string;
+  /** smeg.com-style subgroups */
+  groups?: CatalogNavGroup[];
   items: CatalogNavItem[];
 };
 
@@ -31,7 +48,47 @@ function categoryToNavItem(cat: CategoryStat): CatalogNavItem {
   };
 }
 
-/** Build mega-menu columns from live category stats (all categories in each section). */
+function groupDefToNavGroup(def: CatalogNavGroupDef, categories: CategoryStat[]): CatalogNavGroup {
+  const childItems = membersToNavItems(def, categories).map((item) => ({
+    id: item.id,
+    labels: item.labels,
+    to: "/catalog",
+    search: item.search,
+  }));
+  return {
+    id: def.id,
+    labels: def.labels,
+    items: [
+      ...childItems,
+      {
+        id: `${def.id}-all`,
+        labelKey: "nav.catalog.groupAll",
+        to: "/catalog",
+        search: { section: def.section, navGroup: def.id },
+      },
+    ],
+  };
+}
+
+/** Build mega-menu from subgroup definitions + live categories. */
+export function buildCatalogNavFromGroups(
+  groupDefs: CatalogNavGroupDef[],
+  categories: CategoryStat[],
+): CatalogNavColumn[] {
+  const columns = buildDefaultNavColumns(groupDefs);
+  return columns.map((col) => {
+    if (!col.groups?.length) return col;
+    const section = col.id === "large" ? "large" : col.id === "small" ? "small" : undefined;
+    if (!section) return col;
+    const defs = groupDefs.filter((g) => g.section === section);
+    return {
+      ...col,
+      groups: defs.map((d) => groupDefToNavGroup(d, categories)),
+    };
+  });
+}
+
+/** Legacy: flat columns from category stats only. */
 export function buildCatalogNavFromCategories(
   largeCats: CategoryStat[],
   smallCats: CategoryStat[],
@@ -83,7 +140,7 @@ export function parseCatalogNav(block: BlockValue | undefined): CatalogNavColumn
     const parsed = JSON.parse(raw) as CatalogNavColumn[];
     if (Array.isArray(parsed) && parsed.length > 0) return parsed;
   } catch {
-    /* fallback to dynamic */
+    /* fallback */
   }
   return null;
 }
@@ -98,3 +155,10 @@ export function navItemLabel(item: CatalogNavItem, lang: Lang, t: (k: string) =>
   }
   return item.labelKey ? t(item.labelKey) : item.id;
 }
+
+export function getEffectiveNavGroups(block: BlockValue | undefined): CatalogNavGroupDef[] {
+  const custom = parseCatalogNavGroups(block);
+  return custom.length ? custom : DEFAULT_CATALOG_NAV_GROUPS;
+}
+
+export { parseCatalogNavGroups, serializeCatalogNavGroups } from "@/lib/catalog-nav-groups";

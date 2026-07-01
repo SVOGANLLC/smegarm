@@ -41,3 +41,4 @@ deploy/data/export/
 *.njsproj
 *.sln
 *.sw?
+.tmp/

@@ -49,8 +49,11 @@ const HOMEPAGE_BLOCKS: ContentBlock[] = [
       { i18nKey: "section.story.title", labelKey: "admin.content.field.titleShort", multiline: true },
       { i18nKey: "section.story.body", labelKey: "admin.content.field.body", multiline: true },
       { i18nKey: "section.story.stat.years", labelKey: "admin.content.field.statYears" },
+      { i18nKey: "section.story.stat.years.value", labelKey: "admin.content.field.statYearsValue" },
       { i18nKey: "section.story.stat.countries", labelKey: "admin.content.field.statCountries" },
+      { i18nKey: "section.story.stat.countries.value", labelKey: "admin.content.field.statCountriesValue" },
       { i18nKey: "section.story.stat.colours", labelKey: "admin.content.field.statColours" },
+      { i18nKey: "section.story.stat.colours.value", labelKey: "admin.content.field.statColoursValue" },
     ],
   },
   {

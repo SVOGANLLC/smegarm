@@ -20,7 +20,9 @@ import { categoryLabel as catLabel } from "@/lib/category-i18n";
 import { parseCatalogOrder, sortCategoriesByOrder } from "@/lib/category-order";
 import { parseCatalogGroupConfig, shouldGroupCatalog } from "@/lib/catalog-group-config";
 import { parseModelGroupLabels, resolveModelGroupLabel } from "@/lib/model-group-labels";
-import { sectionCategories, sectionFamilies, sectionTitleKey, type CatalogSection } from "@/lib/catalog-sections";
+import { sectionCategories, sectionFamilies, sectionTitleKey, resolveAccessoryCategoryRaw, type CatalogSection } from "@/lib/catalog-sections";
+import { getEffectiveNavGroups } from "@/lib/catalog-nav";
+import { resolveNavGroupFilters, navGroupLabel } from "@/lib/catalog-nav-groups";
 import { useSiteContentBlock } from "@/lib/site-content";
 import { ProductCard } from "@/components/site/ProductCard";
 import { ModelColorPickerView } from "@/components/site/ModelColorPickerView";
@@ -49,6 +51,7 @@ const searchSchema = z.object({
   sort: z.enum(["name", "price-asc", "price-desc"]).optional(),
   spec: z.string().optional(),
   section: z.enum(["large", "small", "accessories"]).optional(),
+  navGroup: z.string().optional(),
   model: z.string().optional(),
   modelSkus: z.string().optional(),
   page: z.number().int().min(1).default(1),
@@ -123,7 +126,7 @@ function findCategoryBySlug(
 
 function CatalogPage() {
   const search = Route.useSearch();
-  const { category, family, q, page, flag, sort, theme, inStock, spec: specRaw, section, model, modelSkus: modelSkusRaw } = search;
+  const { category, family, q, page, flag, sort, theme, inStock, spec: specRaw, section, navGroup, model, modelSkus: modelSkusRaw } = search;
   const colours = split(search.colour);
   const aesthetics = split(search.aesthetic);
   const specFilters = parseSpecSearchParam(specRaw);
@@ -169,6 +172,7 @@ function CatalogPage() {
     staleTime: 5 * 60_000,
   });
   const categoriesBlock = useSiteContentBlock("categories");
+  const navGroupDefs = useMemo(() => getEffectiveNavGroups(categoriesBlock ?? undefined), [categoriesBlock]);
   const catalogOrder = useMemo(() => parseCatalogOrder(categoriesBlock ?? {}), [categoriesBlock]);
   const grouping = useMemo(
     () => ({
@@ -190,13 +194,32 @@ function CatalogPage() {
       })
     : undefined;
 
+  const navGroupDef = navGroup ? navGroupDefs.find((g) => g.id === navGroup) : undefined;
+  const navGroupTitle = navGroupDef ? navGroupLabel(navGroupDef, lang) : undefined;
+
   const sortedCategories = sortCategoriesByOrder(catsQuery.data ?? [], catalogOrder);
 
   const sectionFamilyList = sectionFamilies(section);
-  const sectionCategoryList = sectionCategories(section);
-  const effectiveFamilies = family ? [family] : sectionFamilyList;
+  const accessoryRaw =
+    section === "accessories" && catsQuery.data?.length
+      ? resolveAccessoryCategoryRaw(catsQuery.data)
+      : undefined;
+  const sectionCategoryList = accessoryRaw?.length
+    ? accessoryRaw
+    : sectionCategories(section);
+  const navGroupFilters = useMemo(() => {
+    if (!navGroup || !catsQuery.data) return null;
+    return resolveNavGroupFilters(navGroup, navGroupDefs, catsQuery.data);
+  }, [navGroup, navGroupDefs, catsQuery.data]);
+
+  const effectiveFamilies = family
+    ? [family]
+    : navGroupFilters?.families.length
+      ? navGroupFilters.families
+      : sectionFamilyList;
   const effectiveCategoryIn =
     categoryRawList ??
+    (navGroupFilters?.categoryIn.length ? navGroupFilters.categoryIn : undefined) ??
     (sectionCategoryList?.length && !category ? sectionCategoryList : undefined);
 
   const scopedCatsQuery = useQuery({
@@ -273,7 +296,7 @@ function CatalogPage() {
   });
 
   const productsQuery = useQuery({
-    queryKey: ["catalog", currentCat?.slug ?? null, family ?? "", section ?? "", groupByColor, q ?? "", colours, aesthetics, theme ?? "", flag ?? "", inStock ?? false, sort ?? "", specRaw ?? "", page, shuffleKey],
+    queryKey: ["catalog", currentCat?.slug ?? null, family ?? "", section ?? "", navGroup ?? "", groupByColor, q ?? "", colours, aesthetics, theme ?? "", flag ?? "", inStock ?? false, sort ?? "", specRaw ?? "", page, shuffleKey],
     queryFn: () =>
       fetchCatalog({
         categoryIn: effectiveCategoryIn,
@@ -290,8 +313,10 @@ function CatalogPage() {
         shuffleSeed: sort ? undefined : shuffleKey,
         limit: PAGE_SIZE,
         offset: (page - 1) * PAGE_SIZE,
+        skuIn: navGroupFilters?.skus.length ? navGroupFilters.skus : undefined,
+        navGroupFilters: navGroupFilters ?? undefined,
       }),
-    enabled: !category || !!categoryRawList,
+    enabled: !category || !!categoryRawList || !!navGroup || !!section,
   });
 
   const swatchHex = (canonical: string) =>
@@ -548,6 +573,7 @@ function CatalogPage() {
             <p className="eyebrow text-muted-foreground">{t("catalog.title")}</p>
             <h1 className="mt-2 font-serif text-2xl leading-tight sm:text-3xl md:mt-3 md:text-6xl">
               {categoryLabel ??
+                navGroupTitle ??
                 (section ? t(sectionTitleKey(section as CatalogSection)!) : t("catalog.all"))}
             </h1>
 
@@ -589,7 +615,12 @@ function CatalogPage() {
                   ))}
                 </div>
               ) : model && modelProductsQuery.data?.length ? (
-                <ModelColorPickerView products={modelProductsQuery.data} onBack={backToModels} modelGroupLabels={modelGroupLabels} />
+                <ModelColorPickerView
+                  products={modelProductsQuery.data}
+                  onBack={backToModels}
+                  onResetFilters={clearAll}
+                  modelGroupLabels={modelGroupLabels}
+                />
               ) : model ? (
                 <div>
                   <button

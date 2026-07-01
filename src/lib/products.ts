@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { canonicalCategoryKey } from "@/lib/category-i18n";
 import { fetchSkusMatchingSpecFilters, type SpecFilters } from "@/lib/spec-filters";
+import type { NavGroupFilters } from "@/lib/catalog-nav-groups";
 import {
   buildProductGroups,
   dedupeVariants,
@@ -547,6 +548,10 @@ export type CatalogFilters = {
   shuffleSeed?: number;
   limit?: number;
   offset?: number;
+  /** Explicit SKU list (nav group or manual) */
+  skuIn?: string[];
+  /** OR-filter for nav subgroup members */
+  navGroupFilters?: NavGroupFilters;
 };
 
 function shuffleArray<T>(items: T[], seed?: number): T[] {
@@ -565,12 +570,32 @@ function shuffleArray<T>(items: T[], seed?: number): T[] {
 
 type CatalogQuery = ReturnType<ReturnType<typeof supabase.from>["select"]>;
 
+function applyNavGroupOr(q: CatalogQuery, nf: NavGroupFilters): CatalogQuery {
+  if (nf.skus.length) return q.in("sku", nf.skus);
+  const parts: string[] = [];
+  if (nf.modelGroups.length) {
+    parts.push(`model_group.in.(${nf.modelGroups.map((v) => `"${v.replace(/"/g, "")}"`).join(",")})`);
+  }
+  if (nf.families.length) {
+    parts.push(`family.in.(${nf.families.map((v) => `"${v.replace(/"/g, "")}"`).join(",")})`);
+  }
+  if (nf.categoryIn.length) {
+    parts.push(`category.in.(${nf.categoryIn.map((v) => `"${v.replace(/"/g, "")}"`).join(",")})`);
+  }
+  if (!parts.length) return q;
+  return q.or(parts.join(","));
+}
+
 function applyCatalogFilters(q: CatalogQuery, f: CatalogFilters, skuIn?: string[] | null): CatalogQuery {
   q = q.eq("is_published", true);
-  if (skuIn) q = q.in("sku", skuIn);
-  if (f.categoryIn?.length) q = q.in("category", f.categoryIn);
-  else if (f.category) q = q.eq("category", f.category);
-  if (f.families?.length) q = q.in("family", f.families);
+  const explicitSkus = f.skuIn?.length ? f.skuIn : skuIn;
+  if (explicitSkus?.length) q = q.in("sku", explicitSkus);
+  if (f.navGroupFilters) q = applyNavGroupOr(q, f.navGroupFilters);
+  else {
+    if (f.categoryIn?.length) q = q.in("category", f.categoryIn);
+    else if (f.category) q = q.eq("category", f.category);
+    if (f.families?.length) q = q.in("family", f.families);
+  }
   if (f.aesthetics?.length) q = q.in("aesthetic", f.aesthetics);
   if (f.colours?.length) q = q.in("colour", f.colours);
   if (f.theme) q = q.eq("theme_key", f.theme);

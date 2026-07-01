@@ -5,14 +5,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import {
   buildCatalogNavFromCategories,
-  navItemLabel,
-  NAV_LARGE_FAMILIES,
-  NAV_SMALL_FAMILIES,
+  buildCatalogNavFromGroups,
+  getEffectiveNavGroups,
   parseCatalogNav,
   type CatalogNavColumn,
+  type CatalogNavGroup,
   type CatalogNavItem,
+  navItemLabel,
 } from "@/lib/catalog-nav";
-import { fetchCategoriesScoped } from "@/lib/products";
+import { fetchCategories, fetchCategoriesScoped } from "@/lib/products";
 import { useSiteContentBlock } from "@/lib/site-content";
 import { cn } from "@/lib/utils";
 
@@ -50,39 +51,94 @@ function NavLink({ item, onClick }: { item: CatalogNavItem; onClick?: () => void
   );
 }
 
-function useCatalogNavColumns() {
+function useCatalogNavColumns(): CatalogNavColumn[] {
   const largeQ = useQuery({
     queryKey: ["nav-categories", "large"],
-    queryFn: () => fetchCategoriesScoped({ families: NAV_LARGE_FAMILIES }),
+    queryFn: () => fetchCategoriesScoped({ families: ["Refrigerator", "Oven", "Hob", "Cooker", "Dishwashers", "Sink", "Microwave", "Freezers", "Washing Machine", "Washer dryer", "Countertop Combi Oven", "Hood", "Wine cooler", "Blast Chiller", "Taps", "Drawer", "Built-in Coffee machines"] }),
     staleTime: 5 * 60_000,
   });
   const smallQ = useQuery({
     queryKey: ["nav-categories", "small"],
-    queryFn: () => fetchCategoriesScoped({ families: NAV_SMALL_FAMILIES }),
+    queryFn: () => fetchCategoriesScoped({ families: ["Kettles", "Toaster", "Blenders", "Hand Blenders", "Espresso Coffee Machine", "Drip filter Coffee Machine", "Coffee Grinder", "Milk Frother", "Kitchen Scales", "Citrus Juicer", "Stand Mixer", "Food Processor", "Hand Mixer", "Cookware", "Insulated bottle"] }),
     staleTime: 5 * 60_000,
   });
-  const customBlock = useSiteContentBlock("catalog-nav");
-  const customNav = useMemo(() => (customBlock ? parseCatalogNav(customBlock) : undefined), [customBlock]);
+  const allCatsQ = useQuery({
+    queryKey: ["nav-categories", "all"],
+    queryFn: fetchCategories,
+    staleTime: 5 * 60_000,
+  });
+  const customNavBlock = useSiteContentBlock("catalog-nav");
+  const categoriesBlock = useSiteContentBlock("categories");
+  const customNav = useMemo(() => (customNavBlock ? parseCatalogNav(customNavBlock) : undefined), [customNavBlock]);
+
+  const groupNav = useMemo(() => {
+    if (!allCatsQ.data) return null;
+    const groups = getEffectiveNavGroups(categoriesBlock ?? undefined);
+    return buildCatalogNavFromGroups(groups, allCatsQ.data);
+  }, [allCatsQ.data, categoriesBlock]);
 
   const dynamic =
     largeQ.data && smallQ.data ? buildCatalogNavFromCategories(largeQ.data, smallQ.data) : null;
-  return customNav ?? dynamic ?? buildCatalogNavFromCategories(largeQ.data ?? [], smallQ.data ?? []);
+  return customNav ?? groupNav ?? dynamic ?? buildCatalogNavFromCategories(largeQ.data ?? [], smallQ.data ?? []);
+}
+
+function NavGroupBlock({
+  group,
+  lang,
+  t,
+  onNavigate,
+}: {
+  group: CatalogNavGroup;
+  lang: "ru" | "en" | "hy";
+  t: (k: string) => string;
+  onNavigate?: () => void;
+}) {
+  const title = group.labels
+    ? group.labels[lang] || group.labels.en || group.labels.ru || group.id
+    : group.labelKey
+      ? t(group.labelKey)
+      : group.id;
+  return (
+    <div className="mb-4">
+      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-foreground/90">{title}</p>
+      <ul className="space-y-1 border-l border-border/60 pl-3">
+        {group.items.map((item) => (
+          <li key={item.id}>
+            <NavLink item={item} onClick={onNavigate} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 function NavColumns({ columns, onNavigate }: { columns: CatalogNavColumn[]; onNavigate?: () => void }) {
-  const { t } = useI18n();
+  const { lang, t } = useI18n();
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 md:gap-8">
       {columns.map((col) => (
         <div key={col.id} className="min-w-0">
           <p className="eyebrow mb-2 text-muted-foreground">{t(col.titleKey)}</p>
-          <ul className="max-h-[min(50vh,320px)] space-y-1.5 overflow-y-auto pr-1">
-            {col.items.map((item) => (
-              <li key={item.id}>
-                <NavLink item={item} onClick={onNavigate} />
-              </li>
-            ))}
-          </ul>
+          <div className="max-h-[min(50vh,320px)] overflow-y-auto pr-1">
+            {col.groups?.length ? (
+              col.groups.map((g) => <NavGroupBlock key={g.id} group={g} lang={lang} t={t} onNavigate={onNavigate} />)
+            ) : (
+              <ul className="space-y-1.5">
+                {col.items.map((item) => (
+                  <li key={item.id}>
+                    <NavLink item={item} onClick={onNavigate} />
+                  </li>
+                ))}
+              </ul>
+            )}
+            {col.groups?.length
+              ? col.items.map((item) => (
+                  <div key={item.id} className="mt-3 border-t border-border/50 pt-2">
+                    <NavLink item={item} onClick={onNavigate} />
+                  </div>
+                ))
+              : null}
+          </div>
         </div>
       ))}
     </div>
@@ -162,7 +218,7 @@ export function CatalogMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
 
 /** Mobile / tablet accordion for catalog links */
 export function CatalogMobileNav({ onNavigate }: { onNavigate?: () => void }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [expanded, setExpanded] = useState(false);
   const columns = useCatalogNavColumns();
 
@@ -189,13 +245,26 @@ export function CatalogMobileNav({ onNavigate }: { onNavigate?: () => void }) {
           {columns.map((col) => (
             <div key={col.id}>
               <p className="eyebrow mb-2 text-muted-foreground">{t(col.titleKey)}</p>
-              <ul className="space-y-2">
-                {col.items.map((item) => (
-                  <li key={item.id}>
-                    <NavLink item={item} onClick={onNavigate} />
-                  </li>
-                ))}
-              </ul>
+              {col.groups?.length ? (
+                <div className="space-y-4">
+                  {col.groups.map((g) => (
+                    <NavGroupBlock key={g.id} group={g} lang={lang} t={t} onNavigate={onNavigate} />
+                  ))}
+                  {col.items.map((item) => (
+                    <div key={item.id} className="border-t border-border/50 pt-2">
+                      <NavLink item={item} onClick={onNavigate} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {col.items.map((item) => (
+                    <li key={item.id}>
+                      <NavLink item={item} onClick={onNavigate} />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           ))}
         </div>
