@@ -18,6 +18,7 @@ import {
   CircleHelp,
   Search,
   LayoutGrid,
+  Palette,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n, type Lang } from "@/lib/i18n";
@@ -34,6 +35,7 @@ const mainNav: NavItem[] = [
   { to: "/admini/products", labelKey: "admin.nav.products", icon: Package },
   { to: "/admini/collections", labelKey: "admin.nav.collections", icon: Layers },
   { to: "/admini/menu", labelKey: "admin.nav.menuGroups", icon: LayoutGrid, adminOnly: true },
+  { to: "/admini/groups", labelKey: "admin.nav.variantGroups", icon: Palette, adminOnly: true },
   { to: "/admini/content", labelKey: "admin.nav.content", icon: FileText, adminOnly: true },
 ];
 

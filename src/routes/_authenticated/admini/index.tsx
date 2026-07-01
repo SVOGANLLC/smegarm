@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-import { ChevronRight, FileText, Inbox, Layers, LayoutGrid, Package, ShoppingCart } from "lucide-react";
+import { ChevronRight, FileText, Inbox, Layers, LayoutGrid, Package, Palette, ShoppingCart } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admini/")({
   component: AdminHome,
@@ -110,6 +110,7 @@ function AdminHome() {
           <MenuRow to="/admini/products" icon={Package} label={t("admin.nav.products")} hint={t("admin.home.productsHint")} />
           <MenuRow to="/admini/collections" icon={Layers} label={t("admin.nav.collections")} hint={t("admin.home.collectionsHint")} />
           <MenuRow to="/admini/menu" icon={LayoutGrid} label={t("admin.nav.menuGroups")} hint={t("admin.menu.intro")} />
+          <MenuRow to="/admini/groups" icon={Palette} label={t("admin.nav.variantGroups")} hint={t("admin.home.groupsHint")} />
           <MenuRow to="/admini/content" icon={FileText} label={t("admin.nav.content")} hint={t("admin.home.contentHint")} />
         </MenuGroup>
 

@@ -471,6 +471,7 @@ export type Database = {
           lead_time_days: number | null
           main_image: string | null
           model_group: string | null
+          variant_group: string | null
           name: string
           name_en: string | null
           name_hy: string | null
@@ -525,6 +526,7 @@ export type Database = {
           lead_time_days?: number | null
           main_image?: string | null
           model_group?: string | null
+          variant_group?: string | null
           name: string
           name_en?: string | null
           name_hy?: string | null
@@ -579,6 +581,7 @@ export type Database = {
           lead_time_days?: number | null
           main_image?: string | null
           model_group?: string | null
+          variant_group?: string | null
           name?: string
           name_en?: string | null
           name_hy?: string | null
