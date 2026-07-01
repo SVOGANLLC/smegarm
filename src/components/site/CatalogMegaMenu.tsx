@@ -3,20 +3,16 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n";
-import { LARGE_FAMILIES, SMALL_FAMILIES } from "@/lib/catalog-sections";
 import {
   buildCatalogMegaMenuNav,
-  buildCatalogNavFromCategories,
-  categoryRawForSlugs,
   categorySlugsFromGroups,
   getEffectiveNavGroups,
-  mergeCategoryStats,
   parseCatalogNav,
   type CatalogNavColumn,
   type CatalogNavItem,
   navItemLabel,
 } from "@/lib/catalog-nav";
-import { fetchCategories, fetchCategoriesScoped } from "@/lib/products";
+import { fetchCategories } from "@/lib/products";
 import { useSiteContentBlock } from "@/lib/site-content";
 import { cn } from "@/lib/utils";
 
@@ -65,39 +61,16 @@ function useCatalogNavColumns(): CatalogNavColumn[] {
   const customNav = useMemo(() => (customNavBlock ? parseCatalogNav(customNavBlock) : undefined), [customNavBlock]);
 
   const groupDefs = useMemo(() => getEffectiveNavGroups(categoriesBlock ?? undefined), [categoriesBlock]);
-  const largeSlugs = useMemo(() => categorySlugsFromGroups(groupDefs, "large"), [groupDefs]);
-  const smallSlugs = useMemo(() => categorySlugsFromGroups(groupDefs, "small"), [groupDefs]);
-
-  const sectionCatsQ = useQuery({
-    queryKey: ["nav-section-categories", largeSlugs.join(","), smallSlugs.join(",")],
-    queryFn: async () => {
-      const all = allCatsQ.data ?? [];
-      const largeRaw = categoryRawForSlugs(largeSlugs, all);
-      const smallRaw = categoryRawForSlugs(smallSlugs, all);
-
-      const [largeByFamily, smallByFamily, largeByCat, smallByCat] = await Promise.all([
-        fetchCategoriesScoped({ families: [...LARGE_FAMILIES] }),
-        fetchCategoriesScoped({ families: [...SMALL_FAMILIES] }),
-        largeRaw.length ? fetchCategoriesScoped({ categoryIn: largeRaw }) : Promise.resolve([]),
-        smallRaw.length ? fetchCategoriesScoped({ categoryIn: smallRaw }) : Promise.resolve([]),
-      ]);
-
-      return {
-        large: mergeCategoryStats(largeByFamily, largeByCat),
-        small: mergeCategoryStats(smallByFamily, smallByCat),
-      };
-    },
-    enabled: !!allCatsQ.data,
-    staleTime: 5 * 60_000,
-  });
 
   return useMemo(() => {
     if (customNav) return customNav;
-    if (!sectionCatsQ.data) {
-      return buildCatalogNavFromCategories([], []);
-    }
-    return buildCatalogMegaMenuNav(groupDefs, sectionCatsQ.data.large, sectionCatsQ.data.small);
-  }, [customNav, groupDefs, sectionCatsQ.data]);
+    const all = allCatsQ.data ?? [];
+    const largeSlugSet = new Set(categorySlugsFromGroups(groupDefs, "large"));
+    const smallSlugSet = new Set(categorySlugsFromGroups(groupDefs, "small"));
+    const large = all.filter((c) => largeSlugSet.has(c.slug));
+    const small = all.filter((c) => smallSlugSet.has(c.slug));
+    return buildCatalogMegaMenuNav(groupDefs, large, small);
+  }, [customNav, groupDefs, allCatsQ.data]);
 }
 
 function CategoryColumn({ col, onNavigate }: { col: CatalogNavColumn; onNavigate?: () => void }) {
