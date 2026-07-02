@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Copy, Star, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { ProductCollectionsEditor } from "@/components/admin/ProductCollectionsEditor";
 import { ProductImageUploader } from "@/components/admin/ProductImageUploader";
@@ -160,6 +160,25 @@ function EditProduct() {
       return typeof patch === "function" ? patch(prev) : { ...prev, ...patch };
     });
   }, []);
+
+  const parseImageLines = (text: string): string[] =>
+    text
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+  const serializeImageLines = (urls: string[]): string => urls.join("\n");
+
+  const dedupeKeepOrder = (urls: string[]): string[] => {
+    const seen = new Set<string>();
+    const next: string[] = [];
+    for (const u of urls) {
+      if (seen.has(u)) continue;
+      seen.add(u);
+      next.push(u);
+    }
+    return next;
+  };
 
   const patchFields = useMutation({
     mutationFn: async (fields: { main_image?: string; images?: string }) => {
@@ -490,9 +509,12 @@ function EditProduct() {
             <ProductImageUploader
               sku={sku}
               onUploaded={async (url) => {
+                const base = formRef.current ?? form;
+                const nextImages = dedupeKeepOrder([url, ...parseImageLines(base.images)]);
+                const images = serializeImageLines(nextImages);
                 markDirty();
-                setForm((f) => (f ? { ...f, main_image: url } : f));
-                await patchFields.mutateAsync({ main_image: url });
+                setForm((f) => (f ? { ...f, main_image: url, images } : f));
+                await patchFields.mutateAsync({ main_image: url, images });
               }}
               label={t("admin.product.uploadMain")}
             />
@@ -520,7 +542,8 @@ function EditProduct() {
               multiple
               onUploaded={async (url) => {
                 const base = formRef.current ?? form;
-                const images = (base.images ? `${base.images}\n` : "") + url;
+                const nextImages = dedupeKeepOrder([...parseImageLines(base.images), url]);
+                const images = serializeImageLines(nextImages);
                 markDirty();
                 setForm((f) => (f ? { ...f, images } : f));
                 await patchFields.mutateAsync({ images });
@@ -529,41 +552,93 @@ function EditProduct() {
             />
             {form.images.trim() && (
               <div className="mt-3 flex flex-wrap gap-2">
-                {form.images
-                  .split("\n")
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-                  .map((url, i) => (
-                    <div key={i} className="group relative">
-                      <img
-                        src={url}
-                        alt=""
-                        className="h-20 w-20 rounded-sm border border-border object-cover"
-                      />
+                {parseImageLines(form.images).map((url, i, allUrls) => {
+                  const isMain = (form.main_image || "").trim() === url;
+                  return (
+                    <div key={url} className="group relative">
+                      <img src={url} alt="" className="h-20 w-20 rounded-sm border border-border object-cover" />
+
+                      <div className="absolute left-1 top-1 flex gap-1">
+                        {!isMain ? (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const nextImages = dedupeKeepOrder([url, ...allUrls.filter((u) => u !== url)]);
+                              const images = serializeImageLines(nextImages);
+                              markDirty();
+                              setForm((f) => (f ? { ...f, main_image: url, images } : f));
+                              await patchFields.mutateAsync({ main_image: url, images });
+                            }}
+                            className="hidden rounded-sm bg-foreground/90 p-1 text-background group-hover:block"
+                            title={t("admin.product.makeMain")}
+                          >
+                            <Star className="h-3 w-3" />
+                          </button>
+                        ) : (
+                          <span
+                            className="rounded-sm bg-foreground/90 px-1.5 py-1 text-[9px] uppercase tracking-[0.14em] text-background"
+                            title={t("admin.product.mainPhoto")}
+                          >
+                            {t("admin.product.main")}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="absolute bottom-1 left-1 flex gap-1">
+                        <button
+                          type="button"
+                          disabled={i === 0}
+                          onClick={async () => {
+                            if (i === 0) return;
+                            const next = [...allUrls];
+                            [next[i - 1], next[i]] = [next[i], next[i - 1]];
+                            const images = serializeImageLines(next);
+                            markDirty();
+                            setForm((f) => (f ? { ...f, images } : f));
+                            await patchFields.mutateAsync({ images });
+                          }}
+                          className="hidden rounded-sm bg-foreground/90 p-1 text-background disabled:opacity-40 group-hover:block"
+                          title={t("admin.product.moveUp")}
+                        >
+                          <ArrowUp className="h-3 w-3" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={i === allUrls.length - 1}
+                          onClick={async () => {
+                            if (i === allUrls.length - 1) return;
+                            const next = [...allUrls];
+                            [next[i], next[i + 1]] = [next[i + 1], next[i]];
+                            const images = serializeImageLines(next);
+                            markDirty();
+                            setForm((f) => (f ? { ...f, images } : f));
+                            await patchFields.mutateAsync({ images });
+                          }}
+                          className="hidden rounded-sm bg-foreground/90 p-1 text-background disabled:opacity-40 group-hover:block"
+                          title={t("admin.product.moveDown")}
+                        >
+                          <ArrowDown className="h-3 w-3" />
+                        </button>
+                      </div>
+
                       <button
                         type="button"
-                        onClick={() =>
-                          setForm((f) =>
-                            f
-                              ? {
-                                  ...f,
-                                  images: f.images
-                                    .split("\n")
-                                    .map((s) => s.trim())
-                                    .filter(Boolean)
-                                    .filter((_, j) => j !== i)
-                                    .join("\n"),
-                                }
-                              : f,
-                          )
-                        }
+                        onClick={async () => {
+                          const nextImages = allUrls.filter((_, j) => j !== i);
+                          const images = serializeImageLines(nextImages);
+                          const nextMain = isMain ? (nextImages[0] ?? "") : form.main_image;
+                          markDirty();
+                          setForm((f) => (f ? { ...f, images, main_image: nextMain } : f));
+                          await patchFields.mutateAsync({ images, main_image: nextMain });
+                        }}
                         className="absolute -right-1 -top-1 hidden rounded-full bg-foreground p-0.5 text-background group-hover:block"
                         title={t("admin.product.remove")}
                       >
                         <X className="h-3 w-3" />
                       </button>
                     </div>
-                  ))}
+                  );
+                })}
               </div>
             )}
           </Field>
