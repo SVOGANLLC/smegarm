@@ -1,4 +1,13 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { loadEnv } from "vite";
+
+const env = loadEnv(process.env.NODE_ENV === "production" ? "production" : "development", process.cwd(), "");
+const apiTarget = (env.VITE_SUPABASE_URL || "https://smeg.am").replace(/\/$/, "");
+const apiProxy = {
+  target: apiTarget,
+  changeOrigin: true,
+  secure: true,
+};
 
 export default defineConfig({
   tanstackStart: {
@@ -7,4 +16,14 @@ export default defineConfig({
   },
   // Build a self-contained Node HTTP server (.output/server/index.mjs) for the VPS.
   nitro: { preset: "node-server" },
+  // Local dev: mirror production nginx — Supabase API on same origin as the app.
+  vite: {
+    server: {
+      proxy: {
+        "/rest/v1": apiProxy,
+        "/auth/v1": apiProxy,
+        "/storage/v1": apiProxy,
+      },
+    },
+  },
 });

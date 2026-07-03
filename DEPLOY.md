@@ -18,6 +18,7 @@
 |---|---|
 | `VITE_SUPABASE_URL` | Публичный адрес API (после DNS: `https://smeg.am`) |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Публичный ключ (ANON_KEY) |
+| `VITE_ANALYTICS_ENABLED` | `true` на проде — просмотры и поиск в админке (нужны миграции analytics) |
 | `SUPABASE_URL` | Внутренний адрес API: `http://smeg-api:8000` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Серверный ключ (полный доступ к БД) |
 | `PUBLIC_BASE_URL` | Адрес возврата после оплаты ConverseBank |
@@ -144,6 +145,7 @@ sudo certbot --nginx -d smeg.am -d www.smeg.am
 ```
 PUBLIC_BASE_URL=https://smeg.am
 VITE_SUPABASE_URL=https://smeg.am
+VITE_ANALYTICS_ENABLED=true
 ```
 
 **`/opt/smeg/deploy/supabase/.env`:**
