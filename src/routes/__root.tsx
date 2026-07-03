@@ -17,7 +17,7 @@ import { CartProvider } from "../lib/cart";
 import { CartDrawer } from "../components/site/CartDrawer";
 import { WhatsAppFab } from "../components/site/WhatsAppFab";
 import { ScrollToTopButton } from "../components/site/ScrollToTopButton";
-import { canonicalLink, faviconLinks, hreflangLinks, seoMeta, absoluteUrl } from "../lib/seo";
+import { faviconLinks, absoluteUrl } from "../lib/seo";
 
 function NotFoundComponent() {
   return (
@@ -81,12 +81,6 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
-    meta: seoMeta({
-      title: "Smeg Armenia — Official SMEG Italian appliances in Yerevan",
-      description:
-        "Official SMEG in Armenia. Iconic Italian refrigerators, ovens, coffee machines and small appliances. Showroom at Nar-Dos 2, Yerevan.",
-      path: "/",
-    }),
     links: [
       {
         rel: "stylesheet",
@@ -101,8 +95,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "manifest", href: "/manifest.webmanifest" },
       ...faviconLinks(),
       { rel: "icon", type: "image/png", sizes: "512x512", href: absoluteUrl("/icon-512.png?v=3") },
-      ...hreflangLinks("/"),
-      ...canonicalLink("/"),
     ],
   }),
   shellComponent: RootShell,
