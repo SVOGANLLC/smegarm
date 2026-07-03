@@ -19,6 +19,9 @@ services:
       SUPABASE_URL: http://smeg-api:8000
     ports:
       - "127.0.0.1:3000:3000"
+    extra_hosts:
+      # Some Reg.ru VPS routes block default Telegram DC IPs; this one is reachable.
+      - "api.telegram.org:149.154.167.220"
     networks:
       - default
       - supabase

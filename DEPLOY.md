@@ -226,7 +226,7 @@ docker cp smeg-db:/tmp/backup.sql ./backup-$(date +%F).sql
 | Ошибки Supabase | `docker ps` — все 5 контейнеров (`smeg-db`, `smeg-auth`, `smeg-rest`, `smeg-storage`, `smeg-api`) запущены |
 | Пустая страница | `VITE_*` заданы при сборке (`docker compose build`) |
 | Оплата не возвращает | `PUBLIC_BASE_URL` в `.env` |
-| Telegram не шлёт | `TELEGRAM_BOT_TOKEN` в `.env`, chat_id сохранён в админке |
+| Telegram не шлёт | `TELEGRAM_BOT_TOKEN` в `.env`, chat_id сохранён в админке; webhook: `node deploy/scripts/setup-telegram-webhook.mjs` (с машины с Node, не с VPS); на Reg.ru VPS часть IP Telegram заблокирована — в `docker-compose.yml` есть `extra_hosts` для `api.telegram.org` |
 | Цвета в фильтрах серые | swatch-и в `color_swatches` привязаны к `colour_en` (англ.) |
 | Аналитика пустая / ошибка | Миграции `202607031*`; без флага трекинг выключен — это нормально |
 | nginx не стартует после правок | `sudo nginx -t` — часто нет файла сертификата; вернуть старый конфиг |

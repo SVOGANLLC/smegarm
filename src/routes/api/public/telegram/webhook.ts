@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHash, timingSafeEqual } from "crypto";
+import { telegramSendMessage } from "@/lib/telegram-api";
 
 function deriveSecret(token: string) {
   return createHash("sha256").update(`telegram-webhook:${token}`).digest("base64url");
@@ -12,13 +13,7 @@ function safeEqual(a: string, b: string) {
 }
 
 async function sendMessage(chatId: number | string, text: string) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) return;
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
-  });
+  await telegramSendMessage(chatId, text);
 }
 
 function reply(chatId: number, firstName: string | undefined) {
@@ -55,7 +50,11 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         const msg = update?.message ?? update?.edited_message;
         const chatId = msg?.chat?.id;
         if (typeof chatId === "number") {
-          await sendMessage(chatId, reply(chatId, msg?.from?.first_name));
+          try {
+            await sendMessage(chatId, reply(chatId, msg?.from?.first_name));
+          } catch (e) {
+            console.error("[telegram] webhook reply failed", e);
+          }
         }
         return Response.json({ ok: true });
       },
