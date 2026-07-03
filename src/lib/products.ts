@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { canonicalCategoryKey } from "@/lib/category-i18n";
 import { fetchSkusMatchingSpecFilters, type SpecFilters } from "@/lib/spec-filters";
+import { isFuzzySearchEnabled } from "@/lib/search";
 import type { NavGroupFilters } from "@/lib/catalog-nav-groups";
 import {
   buildProductGroups,
@@ -384,17 +385,34 @@ export type SearchSuggestion = {
 
 export async function searchProductsRpc(
   query: string,
-  opts: { onlyPublished?: boolean; limit?: number } = {},
+  opts: { onlyPublished?: boolean; limit?: number; fuzzy?: boolean } = {},
 ): Promise<SearchSuggestion[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
-  const { data, error } = await supabase.rpc("search_products", {
+
+  const baseArgs = {
     q: trimmed,
     only_published: opts.onlyPublished ?? true,
     max_rows: opts.limit ?? 8,
-  });
-  if (error) throw error;
-  return (data ?? []) as SearchSuggestion[];
+  };
+  const useFuzzy = opts.fuzzy ?? isFuzzySearchEnabled();
+
+  if (!useFuzzy) {
+    const { data, error } = await supabase.rpc("search_products", baseArgs);
+    if (error) throw error;
+    return (data ?? []) as SearchSuggestion[];
+  }
+
+  const modern = await supabase.rpc("search_products", { ...baseArgs, p_fuzzy: true });
+  if (!modern.error) return (modern.data ?? []) as SearchSuggestion[];
+
+  if (modern.error.code === "PGRST202" || /function.*not exist/i.test(modern.error.message ?? "")) {
+    const legacy = await supabase.rpc("search_products", baseArgs);
+    if (legacy.error) throw legacy.error;
+    return (legacy.data ?? []) as SearchSuggestion[];
+  }
+
+  throw modern.error;
 }
 
 export async function fetchColorSwatches(): Promise<ColorSwatch[]> {
@@ -780,13 +798,8 @@ async function fetchGroupedCatalog(
   let rows: GroupSkuRow[] = [];
 
   if (f.search) {
-    const { data: ranked, error: e } = await supabase.rpc("search_products", {
-      q: f.search,
-      only_published: true,
-      max_rows: 500,
-    });
-    if (e) throw e;
-    let skus = ((ranked ?? []) as Array<{ sku: string }>).map((r) => r.sku);
+    const ranked = await searchProductsRpc(f.search, { onlyPublished: true, limit: 500 });
+    let skus = ranked.map((r) => r.sku);
     if (specSkuIn) {
       const allowed = new Set(specSkuIn);
       skus = skus.filter((s) => allowed.has(s));
@@ -886,20 +899,14 @@ export async function fetchCatalog(f: CatalogFilters): Promise<{ items: CatalogD
 
   // Text search: global, ranked by RPC — do not intersect with category sidebar filter.
   if (f.search) {
-    const { data: rows, error: e } = await supabase.rpc("search_products", {
-      q: f.search,
-      only_published: true,
-      max_rows: 500,
-    });
-    if (e) throw e;
-    let ranked = (rows ?? []) as Array<{ sku: string }>;
+    const ranked = await searchProductsRpc(f.search, { onlyPublished: true, limit: 500 });
+    let orderedSkus = ranked.map((r) => r.sku);
     if (specSkuIn) {
       const allowed = new Set(specSkuIn);
-      ranked = ranked.filter((r) => allowed.has(r.sku));
+      orderedSkus = orderedSkus.filter((s) => allowed.has(s));
     }
-    if (!ranked.length) return { items: [], total: 0 };
+    if (!orderedSkus.length) return { items: [], total: 0 };
 
-    const orderedSkus = ranked.map((r) => r.sku);
     const filteredSkus = await filterSkusByFacets(orderedSkus, f);
     const total = filteredSkus.length;
     if (!total) return { items: [], total: 0 };

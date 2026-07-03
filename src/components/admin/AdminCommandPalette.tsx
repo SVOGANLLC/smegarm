@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { searchProductsRpc } from "@/lib/products";
 import { useI18n } from "@/lib/i18n";
 
 type Result = {
@@ -75,12 +76,8 @@ export function AdminCommandPalette() {
         }
       }
 
-      const { data: products } = await supabase.rpc("search_products", {
-        q: term,
-        only_published: false,
-        max_rows: 8,
-      });
-      for (const row of (products ?? []) as Array<{ sku: string; name?: string }>) {
+      const products = await searchProductsRpc(term, { onlyPublished: false, limit: 8 });
+      for (const row of products) {
         results.push({
           id: `sku-${row.sku}`,
           label: row.name || row.sku,

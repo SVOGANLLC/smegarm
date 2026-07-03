@@ -19,6 +19,7 @@
 | `VITE_SUPABASE_URL` | Публичный адрес API (после DNS: `https://smeg.am`) |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Публичный ключ (ANON_KEY) |
 | `VITE_ANALYTICS_ENABLED` | `true` на проде — просмотры и поиск в админке (нужны миграции analytics) |
+| `VITE_FUZZY_SEARCH_ENABLED` | `true` после миграции `20260703180000` — поиск с опечатками |
 | `SUPABASE_URL` | Внутренний адрес API: `http://smeg-api:8000` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Серверный ключ (полный доступ к БД) |
 | `PUBLIC_BASE_URL` | Адрес возврата после оплаты ConverseBank |

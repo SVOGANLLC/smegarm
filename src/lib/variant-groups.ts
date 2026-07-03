@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { searchProductsRpc } from "@/lib/products";
 import { assertRowUpdated } from "@/lib/supabase-assert";
 import { removeModelGroupLabel, persistModelGroupLabels, type ModelGroupLabel } from "@/lib/model-group-labels";
 
@@ -157,13 +158,8 @@ export async function searchProductsForGroup(q: string, limit = 12): Promise<Pro
     if ((data ?? []).length) return data as ProductRow[];
   }
 
-  const { data, error } = await supabase.rpc("search_products", {
-    q: term,
-    only_published: false,
-    max_rows: limit,
-  });
-  if (error) throw error;
-  const skus = ((data ?? []) as Array<{ sku: string }>).map((r) => r.sku);
+  const hits = await searchProductsRpc(term, { onlyPublished: false, limit });
+  const skus = hits.map((r) => r.sku);
   if (!skus.length) return [];
 
   const { data: rows, error: e2 } = await supabase

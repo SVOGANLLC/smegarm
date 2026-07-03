@@ -7,6 +7,7 @@ services:
         VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY}
         VITE_SUPABASE_PROJECT_ID: ${VITE_SUPABASE_PROJECT_ID}
         VITE_ANALYTICS_ENABLED: ${VITE_ANALYTICS_ENABLED:-false}
+        VITE_FUZZY_SEARCH_ENABLED: ${VITE_FUZZY_SEARCH_ENABLED:-false}
     image: smeg-armenia:latest
     container_name: smeg-armenia
     restart: unless-stopped

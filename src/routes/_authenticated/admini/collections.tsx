@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChevronDown, ChevronUp, Eye, EyeOff, Trash2, Upload, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import type { CollectionSection } from "@/lib/products";
+import { searchProductsRpc, type CollectionSection } from "@/lib/products";
 import {
   createCollectionAdmin,
   deleteCollectionAdmin,
@@ -126,13 +126,8 @@ function CollectionProducts({
     queryKey: ["admin-collection-product-search", query],
     queryFn: async () => {
       if (query.trim().length < 2) return [];
-      const { data, error } = await supabase.rpc("search_products", {
-        q: query.trim(),
-        only_published: false,
-        max_rows: 12,
-      });
-      if (error) throw error;
-      const skus = (data ?? []).map((r: { sku: string }) => r.sku);
+      const hits = await searchProductsRpc(query.trim(), { onlyPublished: false, limit: 12 });
+      const skus = hits.map((r) => r.sku);
       if (!skus.length) return [];
       const { data: products, error: e2 } = await supabase
         .from("products")

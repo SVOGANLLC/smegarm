@@ -806,7 +806,7 @@ export type Database = {
         }[]
       }
       search_products: {
-        Args: { max_rows?: number; only_published?: boolean; q: string }
+        Args: { max_rows?: number; only_published?: boolean; p_fuzzy?: boolean; q: string }
         Returns: {
           category: string
           colour: string

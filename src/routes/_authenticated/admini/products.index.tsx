@@ -10,6 +10,7 @@ import { useI18n } from "@/lib/i18n";
 import { z } from "zod";
 import { assertRowUpdated } from "@/lib/supabase-assert";
 import { invalidateProductQueries } from "@/lib/admin-product-cache";
+import { searchProductsRpc } from "@/lib/products";
 
 const productsSearchSchema = z.object({
   noPrice: z.boolean().optional(),
@@ -62,13 +63,8 @@ function AdminProducts() {
       const term = q.trim();
       let skuFilter: string[] | null = null;
       if (term) {
-        const { data: hits, error: e1 } = await supabase.rpc("search_products", {
-          q: term,
-          only_published: false,
-          max_rows: 500,
-        });
-        if (e1) throw e1;
-        skuFilter = (hits ?? []).map((r: { sku: string }) => r.sku);
+        const hits = await searchProductsRpc(term, { onlyPublished: false, limit: 500 });
+        skuFilter = hits.map((r) => r.sku);
         if (skuFilter.length === 0) return { items: [], total: 0 };
       }
       let qb = supabase
