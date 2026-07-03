@@ -16,7 +16,7 @@ import {
   slugify,
 } from "@/lib/products";
 import { z } from "zod";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useI18n, getI18nDefaults } from "@/lib/i18n";
 import { categoryLabel as catLabel, familyLabel } from "@/lib/category-i18n";
@@ -25,7 +25,7 @@ import { parseCatalogGroupConfig, shouldGroupCatalogDisplay } from "@/lib/catalo
 import { parseModelGroupLabels, resolveModelGroupLabel } from "@/lib/model-group-labels";
 import { sectionCategories, sectionFamilies, sectionTitleKey, resolveAccessoryCategoryRaw, type CatalogSection } from "@/lib/catalog-sections";
 import { getEffectiveNavGroups } from "@/lib/catalog-nav";
-import { resolveNavGroupFilters, navGroupLabel } from "@/lib/catalog-nav-groups";
+import { resolveNavGroupFilters, navGroupLabel, navGroupFiltersKey } from "@/lib/catalog-nav-groups";
 import { useSiteContentBlock } from "@/lib/site-content";
 import { ProductCard } from "@/components/site/ProductCard";
 import { ModelColorPickerView } from "@/components/site/ModelColorPickerView";
@@ -41,6 +41,7 @@ import {
   type SpecFilters,
 } from "@/lib/spec-filters";
 import { canonicalLink, hreflangLinks, seoMeta } from "@/lib/seo";
+import { trackSiteSearch } from "@/lib/analytics";
 
 const searchSchema = z.object({
   category: z.string().optional(),
@@ -226,6 +227,19 @@ function CatalogPage() {
     return resolveNavGroupFilters(navGroup, navGroupDefs, catsQuery.data);
   }, [navGroupOnly, navGroup, navGroupDefs, catsQuery.data]);
 
+  const navGroupFilterKey = navGroupOnly
+    ? catsQuery.isSuccess
+      ? navGroupFiltersKey(navGroupFilters) || "__empty__"
+      : "__pending__"
+    : "";
+
+  /** Wait for categories before resolving nav-group OR filters; unknown groups must not block the grid forever. */
+  const navGroupCatalogReady = !navGroupOnly || catsQuery.isSuccess;
+
+  const categoryAwaitingList = !!category && catsQuery.isLoading;
+  const unknownCategory =
+    !!category && catsQuery.isSuccess && !categoryRawList && !navGroup && !section && !family && !q;
+
   const effectiveFamilies = family
     ? [family]
     : category
@@ -309,6 +323,7 @@ function CatalogPage() {
     queryKey: [
       "spec-facets",
       navGroup ?? "",
+      navGroupFilterKey,
       effectiveCategoryIn ?? null,
       effectiveFamilies ?? null,
       colours,
@@ -336,11 +351,30 @@ function CatalogPage() {
         active: specFilters,
       });
     },
+    enabled: navGroupCatalogReady || !navGroupOnly,
     staleTime: 60_000,
   });
 
   const productsQuery = useQuery({
-    queryKey: ["catalog", currentCat?.slug ?? null, family ?? "", section ?? "", navGroup ?? "", groupByColor, q ?? "", colours, aesthetics, theme ?? "", flag ?? "", inStock ?? false, sort ?? "", specRaw ?? "", page, shuffleKey],
+    queryKey: [
+      "catalog",
+      currentCat?.slug ?? null,
+      family ?? "",
+      section ?? "",
+      navGroup ?? "",
+      navGroupFilterKey,
+      groupByColor,
+      q ?? "",
+      colours,
+      aesthetics,
+      theme ?? "",
+      flag ?? "",
+      inStock ?? false,
+      sort ?? "",
+      specRaw ?? "",
+      page,
+      shuffleKey,
+    ],
     queryFn: () =>
       fetchCatalog({
         categoryIn: navGroupFilters ? undefined : effectiveCategoryIn,
@@ -360,14 +394,38 @@ function CatalogPage() {
         skuIn: navGroupFilters?.skus.length ? navGroupFilters.skus : undefined,
         navGroupFilters: navGroupFilters ?? undefined,
       }),
-    enabled: !category || !!categoryRawList || !!navGroup || !!section || !!family || !!q,
+    enabled:
+      navGroupCatalogReady &&
+      !categoryAwaitingList &&
+      (!category || !!categoryRawList || !!navGroup || !!section || !!family || !!q),
   });
+
+  const lastSearchLogRef = useRef<string | null>(null);
+  useEffect(() => {
+    const term = q?.trim();
+    if (!term || term.length < 2 || productsQuery.isLoading || productsQuery.data === undefined) return;
+    const logKey = `${term}:${productsQuery.data.total}`;
+    if (lastSearchLogRef.current === logKey) return;
+    lastSearchLogRef.current = logKey;
+    trackSiteSearch(term, productsQuery.data.total, "catalog");
+  }, [q, productsQuery.data?.total, productsQuery.isLoading]);
 
   const swatchHex = (canonical: string) =>
     swatchesQuery.data?.find((s) => s.colour === canonical)?.hex ?? "#d4d4d4";
 
   const total = productsQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  useEffect(() => {
+    if (!productsQuery.data || page <= totalPages) return;
+    navigate({ search: (prev: CatalogSearch) => ({ ...prev, page: 1 }) });
+  }, [productsQuery.data, page, totalPages, navigate]);
+
+  const catalogGridLoading =
+    categoryAwaitingList ||
+    (navGroupOnly && catsQuery.isLoading) ||
+    productsQuery.isLoading ||
+    productsQuery.isFetching;
 
   const toggleIn = (key: "colour" | "aesthetic", value: string) => {
     const current = split(search[key]);
@@ -698,12 +756,16 @@ function CatalogPage() {
                   </button>
                   <p className="text-sm text-muted-foreground">{t("catalog.nothing")}</p>
                 </div>
-              ) : productsQuery.isLoading ? (
+              ) : productsQuery.isError ? (
+                <p className="text-sm text-muted-foreground">{productsQuery.error.message}</p>
+              ) : catalogGridLoading ? (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                   {Array.from({ length: 8 }).map((_, i) => (
                     <div key={i} className="aspect-[4/5] animate-pulse bg-secondary" />
                   ))}
                 </div>
+              ) : unknownCategory ? (
+                <p className="text-sm text-muted-foreground">{t("catalog.notFound")}</p>
               ) : productsQuery.data?.items.length ? (
                 <>
                   <div className="grid grid-cols-1 gap-y-8 sm:grid-cols-2 sm:gap-x-6 md:grid-cols-3 lg:grid-cols-4">

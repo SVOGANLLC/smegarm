@@ -19,6 +19,7 @@ import {
   Search,
   LayoutGrid,
   Palette,
+  BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n, type Lang } from "@/lib/i18n";
@@ -31,6 +32,7 @@ type NavItem = { to: string; labelKey: string; icon: typeof Home; exact?: boolea
 const mainNav: NavItem[] = [
   { to: "/admini", labelKey: "admin.nav.home", icon: Home, exact: true },
   { to: "/admini/orders", labelKey: "admin.nav.orders", icon: ShoppingCart },
+  { to: "/admini/analytics", labelKey: "admin.nav.analytics", icon: BarChart3 },
   { to: "/admini/inquiries", labelKey: "admin.nav.inquiries", icon: Inbox },
   { to: "/admini/products", labelKey: "admin.nav.products", icon: Package },
   { to: "/admini/collections", labelKey: "admin.nav.collections", icon: Layers },

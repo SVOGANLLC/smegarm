@@ -37,6 +37,7 @@ import { Route as AuthenticatedAdminiHelpRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminiGroupsRouteImport } from './routes/_authenticated/admini/groups'
 import { Route as AuthenticatedAdminiContentRouteImport } from './routes/_authenticated/admini/content'
 import { Route as AuthenticatedAdminiCollectionsRouteImport } from './routes/_authenticated/admini/collections'
+import { Route as AuthenticatedAdminiAnalyticsRouteImport } from './routes/_authenticated/admini/analytics'
 import { Route as AuthenticatedAdminiProductsIndexRouteImport } from './routes/_authenticated/admini/products.index'
 import { Route as ApiPublicTranslateTickRouteImport } from './routes/api/public/translate/tick'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
@@ -194,6 +195,12 @@ const AuthenticatedAdminiCollectionsRoute =
     path: '/collections',
     getParentRoute: () => AuthenticatedAdminiRouteRoute,
   } as any)
+const AuthenticatedAdminiAnalyticsRoute =
+  AuthenticatedAdminiAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
+  } as any)
 const AuthenticatedAdminiProductsIndexRoute =
   AuthenticatedAdminiProductsIndexRouteImport.update({
     id: '/',
@@ -238,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/collection/$slug': typeof CollectionSlugRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$sku': typeof ProductSkuRoute
+  '/admini/analytics': typeof AuthenticatedAdminiAnalyticsRoute
   '/admini/collections': typeof AuthenticatedAdminiCollectionsRoute
   '/admini/content': typeof AuthenticatedAdminiContentRoute
   '/admini/groups': typeof AuthenticatedAdminiGroupsRoute
@@ -271,6 +279,7 @@ export interface FileRoutesByTo {
   '/collection/$slug': typeof CollectionSlugRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$sku': typeof ProductSkuRoute
+  '/admini/analytics': typeof AuthenticatedAdminiAnalyticsRoute
   '/admini/collections': typeof AuthenticatedAdminiCollectionsRoute
   '/admini/content': typeof AuthenticatedAdminiContentRoute
   '/admini/groups': typeof AuthenticatedAdminiGroupsRoute
@@ -306,6 +315,7 @@ export interface FileRoutesById {
   '/collection/$slug': typeof CollectionSlugRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$sku': typeof ProductSkuRoute
+  '/_authenticated/admini/analytics': typeof AuthenticatedAdminiAnalyticsRoute
   '/_authenticated/admini/collections': typeof AuthenticatedAdminiCollectionsRoute
   '/_authenticated/admini/content': typeof AuthenticatedAdminiContentRoute
   '/_authenticated/admini/groups': typeof AuthenticatedAdminiGroupsRoute
@@ -342,6 +352,7 @@ export interface FileRouteTypes {
     | '/collection/$slug'
     | '/order/$id'
     | '/product/$sku'
+    | '/admini/analytics'
     | '/admini/collections'
     | '/admini/content'
     | '/admini/groups'
@@ -375,6 +386,7 @@ export interface FileRouteTypes {
     | '/collection/$slug'
     | '/order/$id'
     | '/product/$sku'
+    | '/admini/analytics'
     | '/admini/collections'
     | '/admini/content'
     | '/admini/groups'
@@ -409,6 +421,7 @@ export interface FileRouteTypes {
     | '/collection/$slug'
     | '/order/$id'
     | '/product/$sku'
+    | '/_authenticated/admini/analytics'
     | '/_authenticated/admini/collections'
     | '/_authenticated/admini/content'
     | '/_authenticated/admini/groups'
@@ -648,6 +661,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminiCollectionsRouteImport
       parentRoute: typeof AuthenticatedAdminiRouteRoute
     }
+    '/_authenticated/admini/analytics': {
+      id: '/_authenticated/admini/analytics'
+      path: '/analytics'
+      fullPath: '/admini/analytics'
+      preLoaderRoute: typeof AuthenticatedAdminiAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
     '/_authenticated/admini/products/': {
       id: '/_authenticated/admini/products/'
       path: '/'
@@ -704,6 +724,7 @@ const AuthenticatedAdminiProductsRouteWithChildren =
   )
 
 interface AuthenticatedAdminiRouteRouteChildren {
+  AuthenticatedAdminiAnalyticsRoute: typeof AuthenticatedAdminiAnalyticsRoute
   AuthenticatedAdminiCollectionsRoute: typeof AuthenticatedAdminiCollectionsRoute
   AuthenticatedAdminiContentRoute: typeof AuthenticatedAdminiContentRoute
   AuthenticatedAdminiGroupsRoute: typeof AuthenticatedAdminiGroupsRoute
@@ -721,6 +742,7 @@ interface AuthenticatedAdminiRouteRouteChildren {
 
 const AuthenticatedAdminiRouteRouteChildren: AuthenticatedAdminiRouteRouteChildren =
   {
+    AuthenticatedAdminiAnalyticsRoute: AuthenticatedAdminiAnalyticsRoute,
     AuthenticatedAdminiCollectionsRoute: AuthenticatedAdminiCollectionsRoute,
     AuthenticatedAdminiContentRoute: AuthenticatedAdminiContentRoute,
     AuthenticatedAdminiGroupsRoute: AuthenticatedAdminiGroupsRoute,

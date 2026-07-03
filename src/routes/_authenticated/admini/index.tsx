@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-import { ChevronRight, FileText, Inbox, Layers, LayoutGrid, Package, Palette, ShoppingCart } from "lucide-react";
+import { parseModelGroupLabels } from "@/lib/model-group-labels";
+import { countEmptyVariantGroups } from "@/lib/variant-groups";
+import { ChevronRight, FileText, Inbox, Layers, LayoutGrid, Package, Palette, ShoppingCart, BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admini/")({
   component: AdminHome,
@@ -11,7 +13,7 @@ export const Route = createFileRoute("/_authenticated/admini/")({
 
 type RowProps = {
   to: string;
-  search?: { noPrice?: boolean; hidden?: boolean };
+  search?: { noPrice?: boolean; hidden?: boolean; products?: "without" };
   label: string;
   hint?: string;
   count?: number;
@@ -56,7 +58,7 @@ function AdminHome() {
   const stats = useQuery({
     queryKey: ["admin-today"],
     queryFn: async () => {
-      const [newOrders, newInq, hidden, noPrice] = await Promise.all([
+      const [newOrders, newInq, hidden, noPrice, categoriesBlock] = await Promise.all([
         supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "new"),
         supabase.from("inquiries").select("id", { count: "exact", head: true }).eq("status", "new"),
         supabase
@@ -68,12 +70,16 @@ function AdminHome() {
           .select("sku", { count: "exact", head: true })
           .eq("is_published", true)
           .is("price_amd", null),
+        supabase.from("site_content").select("value").eq("key", "categories").maybeSingle(),
       ]);
+      const labelKeys = parseModelGroupLabels(categoriesBlock.data?.value ?? undefined).map((l) => l.key);
+      const emptyGroups = await countEmptyVariantGroups(labelKeys);
       return {
         newOrders: newOrders.count ?? 0,
         newInq: newInq.count ?? 0,
         hidden: hidden.count ?? 0,
         noPrice: noPrice.count ?? 0,
+        emptyGroups,
       };
     },
     staleTime: 30_000,
@@ -97,6 +103,12 @@ function AdminHome() {
             urgent={(s?.newOrders ?? 0) > 0}
           />
           <MenuRow
+            to="/admini/analytics"
+            icon={BarChart3}
+            label={t("admin.nav.analytics")}
+            hint={t("admin.home.analyticsHint")}
+          />
+          <MenuRow
             to="/admini/inquiries"
             icon={Inbox}
             label={t("admin.nav.inquiries")}
@@ -114,8 +126,19 @@ function AdminHome() {
           <MenuRow to="/admini/content" icon={FileText} label={t("admin.nav.content")} hint={t("admin.home.contentHint")} />
         </MenuGroup>
 
-        {(s?.hidden ?? 0) > 0 || (s?.noPrice ?? 0) > 0 ? (
+        {(s?.hidden ?? 0) > 0 || (s?.noPrice ?? 0) > 0 || (s?.emptyGroups ?? 0) > 0 ? (
           <MenuGroup>
+            {(s?.emptyGroups ?? 0) > 0 && (
+              <MenuRow
+                to="/admini/groups"
+                search={{ products: "without" }}
+                icon={Palette}
+                label={t("admin.home.actionEmptyGroups")}
+                hint={t("admin.home.actionEmptyGroupsHint")}
+                count={s?.emptyGroups}
+                urgent
+              />
+            )}
             {(s?.hidden ?? 0) > 0 && (
               <MenuRow
                 to="/admini/products"

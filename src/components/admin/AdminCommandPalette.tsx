@@ -16,6 +16,7 @@ type Result = {
 const STATIC: Result[] = [
   { id: "home", label: "Главная", to: "/admini" },
   { id: "orders", label: "Заказы", to: "/admini/orders" },
+  { id: "analytics", label: "Аналитика", to: "/admini/analytics" },
   { id: "inquiries", label: "Заявки", to: "/admini/inquiries" },
   { id: "products", label: "Товары", to: "/admini/products" },
   { id: "collections", label: "Коллекции", to: "/admini/collections" },

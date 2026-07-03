@@ -6,7 +6,7 @@ import { fetchProductBySku, fetchTheme, slugify } from "@/lib/products";
 import { ProductImageZoom } from "@/components/site/ProductImageZoom";
 import { ColorSwitcher } from "@/components/site/ColorSwitcher";
 import { AddToCartButton } from "@/components/site/AddToCartButton";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useI18n, pickLocalized, pickLocalizedSpecs } from "@/lib/i18n";
 import { localizedProductColour } from "@/lib/colour-i18n";
 import { categoryLabel } from "@/lib/category-i18n";
@@ -21,6 +21,7 @@ import {
   productTitle,
   seoMeta,
 } from "@/lib/seo";
+import { trackProductView } from "@/lib/analytics";
 
 export const Route = createFileRoute("/product/$sku")({
   loader: async ({ params, context }) => {
@@ -102,6 +103,11 @@ function ProductPage() {
   });
   const gallery = product?.images?.length ? product.images : product?.main_image ? [product.main_image] : [];
   const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    trackProductView(sku);
+  }, [sku]);
+
   if (!product) return null;
   const name = pickLocalized(product as unknown as Record<string, unknown>, "name", lang);
   const description = pickLocalized(product as unknown as Record<string, unknown>, "description", lang);
