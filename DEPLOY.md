@@ -168,6 +168,36 @@ node deploy/scripts/setup-telegram-webhook.mjs
 
 ## 7. Обновление сайта
 
+### Безопасный порядок (чтобы ничего не слетело)
+
+1. **Бэкап БД** (раздел 8 ниже).
+2. **Не трогать** рабочие переменные, если `smeg.am` уже открывается:
+   - `PUBLIC_BASE_URL=https://smeg.am`
+   - `VITE_SUPABASE_URL=https://smeg.am`
+3. **Миграции** (только новые файлы из `supabase/migrations/`):
+   ```bash
+   cd /opt/smeg
+   ./deploy/scripts/apply-pending-migrations.sh
+   ```
+   Или вручную по одному файлу через `psql`. Старые таблицы/колонки не удаляются.
+4. **Код и сборка:**
+   ```bash
+   git pull
+   docker compose up -d --build
+   docker image prune -f
+   ```
+5. **Аналитика — опционально.** Без `VITE_ANALYTICS_ENABLED=true` сайт ведёт себя как раньше
+   (каталог, заказы, оплата без изменений). Включать только после миграций `202607031*`.
+6. **nginx** — только если менялся `deploy/nginx/smeg.am.conf`:
+   ```bash
+   sudo cp deploy/nginx/smeg.am.conf /etc/nginx/sites-available/smeg.am.conf
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
+   Если `nginx -t` ругается на сертификат — не перезагружать; старый конфиг оставить.
+7. **Проверка после деплоя:** главная → каталог → карточка товара → корзина → `/admini` → заказы.
+
+### Быстрое обновление (как раньше)
+
 ```bash
 cd /opt/smeg
 git pull
@@ -197,5 +227,7 @@ docker cp smeg-db:/tmp/backup.sql ./backup-$(date +%F).sql
 | Оплата не возвращает | `PUBLIC_BASE_URL` в `.env` |
 | Telegram не шлёт | `TELEGRAM_BOT_TOKEN` в `.env`, chat_id сохранён в админке |
 | Цвета в фильтрах серые | swatch-и в `color_swatches` привязаны к `colour_en` (англ.) |
+| Аналитика пустая / ошибка | Миграции `202607031*`; без флага трекинг выключен — это нормально |
+| nginx не стартует после правок | `sudo nginx -t` — часто нет файла сертификата; вернуть старый конфиг |
 
 Логи nginx: `sudo tail -f /var/log/nginx/error.log`
