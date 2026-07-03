@@ -1,5 +1,5 @@
 import { categoryLabel, familyLabel } from "@/lib/category-i18n";
-import { breadcrumbJsonLd, canonicalLink, hreflangLinks, seoMeta } from "@/lib/seo";
+import { breadcrumbJsonLd, canonicalLink, faqJsonLd, hreflangLinks, seoMeta, type FaqItem } from "@/lib/seo";
 
 import { sectionTitleKey, type CatalogSection } from "@/lib/catalog-sections";
 import { getI18nDefaults } from "@/lib/i18n";
@@ -133,7 +133,11 @@ export function catalogBreadcrumbLabels(
   };
 }
 
-export function catalogHeadFromSearch(search: CatalogSeoSearch, navGroupTitle?: string) {
+export function catalogHeadFromSearch(
+  search: CatalogSeoSearch,
+  navGroupTitle?: string,
+  faqs?: FaqItem[],
+) {
   const hy = getI18nDefaults().hy;
   const path = catalogCanonicalPath(search);
   const noindex = catalogShouldNoindex(search);
@@ -143,6 +147,19 @@ export function catalogHeadFromSearch(search: CatalogSeoSearch, navGroupTitle?: 
   const lastCrumb = crumbs[crumbs.length - 1];
   if (lastCrumb && crumbs.length > 2) {
     title = `${lastCrumb.name} — Smeg Armenia`;
+  }
+
+  const scripts: Array<{ type: "application/ld+json"; children: string }> = [
+    {
+      type: "application/ld+json" as const,
+      children: JSON.stringify(breadcrumbJsonLd(crumbs)),
+    },
+  ];
+  if (faqs?.length) {
+    scripts.push({
+      type: "application/ld+json" as const,
+      children: JSON.stringify(faqJsonLd(faqs)),
+    });
   }
 
   return {
@@ -155,12 +172,7 @@ export function catalogHeadFromSearch(search: CatalogSeoSearch, navGroupTitle?: 
       noindex,
     }),
     links: [...hreflangLinks(path), ...canonicalLink(path)],
-    scripts: [
-      {
-        type: "application/ld+json" as const,
-        children: JSON.stringify(breadcrumbJsonLd(crumbs)),
-      },
-    ],
+    scripts,
   };
 }
 

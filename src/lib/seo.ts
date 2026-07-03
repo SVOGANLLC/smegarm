@@ -168,6 +168,23 @@ export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
   };
 }
 
+export type FaqItem = { question: string; answer: string };
+
+export function faqJsonLd(items: FaqItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
+}
+
 export function productJsonLd(p: ProductSeoRow, lang: Lang = "hy") {
   const inStock = p.availability === "in_stock" || p.availability === "available";
   return {

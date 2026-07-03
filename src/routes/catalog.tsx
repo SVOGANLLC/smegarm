@@ -40,7 +40,8 @@ import {
   serializeSpecSearchParam,
   type SpecFilters,
 } from "@/lib/spec-filters";
-import { catalogHeadFromSearch } from "@/lib/catalog-seo";
+import { catalogHeadFromSearch, catalogShouldNoindex } from "@/lib/catalog-seo";
+import { fetchCategoryFaqs, getStoreFaqs } from "@/lib/category-faqs";
 import { trackSiteSearch } from "@/lib/analytics";
 
 const searchSchema = z.object({
@@ -78,10 +79,31 @@ function patchCatalogSearch(prev: CatalogSearch, patch: Partial<CatalogSearch>):
 
 export const Route = createFileRoute("/catalog")({
   validateSearch: (s) => searchSchema.parse(s),
-  loader: ({ location }) => ({
-    catalogSearch: searchSchema.parse(location.search),
-  }),
-  head: ({ loaderData }) => catalogHeadFromSearch(loaderData?.catalogSearch ?? { page: 1 }),
+  loader: async ({ location }) => {
+    const catalogSearch = searchSchema.parse(location.search);
+    let faqs: ReturnType<typeof getStoreFaqs> | undefined;
+
+    if (!catalogShouldNoindex(catalogSearch)) {
+      if (catalogSearch.category && !catalogSearch.family && !catalogSearch.q?.trim()) {
+        faqs = (await fetchCategoryFaqs(catalogSearch.category)) ?? undefined;
+      } else if (
+        !catalogSearch.category &&
+        !catalogSearch.section &&
+        !catalogSearch.navGroup &&
+        !catalogSearch.q?.trim()
+      ) {
+        faqs = getStoreFaqs("hy");
+      }
+    }
+
+    return { catalogSearch, faqs };
+  },
+  head: ({ loaderData }) =>
+    catalogHeadFromSearch(
+      loaderData?.catalogSearch ?? { page: 1 },
+      undefined,
+      loaderData?.faqs,
+    ),
   errorComponent: ({ error }) => <CatalogErrorView message={error.message} />,
   notFoundComponent: () => <CatalogNotFoundView />,
   component: CatalogPage,
