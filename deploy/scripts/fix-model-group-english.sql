@@ -1,4 +1,5 @@
--- Make variant grouping language-independent: compute model_group from the stable
+-- DEPRECATED: recomputes model_group from name — disabled on production (manual groups only).
+-- Do NOT run unless intentionally re-seeding from English names.
 -- English fields (name_en/colour_en) instead of the localized name/colour, which
 -- change with translation and broke the colour switcher.
 BEGIN;

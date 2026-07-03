@@ -1,8 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-/** Invalidate storefront + admin caches after a product row changes. */
-export function invalidateProductQueries(qc: QueryClient, sku: string) {
-  qc.invalidateQueries({ queryKey: ["admin-product", sku] });
+/** Invalidate list + storefront caches (keep admin-product detail cache as set by save). */
+export function invalidateProductListCaches(qc: QueryClient, sku: string) {
   qc.invalidateQueries({ queryKey: ["admin-products"] });
   qc.invalidateQueries({ queryKey: ["admin-today"] });
   qc.invalidateQueries({ queryKey: ["product", sku] });
@@ -12,4 +11,10 @@ export function invalidateProductQueries(qc: QueryClient, sku: string) {
   qc.invalidateQueries({ queryKey: ["product-collection-meta", sku] });
   qc.invalidateQueries({ queryKey: ["product-collections", sku] });
   qc.invalidateQueries({ queryKey: ["admin-variant-groups"] });
+}
+
+/** Invalidate everything including the admin product detail query. */
+export function invalidateProductQueries(qc: QueryClient, sku: string) {
+  qc.invalidateQueries({ queryKey: ["admin-product", sku] });
+  invalidateProductListCaches(qc, sku);
 }

@@ -7,7 +7,7 @@ import { ArrowDown, ArrowLeft, ArrowUp, Copy, Star, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { ProductCollectionsEditor } from "@/components/admin/ProductCollectionsEditor";
 import { ProductImageUploader } from "@/components/admin/ProductImageUploader";
-import { invalidateProductQueries } from "@/lib/admin-product-cache";
+import { invalidateProductListCaches } from "@/lib/admin-product-cache";
 import {
   normalizeEanForSave,
   parseSpecsText,
@@ -106,9 +106,42 @@ function EditProduct() {
   const [dupSku, setDupSku] = useState("");
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameSku, setRenameSku] = useState("");
-  const hydratedSkuRef = useRef<string | null>(null);
   const formDirtyRef = useRef(false);
   const formRef = useRef<FormState | null>(null);
+  const skipHydrateRef = useRef(false);
+
+  type FormPatch = Partial<FormState> | ((prev: FormState) => FormState);
+
+  const setFormField = useCallback((patch: FormPatch) => {
+    skipHydrateRef.current = false;
+    formDirtyRef.current = true;
+    setForm((prev) => {
+      if (!prev) return prev;
+      const next = typeof patch === "function" ? patch(prev) : { ...prev, ...patch };
+      formRef.current = next;
+      return next;
+    });
+  }, []);
+
+  const mergeImageFieldsFromRow = useCallback(
+    (row: Record<string, unknown>) => {
+      const main_image = (row.main_image as string) ?? "";
+      const images = Array.isArray(row.images) ? (row.images as string[]).join("\n") : "";
+      setForm((prev) => {
+        if (!prev) return prev;
+        const next = { ...prev, main_image, images };
+        formRef.current = next;
+        return next;
+      });
+      qc.setQueryData(["admin-product", sku], (old) =>
+        old && typeof old === "object"
+          ? { ...(old as Record<string, unknown>), main_image: row.main_image, images: row.images }
+          : row,
+      );
+      invalidateProductListCaches(qc, sku);
+    },
+    [qc, sku],
+  );
 
   const q = useQuery({
     queryKey: ["admin-product", sku],
@@ -129,37 +162,27 @@ function EditProduct() {
     const next = productToForm(saved);
     setForm(next);
     formRef.current = next;
+    skipHydrateRef.current = true;
     qc.setQueryData(["admin-product", sku], saved);
-    hydratedSkuRef.current = sku;
     formDirtyRef.current = false;
-    invalidateProductQueries(qc, sku);
+    invalidateProductListCaches(qc, sku);
   };
 
   useEffect(() => {
-    hydratedSkuRef.current = null;
     formDirtyRef.current = false;
+    skipHydrateRef.current = false;
+    formRef.current = null;
+    setForm(null);
   }, [sku]);
 
   useEffect(() => {
-    if (!q.data || hydratedSkuRef.current === sku) return;
-    if (formDirtyRef.current) return;
+    if (!q.data || formDirtyRef.current || skipHydrateRef.current) return;
+    const row = q.data as { sku?: string };
+    if (row.sku !== sku) return;
     const next = productToForm(q.data as Record<string, unknown>);
     setForm(next);
     formRef.current = next;
-    hydratedSkuRef.current = sku;
   }, [sku, q.data]);
-
-  const markDirty = useCallback(() => {
-    formDirtyRef.current = true;
-  }, []);
-
-  const editForm = useCallback((patch: Partial<FormState> | ((prev: FormState) => FormState)) => {
-    formDirtyRef.current = true;
-    setForm((prev) => {
-      if (!prev) return prev;
-      return typeof patch === "function" ? patch(prev) : { ...prev, ...patch };
-    });
-  }, []);
 
   const parseImageLines = (text: string): string[] =>
     text
@@ -200,7 +223,7 @@ function EditProduct() {
       return assertRowUpdated(data, t("admin.saveNoRow"));
     },
     onSuccess: (saved) => {
-      applySavedRow(saved as Record<string, unknown>);
+      mergeImageFieldsFromRow(saved as Record<string, unknown>);
       toast.success(t("admin.saved"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
@@ -219,6 +242,19 @@ function EditProduct() {
       const stockQty = Math.max(0, parseInt(f.stock_qty, 10) || 0);
       const leadRaw = f.lead_time_days.trim();
       const leadDays = leadRaw === "" ? null : Math.max(0, Math.min(365, parseInt(leadRaw, 10) || 0));
+
+      const { error: commerceErr } = await supabase
+        .from("products")
+        .update({
+          price_amd: price,
+          price_old: priceOld,
+          discount_percent: disc,
+          stock_qty: stockQty,
+          lead_time_days: leadDays,
+        })
+        .eq("sku", sku);
+      if (commerceErr) throw commerceErr;
+
       const { data, error } = await supabase
         .from("products")
         .update({
@@ -237,11 +273,6 @@ function EditProduct() {
           aesthetic: f.aesthetic.trim().slice(0, 120) || null,
           family: f.family.trim().slice(0, 120) || null,
           ean: f.ean.trim().slice(0, 32) || null,
-          price_amd: price,
-          price_old: priceOld,
-          discount_percent: disc,
-          stock_qty: stockQty,
-          lead_time_days: leadDays,
           is_published: f.is_published,
           is_featured: f.is_featured,
           is_new: f.is_new,
@@ -489,21 +520,17 @@ function EditProduct() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          const current = formRef.current;
-          if (!current) return;
-          save.mutate(normalizeEanForSave(current));
+          if (!form) return;
+          save.mutate(normalizeEanForSave(form));
         }}
         className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]"
       >
         <div className="space-y-6">
-          <I18nContent sku={sku} form={form} setForm={editForm} />
+          <I18nContent sku={sku} form={form} setForm={setFormField} />
           <Field label={t("admin.product.mainPhoto")}>
             <input
               value={form.main_image}
-              onChange={(e) => {
-                markDirty();
-                setForm({ ...form, main_image: e.target.value });
-              }}
+              onChange={(e) => setFormField({ main_image: e.target.value })}
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
             <ProductImageUploader
@@ -512,8 +539,7 @@ function EditProduct() {
                 const base = formRef.current ?? form;
                 const nextImages = dedupeKeepOrder([url, ...parseImageLines(base.images)]);
                 const images = serializeImageLines(nextImages);
-                markDirty();
-                setForm((f) => (f ? { ...f, main_image: url, images } : f));
+                setFormField((f) => ({ ...f, main_image: url, images }));
                 await patchFields.mutateAsync({ main_image: url, images });
               }}
               label={t("admin.product.uploadMain")}
@@ -530,10 +556,7 @@ function EditProduct() {
           <Field label={t("admin.product.galleryHint")}>
             <textarea
               value={form.images}
-              onChange={(e) => {
-                markDirty();
-                setForm({ ...form, images: e.target.value });
-              }}
+              onChange={(e) => setFormField({ images: e.target.value })}
               rows={6}
               className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-foreground"
             />
@@ -544,8 +567,7 @@ function EditProduct() {
                 const base = formRef.current ?? form;
                 const nextImages = dedupeKeepOrder([...parseImageLines(base.images), url]);
                 const images = serializeImageLines(nextImages);
-                markDirty();
-                setForm((f) => (f ? { ...f, images } : f));
+                setFormField((f) => ({ ...f, images }));
                 await patchFields.mutateAsync({ images });
               }}
               label={t("admin.product.addGallery")}
@@ -565,8 +587,7 @@ function EditProduct() {
                             onClick={async () => {
                               const nextImages = dedupeKeepOrder([url, ...allUrls.filter((u) => u !== url)]);
                               const images = serializeImageLines(nextImages);
-                              markDirty();
-                              setForm((f) => (f ? { ...f, main_image: url, images } : f));
+                              setFormField((f) => ({ ...f, main_image: url, images }));
                               await patchFields.mutateAsync({ main_image: url, images });
                             }}
                             className="hidden rounded-sm bg-foreground/90 p-1 text-background group-hover:block"
@@ -593,8 +614,7 @@ function EditProduct() {
                             const next = [...allUrls];
                             [next[i - 1], next[i]] = [next[i], next[i - 1]];
                             const images = serializeImageLines(next);
-                            markDirty();
-                            setForm((f) => (f ? { ...f, images } : f));
+                            setFormField((f) => ({ ...f, images }));
                             await patchFields.mutateAsync({ images });
                           }}
                           className="hidden rounded-sm bg-foreground/90 p-1 text-background disabled:opacity-40 group-hover:block"
@@ -610,8 +630,7 @@ function EditProduct() {
                             const next = [...allUrls];
                             [next[i], next[i + 1]] = [next[i + 1], next[i]];
                             const images = serializeImageLines(next);
-                            markDirty();
-                            setForm((f) => (f ? { ...f, images } : f));
+                            setFormField((f) => ({ ...f, images }));
                             await patchFields.mutateAsync({ images });
                           }}
                           className="hidden rounded-sm bg-foreground/90 p-1 text-background disabled:opacity-40 group-hover:block"
@@ -627,8 +646,7 @@ function EditProduct() {
                           const nextImages = allUrls.filter((_, j) => j !== i);
                           const images = serializeImageLines(nextImages);
                           const nextMain = isMain ? (nextImages[0] ?? "") : form.main_image;
-                          markDirty();
-                          setForm((f) => (f ? { ...f, images, main_image: nextMain } : f));
+                          setFormField((f) => ({ ...f, images, main_image: nextMain }));
                           await patchFields.mutateAsync({ images, main_image: nextMain });
                         }}
                         className="absolute -right-1 -top-1 hidden rounded-full bg-foreground p-0.5 text-background group-hover:block"
@@ -646,7 +664,7 @@ function EditProduct() {
             <input
               value={form.seo_title}
               maxLength={160}
-              onChange={(e) => setForm({ ...form, seo_title: e.target.value })}
+              onChange={(e) => setFormField({ seo_title: e.target.value })}
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
           </Field>
@@ -655,11 +673,11 @@ function EditProduct() {
               value={form.seo_description}
               maxLength={320}
               rows={3}
-              onChange={(e) => setForm({ ...form, seo_description: e.target.value })}
+              onChange={(e) => setFormField({ seo_description: e.target.value })}
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
           </Field>
-          <SpecsFields form={form} setForm={editForm} />
+          <SpecsFields form={form} setFormField={setFormField} />
         </div>
 
         <aside className="space-y-6 rounded-sm border border-border p-6">
@@ -668,7 +686,7 @@ function EditProduct() {
             <Field label={t("admin.products.categoryLabel")}>
               <input
                 value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                onChange={(e) => setFormField({ category: e.target.value })}
                 placeholder="Ovens"
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
               />
@@ -676,21 +694,21 @@ function EditProduct() {
             <Field label={t("admin.product.categoryEn")}>
               <input
                 value={form.category_en}
-                onChange={(e) => setForm({ ...form, category_en: e.target.value })}
+                onChange={(e) => setFormField({ category_en: e.target.value })}
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
               />
             </Field>
             <Field label={t("admin.product.categoryHy")}>
               <input
                 value={form.category_hy}
-                onChange={(e) => setForm({ ...form, category_hy: e.target.value })}
+                onChange={(e) => setFormField({ category_hy: e.target.value })}
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
               />
             </Field>
             <Field label={t("admin.product.colour")}>
               <input
                 value={form.colour}
-                onChange={(e) => setForm({ ...form, colour: e.target.value })}
+                onChange={(e) => setFormField({ colour: e.target.value })}
                 placeholder="Cream"
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
               />
@@ -698,21 +716,21 @@ function EditProduct() {
             <Field label={t("admin.product.colourEn")}>
               <input
                 value={form.colour_en}
-                onChange={(e) => setForm({ ...form, colour_en: e.target.value })}
+                onChange={(e) => setFormField({ colour_en: e.target.value })}
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
               />
             </Field>
             <Field label={t("admin.product.colourHy")}>
               <input
                 value={form.colour_hy}
-                onChange={(e) => setForm({ ...form, colour_hy: e.target.value })}
+                onChange={(e) => setFormField({ colour_hy: e.target.value })}
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
               />
             </Field>
             <Field label={t("admin.product.aesthetic")}>
               <input
                 value={form.aesthetic}
-                onChange={(e) => setForm({ ...form, aesthetic: e.target.value })}
+                onChange={(e) => setFormField({ aesthetic: e.target.value })}
                 placeholder="50's Style"
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
               />
@@ -720,7 +738,7 @@ function EditProduct() {
             <Field label={t("admin.product.family")}>
               <input
                 value={form.family}
-                onChange={(e) => setForm({ ...form, family: e.target.value })}
+                onChange={(e) => setFormField({ family: e.target.value })}
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
               />
             </Field>
@@ -728,7 +746,9 @@ function EditProduct() {
               <input
                 value={form.ean}
                 onChange={(e) =>
-                  setForm(syncEanFieldToSpecs({ ...form, ean: e.target.value.replace(/[^0-9]/g, "") }))
+                  setFormField((prev) =>
+                    syncEanFieldToSpecs({ ...prev, ean: e.target.value.replace(/[^0-9]/g, "") }),
+                  )
                 }
                 inputMode="numeric"
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-foreground"
@@ -741,7 +761,7 @@ function EditProduct() {
             <input
               inputMode="numeric"
               value={form.price_amd}
-              onChange={(e) => setForm({ ...form, price_amd: e.target.value.replace(/[^0-9]/g, "") })}
+              onChange={(e) => setFormField({ price_amd: e.target.value.replace(/[^0-9]/g, "") })}
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
           </Field>
@@ -749,7 +769,7 @@ function EditProduct() {
             <input
               inputMode="numeric"
               value={form.price_old}
-              onChange={(e) => setForm({ ...form, price_old: e.target.value.replace(/[^0-9]/g, "") })}
+              onChange={(e) => setFormField({ price_old: e.target.value.replace(/[^0-9]/g, "") })}
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
           </Field>
@@ -757,7 +777,7 @@ function EditProduct() {
             <input
               inputMode="numeric"
               value={form.discount_percent}
-              onChange={(e) => setForm({ ...form, discount_percent: e.target.value.replace(/[^0-9]/g, "") })}
+              onChange={(e) => setFormField({ discount_percent: e.target.value.replace(/[^0-9]/g, "") })}
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
           </Field>
@@ -767,7 +787,7 @@ function EditProduct() {
               <input
                 inputMode="numeric"
                 value={form.stock_qty}
-                onChange={(e) => setForm({ ...form, stock_qty: e.target.value.replace(/[^0-9]/g, "") })}
+                onChange={(e) => setFormField({ stock_qty: e.target.value.replace(/[^0-9]/g, "") })}
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
               />
             </Field>
@@ -782,7 +802,7 @@ function EditProduct() {
                 inputMode="numeric"
                 placeholder={t("admin.product.leadExample")}
                 value={form.lead_time_days}
-                onChange={(e) => setForm({ ...form, lead_time_days: e.target.value.replace(/[^0-9]/g, "") })}
+                onChange={(e) => setFormField({ lead_time_days: e.target.value.replace(/[^0-9]/g, "") })}
                 className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
               />
             </Field>
@@ -802,7 +822,7 @@ function EditProduct() {
               value={form.badge_text}
               maxLength={60}
               placeholder={t("admin.product.badgeExample")}
-              onChange={(e) => setForm({ ...form, badge_text: e.target.value })}
+              onChange={(e) => setFormField({ badge_text: e.target.value })}
               className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
             />
           </Field>
@@ -819,7 +839,7 @@ function EditProduct() {
                 <input
                   type="checkbox"
                   checked={form[k] as boolean}
-                  onChange={(e) => setForm({ ...form, [k]: e.target.checked })}
+                  onChange={(e) => setFormField({ [k]: e.target.checked } as Partial<FormState>)}
                   className="h-4 w-4"
                 />
                 {t(labelKey)}
@@ -847,7 +867,13 @@ function EditProduct() {
   );
 }
 
-function SpecsFields({ form, setForm }: { form: FormState; setForm: (f: FormState) => void }) {
+function SpecsFields({
+  form,
+  setFormField,
+}: {
+  form: FormState;
+  setFormField: (patch: Partial<FormState> | ((prev: FormState) => FormState)) => void;
+}) {
   const { t } = useI18n();
   const [tab, setTab] = useState<"ru" | "en" | "hy">("ru");
   const key = tab === "ru" ? "specs" : tab === "en" ? "specs_en" : "specs_hy";
@@ -871,7 +897,7 @@ function SpecsFields({ form, setForm }: { form: FormState; setForm: (f: FormStat
       <p className="mb-2 text-xs text-muted-foreground">{t("admin.product.specsHint")}</p>
       <textarea
         value={form[key]}
-        onChange={(e) => setForm(syncEanFromSpecsEdit(form, tab as SpecsLocale, e.target.value))}
+        onChange={(e) => setFormField((prev) => syncEanFromSpecsEdit(prev, tab as SpecsLocale, e.target.value))}
         rows={12}
         className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-foreground"
       />
@@ -891,11 +917,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function I18nContent({
   sku,
   form,
-  setForm,
+  setFormField,
 }: {
   sku: string;
   form: FormState;
-  setForm: (f: FormState) => void;
+  setFormField: (patch: Partial<FormState> | ((prev: FormState) => FormState)) => void;
 }) {
   const { t } = useI18n();
   const [tab, setTab] = useState<"ru" | "en" | "hy">("ru");
@@ -930,7 +956,7 @@ function I18nContent({
         <input
           value={form[f.nameKey] as string}
           maxLength={500}
-          onChange={(e) => setForm({ ...form, [f.nameKey]: e.target.value })}
+          onChange={(e) => setFormField({ [f.nameKey]: e.target.value } as Partial<FormState>)}
           className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
         />
       </Field>
@@ -938,7 +964,7 @@ function I18nContent({
       <Field label={t("admin.product.descLang", { lang: t(f.labelKey) })}>
         <textarea
           value={form[f.descKey] as string}
-          onChange={(e) => setForm({ ...form, [f.descKey]: e.target.value })}
+          onChange={(e) => setFormField({ [f.descKey]: e.target.value } as Partial<FormState>)}
           rows={6}
           maxLength={10000}
           className="w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"

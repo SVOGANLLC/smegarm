@@ -3,8 +3,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Plus, X } from "lucide-react";
 import { assertRowUpdated } from "@/lib/supabase-assert";
-import { invalidateProductQueries } from "@/lib/admin-product-cache";
-import { applyCollectionMembershipToProduct, isAutoCollectionSlug } from "@/lib/collection-auto-sync";
+import { invalidateProductListCaches } from "@/lib/admin-product-cache";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
@@ -15,19 +14,6 @@ export function ProductCollectionsEditor({ sku }: { sku: string }) {
   const { t } = useI18n();
   const qc = useQueryClient();
   const [pickId, setPickId] = useState("");
-
-  const productMeta = useQuery({
-    queryKey: ["product-collection-meta", sku],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("aesthetic, theme_key")
-        .eq("sku", sku)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-  });
 
   const linked = useQuery({
     queryKey: ["product-collections", sku],
@@ -57,10 +43,10 @@ export function ProductCollectionsEditor({ sku }: { sku: string }) {
 
   const linkedIds = new Set((linked.data ?? []).map((c) => c.id));
   const available = (all.data ?? []).filter((c) => !linkedIds.has(c.id));
-  const meta = productMeta.data;
 
   const invalidate = (slug?: string) => {
-    invalidateProductQueries(qc, sku);
+    invalidateProductListCaches(qc, sku);
+    qc.invalidateQueries({ queryKey: ["product-collections", sku] });
     qc.invalidateQueries({ queryKey: ["admin-collection-products"] });
     qc.invalidateQueries({ queryKey: ["admin-collections"] });
     qc.invalidateQueries({ queryKey: ["collections-list"] });
@@ -86,8 +72,6 @@ export function ProductCollectionsEditor({ sku }: { sku: string }) {
         .maybeSingle();
       if (error) throw error;
       assertRowUpdated(data, t("admin.writeNoRow"));
-
-      await applyCollectionMembershipToProduct(sku, col.slug, "add");
       return col;
     },
     onSuccess: (col) => {
@@ -112,20 +96,11 @@ export function ProductCollectionsEditor({ sku }: { sku: string }) {
         .maybeSingle();
       if (error) throw error;
       assertRowUpdated(data, t("admin.writeNoRow"));
-
-      await applyCollectionMembershipToProduct(sku, col.slug, "remove");
       return col;
     },
     onSuccess: (col) => {
       invalidate(col.slug);
-      const wasAuto = meta && isAutoCollectionSlug(col.slug, meta);
-      if (wasAuto) {
-        toast.message(t("admin.collections.productRemoved"), {
-          description: t("admin.collections.themeSynced"),
-        });
-      } else {
-        toast.success(t("admin.collections.productRemoved"));
-      }
+      toast.success(t("admin.collections.productRemoved"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
@@ -155,11 +130,6 @@ export function ProductCollectionsEditor({ sku }: { sku: string }) {
             >
               <span className="min-w-0 flex-1 truncate">{c.name_hy || c.name}</span>
               <span className="font-mono text-[10px] text-muted-foreground">/{c.slug}</span>
-              {meta && isAutoCollectionSlug(c.slug, meta) && (
-                <span className="shrink-0 rounded-sm bg-secondary px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
-                  {t("admin.collections.autoBadge")}
-                </span>
-              )}
               <button
                 type="button"
                 onClick={() => remove.mutate(c.id)}

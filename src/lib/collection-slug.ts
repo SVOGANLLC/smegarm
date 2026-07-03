@@ -28,7 +28,6 @@ export type CollectionPatchInput = {
   id: string;
   slug: string;
   patch: Record<string, unknown>;
-  syncSlugFromName?: boolean;
   slugFallback?: string;
 };
 
@@ -36,12 +35,5 @@ export async function buildCollectionUpdatePatch(
   input: CollectionPatchInput,
   client: typeof supabase = supabase,
 ): Promise<Record<string, unknown>> {
-  const finalPatch = { ...input.patch };
-  if (input.syncSlugFromName && typeof finalPatch.name === "string") {
-    const base = deriveCollectionSlug(finalPatch.name, input.slugFallback ?? "", input.slug);
-    if (base !== input.slug) {
-      finalPatch.slug = await ensureUniqueCollectionSlug(base, input.id, client);
-    }
-  }
-  return finalPatch;
+  return { ...input.patch };
 }

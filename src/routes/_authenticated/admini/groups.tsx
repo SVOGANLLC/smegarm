@@ -1,21 +1,24 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, Plus, Search, X } from "lucide-react";
+import { ChevronLeft, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 import {
   assignProductToVariantGroup,
+  deleteVariantGroup,
   fetchAdminVariantGroups,
+  filterVariantGroupsByProducts,
   removeProductFromVariantGroup,
   searchProductsForGroup,
   type AdminVariantGroup,
+  type VariantGroupProductFilter,
 } from "@/lib/variant-groups";
 import { useSiteContentBlock, invalidateSiteContentQueries } from "@/lib/site-content";
 import {
   labelForModelGroup,
   parseModelGroupLabels,
-  serializeModelGroupLabels,
+  persistModelGroupLabels,
   upsertModelGroupLabel,
 } from "@/lib/model-group-labels";
 import {
@@ -24,8 +27,6 @@ import {
   groupImageFromLabel,
   type GroupImageState,
 } from "@/components/admin/GroupLabelImageFields";
-import { supabase } from "@/integrations/supabase/client";
-import { assertRowUpdated } from "@/lib/supabase-assert";
 
 type GroupNames = { ru: string; en: string; hy: string };
 type GroupDraft = GroupNames & GroupImageState;
@@ -55,24 +56,7 @@ async function persistGroupLabel(
     image: draft.image.trim() || undefined,
     image_sku: draft.image_sku.trim().toUpperCase() || undefined,
   });
-  const json = serializeModelGroupLabels(next);
-  const { data: existing, error: readErr } = await supabase
-    .from("site_content")
-    .select("value")
-    .eq("key", "categories")
-    .maybeSingle();
-  if (readErr) throw readErr;
-  const value = {
-    ...((existing?.value as Record<string, unknown>) ?? {}),
-    "config.modelGroupLabels": { ru: json, en: json, hy: json },
-  };
-  const { data, error } = await supabase
-    .from("site_content")
-    .upsert({ key: "categories", value }, { onConflict: "key" })
-    .select("key")
-    .maybeSingle();
-  if (error) throw error;
-  assertRowUpdated(data, "Failed to save");
+  await persistModelGroupLabels(next);
 }
 
 function groupLabelTitle(labels: ReturnType<typeof parseModelGroupLabels>, key: string) {
@@ -80,10 +64,38 @@ function groupLabelTitle(labels: ReturnType<typeof parseModelGroupLabels>, key: 
   return row?.name_ru || row?.name_en || row?.name_hy || key;
 }
 
+function groupSearchHaystack(labels: ReturnType<typeof parseModelGroupLabels>, g: AdminVariantGroup): string {
+  const row = labelForModelGroup(labels, g.key);
+  return [
+    g.key,
+    row?.name_ru,
+    row?.name_en,
+    row?.name_hy,
+    ...g.members.flatMap((m) => [m.sku, m.name]),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function matchesGroupSearch(haystack: string, query: string): boolean {
+  const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (!tokens.length) return true;
+  return tokens.every((token) => haystack.includes(token));
+}
+
 export const Route = createFileRoute("/_authenticated/admini/groups")({
-  validateSearch: (s: Record<string, unknown>) => ({
-    key: typeof s.key === "string" ? s.key : undefined,
-  }),
+  validateSearch: (s: Record<string, unknown>) => {
+    const empty = s.empty === true || s.empty === "true" || s.empty === 1 || s.empty === "1";
+    const productsRaw = s.products;
+    let products: VariantGroupProductFilter = "all";
+    if (productsRaw === "with" || productsRaw === "without") products = productsRaw;
+    else if (empty) products = "without";
+    return {
+      key: typeof s.key === "string" ? s.key : undefined,
+      products,
+    };
+  },
   component: VariantGroupsPage,
 });
 
@@ -91,20 +103,21 @@ function VariantGroupsPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { key: selectedKey } = Route.useSearch();
+  const { key: selectedKey, products: productsFilter } = Route.useSearch();
   const [filter, setFilter] = useState("");
   const [newKey, setNewKey] = useState("");
   const [addSku, setAddSku] = useState("");
   const [groupDraft, setGroupDraft] = useState<GroupDraft>(emptyDraft);
 
-  const groupsQ = useQuery({
-    queryKey: ["admin-variant-groups"],
-    queryFn: fetchAdminVariantGroups,
-    staleTime: 10_000,
-  });
-
   const categoriesBlock = useSiteContentBlock("categories");
   const labels = useMemo(() => parseModelGroupLabels(categoriesBlock ?? undefined), [categoriesBlock]);
+  const labelKeys = useMemo(() => labels.map((l) => l.key), [labels]);
+
+  const groupsQ = useQuery({
+    queryKey: ["admin-variant-groups", labelKeys.join("\u0001")],
+    queryFn: () => fetchAdminVariantGroups(labelKeys),
+    staleTime: 10_000,
+  });
 
   const selected = useMemo(
     () => groupsQ.data?.find((g) => g.key === selectedKey) ?? null,
@@ -125,16 +138,14 @@ function VariantGroupsPage() {
     openGroup(selectedKey);
   }, [selectedKey, labels]);
 
+  const listSearch = productsFilter !== "all" ? { products: productsFilter } : {};
+
   const filtered = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    const list = groupsQ.data ?? [];
+    const q = filter.trim();
+    let list = filterVariantGroupsByProducts(groupsQ.data ?? [], productsFilter);
     if (!q) return list;
-    return list.filter(
-      (g) =>
-        g.key.toLowerCase().includes(q) ||
-        g.members.some((m) => m.sku.toLowerCase().includes(q) || m.name.toLowerCase().includes(q)),
-    );
-  }, [groupsQ.data, filter]);
+    return list.filter((g) => matchesGroupSearch(groupSearchHaystack(labels, g), q));
+  }, [groupsQ.data, filter, productsFilter, labels]);
 
   const addSearchQ = useQuery({
     queryKey: ["admin-group-add-search", addSku],
@@ -164,6 +175,18 @@ function VariantGroupsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const deleteGroup = useMutation({
+    mutationFn: (groupKey: string) => deleteVariantGroup(groupKey, labels),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-variant-groups"] });
+      qc.invalidateQueries({ queryKey: ["admin-today"] });
+      invalidateSiteContentQueries(qc);
+      toast.success(t("admin.groups.deleted"));
+      navigate({ to: "/admini/groups", search: listSearch });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const saveLabel = useMutation({
     mutationFn: ({ key, draft }: { key: string; draft: GroupDraft }) => persistGroupLabel(labels, key, draft),
     onSuccess: () => {
@@ -180,6 +203,8 @@ function VariantGroupsPage() {
     await saveLabel.mutateAsync({ key, draft });
   };
 
+  const selectedCanDelete = !!selectedKey;
+
   if (selectedKey) {
     if (groupsQ.isLoading) {
       return <div className="mx-auto max-w-lg h-24 animate-pulse rounded-xl bg-secondary" />;
@@ -189,7 +214,7 @@ function VariantGroupsPage() {
         <div className="mx-auto max-w-lg">
           <button
             type="button"
-            onClick={() => navigate({ to: "/admini/groups", search: {} })}
+            onClick={() => navigate({ to: "/admini/groups", search: listSearch })}
             className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -215,6 +240,14 @@ function VariantGroupsPage() {
             adding={assign.isPending}
             members={[]}
             manual
+            canDelete={selectedCanDelete}
+            deleting={deleteGroup.isPending}
+            onDelete={() => {
+              const name = groupLabelTitle(labels, selectedKey);
+              if (!confirm(t("admin.deleteConfirm", { name }))) return;
+              deleteGroup.mutate(selectedKey);
+            }}
+            listSearch={listSearch}
           />
         </div>
       );
@@ -242,6 +275,14 @@ function VariantGroupsPage() {
         manual={selected.manual}
         productCount={selected.product_count}
         colourCount={selected.colour_count}
+        canDelete={selectedCanDelete}
+        deleting={deleteGroup.isPending}
+        onDelete={() => {
+          const name = groupLabelTitle(labels, selected.key);
+          if (!confirm(t("admin.deleteConfirm", { name }))) return;
+          deleteGroup.mutate(selected.key);
+        }}
+        listSearch={listSearch}
       />
     );
   }
@@ -249,9 +290,33 @@ function VariantGroupsPage() {
   return (
     <div className="mx-auto max-w-lg">
       <h1 className="font-serif text-3xl">{t("admin.groups.title")}</h1>
-      <p className="mt-1 text-sm text-muted-foreground">{t("admin.groups.intro")}</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {productsFilter === "without"
+          ? t("admin.groups.emptyFilterIntro")
+          : productsFilter === "with"
+            ? t("admin.groups.withProductsIntro")
+            : t("admin.groups.intro")}
+      </p>
 
-      <div className="relative mt-6">
+      <div className="mt-4 flex flex-wrap items-center gap-2 rounded-sm border border-border bg-secondary/40 p-3">
+        <select
+          value={productsFilter}
+          onChange={(e) => {
+            const value = e.target.value as VariantGroupProductFilter;
+            navigate({
+              to: "/admini/groups",
+              search: value === "all" ? {} : { products: value },
+            });
+          }}
+          className="rounded-sm border border-border bg-background px-3 py-2 text-xs uppercase tracking-[0.14em]"
+        >
+          <option value="all">{t("admin.groups.filterAll")}</option>
+          <option value="with">{t("admin.groups.filterWithProducts")}</option>
+          <option value="without">{t("admin.groups.filterWithoutProducts")}</option>
+        </select>
+      </div>
+
+      <div className="relative mt-4">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           value={filter}
@@ -268,7 +333,7 @@ function VariantGroupsPage() {
           const key = newKey.trim().toUpperCase();
           if (!key) return;
           openGroup(key);
-          navigate({ to: "/admini/groups", search: { key } });
+          navigate({ to: "/admini/groups", search: { key, ...listSearch } });
         }}
       >
         <input
@@ -290,13 +355,19 @@ function VariantGroupsPage() {
         {groupsQ.isLoading ? (
           <div className="h-24 animate-pulse bg-secondary" />
         ) : filtered.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">{t("admin.groups.empty")}</p>
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+            {productsFilter === "without"
+              ? t("admin.groups.emptyFilterNone")
+              : productsFilter === "with"
+                ? t("admin.groups.withProductsNone")
+                : t("admin.groups.empty")}
+          </p>
         ) : (
           filtered.map((g) => (
             <Link
               key={g.key}
               to="/admini/groups"
-              search={{ key: g.key }}
+              search={{ key: g.key, ...listSearch }}
               onClick={() => openGroup(g.key)}
               className="flex items-center gap-3 border-b border-border px-4 py-4 transition last:border-b-0 hover:bg-secondary/40"
             >
@@ -338,6 +409,10 @@ function GroupDetailShell({
   manual,
   productCount = 0,
   colourCount = 0,
+  canDelete = false,
+  deleting = false,
+  onDelete,
+  listSearch = {},
 }: {
   groupKey: string;
   groupDraft: GroupDraft;
@@ -357,6 +432,10 @@ function GroupDetailShell({
   manual: boolean;
   productCount?: number;
   colourCount?: number;
+  canDelete?: boolean;
+  deleting?: boolean;
+  onDelete?: () => void;
+  listSearch?: { products?: VariantGroupProductFilter };
 }) {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -365,7 +444,7 @@ function GroupDetailShell({
     <div className="mx-auto max-w-lg">
       <button
         type="button"
-        onClick={() => navigate({ to: "/admini/groups", search: {} })}
+        onClick={() => navigate({ to: "/admini/groups", search: listSearch })}
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -475,6 +554,22 @@ function GroupDetailShell({
           </ul>
         )}
       </div>
+
+      {canDelete && onDelete && (
+        <div className="mt-6 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+          <p className="text-sm font-medium text-destructive">{t("admin.groups.delete")}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t("admin.groups.deleteHint")}</p>
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={deleting}
+            className="mt-3 inline-flex items-center gap-2 rounded-sm border border-destructive/40 px-3 py-2 text-xs uppercase tracking-wider text-destructive hover:bg-destructive/10 disabled:opacity-50"
+          >
+            <Trash2 className="h-4 w-4" />
+            {t("admin.groups.delete")}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

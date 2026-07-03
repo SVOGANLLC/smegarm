@@ -1,4 +1,6 @@
 import type { Lang } from "@/lib/i18n";
+import { supabase } from "@/integrations/supabase/client";
+import { assertRowUpdated } from "@/lib/supabase-assert";
 
 type BlockValue = Record<string, Partial<Record<Lang, string>>>;
 
@@ -118,6 +120,33 @@ export function upsertModelGroupLabel(
     return next;
   }
   return [...labels, { key: trimmed, ...patch }];
+}
+
+export function removeModelGroupLabel(labels: ModelGroupLabel[], key: string): ModelGroupLabel[] {
+  const trimmed = key.trim();
+  if (!trimmed) return labels;
+  return labels.filter((l) => l.key !== trimmed);
+}
+
+export async function persistModelGroupLabels(labels: ModelGroupLabel[]): Promise<void> {
+  const json = serializeModelGroupLabels(labels);
+  const { data: existing, error: readErr } = await supabase
+    .from("site_content")
+    .select("value")
+    .eq("key", "categories")
+    .maybeSingle();
+  if (readErr) throw readErr;
+  const value = {
+    ...((existing?.value as Record<string, unknown>) ?? {}),
+    "config.modelGroupLabels": { ru: json, en: json, hy: json },
+  };
+  const { data, error } = await supabase
+    .from("site_content")
+    .upsert({ key: "categories", value }, { onConflict: "key" })
+    .select("key")
+    .maybeSingle();
+  if (error) throw error;
+  assertRowUpdated(data, "Failed to save");
 }
 
 export function labelsWithContent(labels: ModelGroupLabel[]): ModelGroupLabel[] {

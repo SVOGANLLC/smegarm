@@ -128,7 +128,7 @@ export const ADMIN_HELP_SECTIONS: HelpSection[] = [
       ["Вкладки RU / EN / HY — название и описание; кнопка AI переводит пустые EN/HY с русского", "RU/EN/HY tabs; AI translates from Russian", "AI թարգմանություն"],
       ["Главное фото и галерея — URL или загрузка в хранилище product-media", "Main image + gallery — URL or upload", "Նկարների բեռնում"],
       ["Характеристики — формат «Ключ: значение» построчно; EAN синхронизируется со specs", "Specs: key: value per line; EAN syncs", "Բնութագրեր"],
-      ["Коллекции — добавление сразу сохраняется (кнопка +); обновляет theme_key/aesthetic у товара", "Collections — instant save on +; updates theme_key/aesthetic", "Հավաքածուներ"],
+      ["Коллекции — добавление сразу сохраняется (кнопка +), состав только вручную", "Collections — instant save on +, manual membership only", "Հավաքածուներ"],
       ["Дублировать / Переименовать SKU — в шапке карточки", "Duplicate / Rename SKU in header", "SKU վերանվանում"],
       ["is_featured — попадание в блок «Иконы Smeg» на главной (список SKU задаётся в Контенте)", "is_featured — homepage icons (SKU list in Content)", "Գլխավորի «Իկոններ»"],
     ],
@@ -154,38 +154,12 @@ export const ADMIN_HELP_SECTIONS: HelpSection[] = [
     ],
     bullets: [
       ["Название RU / EN / HY — измените и нажмите «Сохранить названия»", "Edit names and click Save names", "Խմբագրել և սեղմել «Պահպանել անվանումները»"],
-      ["Slug (URL) пересчитывается автоматически из названия RU (или EN, если в RU нет латиницы)", "Slug auto-derived from RU name", "Slug ավտոմատ"],
+      ["Slug (URL) задаётся при создании коллекции и не меняется при переименовании", "Slug is set at creation and does not change on rename", "Slug-ը ստեղծման ժամանակ"],
       ["Секция: Design / Timeless / Special — группировка на главной", "Section: design / timeless / special", "Խմբավորում գլխավորում"],
       ["Товары в коллекции — раскройте блок, найдите SKU, кликните; сохраняется сразу", "Products — expand, search SKU, click to add", "Ապրանքների ավելացում"],
-      ["Метка «авто» — товар попал по эстетике или theme_key (см. ниже)", "«auto» badge — aesthetic/theme sync", "«ավտո» նշան"],
-      ["При добавлении/удалении обновляются theme_key и aesthetic товара", "Add/remove updates product theme_key/aesthetic", "theme_key թարմացում"],
+      ["Состав коллекции только ручной — сохранение товара не меняет коллекции", "Collection membership is manual only", "Միայն ձեռքով"],
     ],
     link: { to: "/admini/collections", label: ["Открыть коллекции", "Open collections", "Բացել հավաքածուները"] },
-  },
-  {
-    id: "auto-sync",
-    title: ["Автосинхронизация коллекций", "Collection auto-sync", "Հավաքածուների ավտոսինխ"],
-    adminOnly: true,
-    paragraphs: [
-      [
-        "Часть коллекций заполняется автоматически по полям товара aesthetic и theme_key. Например: aesthetic «Linea» → коллекция linea; theme_key dg_divina_cucina → divina-cucina и dolce-gabbana.",
-        "Some collections auto-fill from aesthetic and theme_key fields.",
-        "Որոշ հավաքածուներ ավտոմատ են լրացվում aesthetic/theme_key-ից։",
-      ],
-    ],
-    bullets: [
-      ["Isola, Musa, Linea, Classica, Portofino, Piano Design, Cortina, 50's Style, Victoria, Coloniale, Universale — по aesthetic", "Aesthetic-driven collections listed in docs", "Էսթետիկա"],
-      ["D&G: dg_sicily, dg_divina_cucina, dg_blu_mediterraneo; любой dg_* также в dolce-gabbana", "D&G theme keys", "D&G թեմաներ"],
-      ["Coca-Cola, Smeg500, Porsche — по theme_key", "Special theme keys", "Հատուկ թեմաներ"],
-      ["При ручном добавлении в коллекцию админка выставляет соответствующий theme_key/aesthetic", "Manual add sets matching fields", "Ձեռքով ավելացումը թարմացնում է դաշտերը"],
-    ],
-    tips: [
-      [
-        "Полная таблица соответствий — в файле docs/PLATFORM.md в репозитории.",
-        "Full mapping table — docs/PLATFORM.md in the repo.",
-        "Ամբողջական աղյուսակ՝ docs/PLATFORM.md",
-      ],
-    ],
   },
   {
     id: "content",

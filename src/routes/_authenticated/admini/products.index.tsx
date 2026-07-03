@@ -126,12 +126,19 @@ function AdminProducts() {
         .from("products")
         .update({ price_amd })
         .eq("sku", sku)
-        .select("sku, price_amd")
+        .select("*")
         .maybeSingle();
       if (error) throw error;
       return assertRowUpdated(data, t("admin.saveNoRow"));
     },
-    onSuccess: (_data, { sku }) => {
+    onSuccess: (saved, { sku }) => {
+      qc.setQueryData(["admin-products"], (old: { items?: Array<{ sku: string; price_amd?: number | null }> } | undefined) => {
+        if (!old?.items) return old;
+        return {
+          ...old,
+          items: old.items.map((p) => (p.sku === sku ? { ...p, price_amd: saved.price_amd } : p)),
+        };
+      });
       invalidateProductQueries(qc, sku);
       toast.success(t("admin.saved"));
     },

@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { assertRowUpdated } from "@/lib/supabase-assert";
+import { removeModelGroupLabel, persistModelGroupLabels, type ModelGroupLabel } from "@/lib/model-group-labels";
 
 export type VariantGroupMember = {
   sku: string;
@@ -28,7 +29,49 @@ type ProductRow = {
   is_published: boolean;
 };
 
-export async function fetchAdminVariantGroups(): Promise<AdminVariantGroup[]> {
+/** Groups with a saved label (or manual flag) but zero products assigned. */
+export type VariantGroupProductFilter = "all" | "with" | "without";
+
+export function filterVariantGroupsByProducts(
+  groups: AdminVariantGroup[],
+  filter: VariantGroupProductFilter,
+): AdminVariantGroup[] {
+  if (filter === "with") return groups.filter((g) => g.product_count > 0);
+  if (filter === "without") return groups.filter((g) => g.product_count === 0);
+  return groups;
+}
+
+/** @deprecated Use filterVariantGroupsByProducts(groups, "without") */
+export function filterEmptyVariantGroups(groups: AdminVariantGroup[]): AdminVariantGroup[] {
+  return filterVariantGroupsByProducts(groups, "without");
+}
+
+export async function countEmptyVariantGroups(labelKeys: string[] = []): Promise<number> {
+  const groups = await fetchAdminVariantGroups(labelKeys);
+  return filterVariantGroupsByProducts(groups, "without").length;
+}
+
+export function canDeleteVariantGroup(_group: AdminVariantGroup, _hasLabel = false): boolean {
+  return true;
+}
+
+export async function deleteVariantGroup(groupKey: string, labels: ModelGroupLabel[]): Promise<void> {
+  const key = groupKey.trim();
+  if (!key) throw new Error("Group key required");
+
+  const { error: unassignErr } = await supabase
+    .from("products")
+    .update({ variant_group: null, model_group: null })
+    .eq("model_group", key);
+  if (unassignErr) throw unassignErr;
+
+  const hasLabel = labels.some((l) => l.key === key);
+  if (hasLabel) {
+    await persistModelGroupLabels(removeModelGroupLabel(labels, key));
+  }
+}
+
+export async function fetchAdminVariantGroups(labelKeys: string[] = []): Promise<AdminVariantGroup[]> {
   const { data, error } = await supabase
     .from("products")
     .select("sku, name, colour, main_image, model_group, variant_group, is_published")
@@ -56,6 +99,12 @@ export async function fetchAdminVariantGroups(): Promise<AdminVariantGroup[]> {
     map.set(key, entry);
   }
 
+  for (const raw of labelKeys) {
+    const key = raw.trim();
+    if (!key || map.has(key)) continue;
+    map.set(key, { manual: true, colours: new Set(), members: [] });
+  }
+
   return Array.from(map.entries())
     .filter(([, v]) => v.manual || v.members.length >= 2)
     .map(([key, v]) => ({
@@ -73,7 +122,7 @@ export async function assignProductToVariantGroup(sku: string, groupKey: string)
   if (!key) throw new Error("Group key required");
   const { data, error } = await supabase
     .from("products")
-    .update({ variant_group: key })
+    .update({ variant_group: key, model_group: key })
     .eq("sku", sku.trim().toUpperCase())
     .select("sku")
     .maybeSingle();
@@ -82,10 +131,11 @@ export async function assignProductToVariantGroup(sku: string, groupKey: string)
 }
 
 export async function removeProductFromVariantGroup(sku: string): Promise<void> {
+  const normalized = sku.trim().toUpperCase();
   const { data, error } = await supabase
     .from("products")
-    .update({ variant_group: null })
-    .eq("sku", sku.trim().toUpperCase())
+    .update({ variant_group: null, model_group: null })
+    .eq("sku", normalized)
     .select("sku")
     .maybeSingle();
   if (error) throw error;

@@ -52,6 +52,7 @@ export function collectColourTokens(members: ColourMember[]): string[] {
       tokens.add(dict.en);
       tokens.add(dict.en.toLowerCase());
       tokens.add(dict.hy);
+      tokens.add(dict.hy.toLowerCase());
     } else if (/^[A-Za-z]/.test(canonical)) {
       tokens.add(canonical);
       tokens.add(canonical.toLowerCase());
@@ -63,9 +64,63 @@ export function collectColourTokens(members: ColourMember[]): string[] {
   tokens.add("color");
   tokens.add("colour");
   tokens.add("цвет");
+  tokens.add("цвета");
   tokens.add("գույն");
 
+  // Common RU phrasing variants not always present in product.colour
+  for (const phrase of [
+    "пастельно-голубой",
+    "пастельно-голубая",
+    "пастельный голубой",
+    "пастельная голубая",
+    "пастельный синий",
+    "пастельная синяя",
+    "изумрудный зеленый",
+    "изумрудно-зеленый",
+    "цвета крема",
+    "кремового цвета",
+    "серебро",
+    "серебристый",
+    "серебряный",
+  ]) {
+    tokens.add(phrase);
+  }
+
   return [...tokens].filter((t) => t.length >= 2).sort((a, b) => b.length - a.length);
+}
+
+function normalizeStrippedName(name: string): string {
+  return name
+    .replace(/,\s*,+/g, ",")
+    .replace(/\s{2,}/g, " ")
+    .replace(/^[,\s·•\-–—/]+/u, "")
+    .replace(/[,;:\-–—\s]+$/u, "")
+    .trim();
+}
+
+const CYR = "[\\p{L}]+";
+
+/** Strip compound / idiomatic colour phrases that token matching misses. */
+function stripCompoundColourPhrases(name: string): string {
+  let result = name;
+  const patterns: Array<{ re: RegExp; repl: string }> = [
+    { re: new RegExp(`,\\s*пастельно-?\\s*(?:голуб|син|зелен)${CYR}`, "giu"), repl: "" },
+    { re: new RegExp(`,\\s*пастельн${CYR}\\s+(?:голуб|син|зелен)${CYR}`, "giu"), repl: "" },
+    { re: /пастельный\s+синий\s+/giu, repl: "" },
+    { re: /\s+цвета\s*,/giu, repl: ", " },
+    { re: /цвета\s+крема,\s*/giu, repl: "" },
+    { re: /,?\s*кремового\s+цвета/giu, repl: "" },
+    { re: /,\s*серебро\s*$/giu, repl: "" },
+    { re: /[«""][^«"""]*(?:зелен|син|красн|голуб|крем|черн|бел)[^«"""]*[«""]/giu, repl: "" },
+    { re: new RegExp(`,\\s*пастельно-голубая\\s*$`, "giu"), repl: "" },
+    { re: /,\s*пастельный\s+синий(?:\s+глянцевая)?/giu, repl: "" },
+    { re: /\s+Անտրաց[\p{L}]*\s+շրջանակ/giu, repl: " շրջանակ" },
+  ];
+  for (const { re, repl } of patterns) {
+    const next = result.replace(re, repl);
+    if (next.length >= 3) result = next;
+  }
+  return normalizeStrippedName(result);
 }
 
 export function stripColourFromName(name: string, tokens: string[]): string {
@@ -79,10 +134,12 @@ export function stripColourFromName(name: string, tokens: string[]): string {
     const escaped = escapeRegex(token);
     const patterns = [
       { re: new RegExp(`^${escaped}[,\\s·•\\-–—/]+`, "iu"), repl: "" },
-      { re: new RegExp(`[,\\s·•]+${escaped}[,\\s·•]+`, "iu"), repl: " " },
+      { re: new RegExp(`[,\\s·•]+${escaped}[,\\s·•]+`, "iu"), repl: ", " },
       { re: new RegExp(`[,\\s·•]+цвет\\s+${escaped}\\s*$`, "iu"), repl: "" },
       { re: new RegExp(`[,\\s·•\\-–—/]+${escaped}\\s*$`, "iu"), repl: "" },
       { re: new RegExp(`\\s+${escaped}\\s*$`, "iu"), repl: "" },
+      { re: new RegExp(`\\s+${escaped}՝\\s+`, "iu"), repl: " " },
+      { re: new RegExp(`\\s+${escaped}\\s+շրջանակ`, "iu"), repl: " շրջանակ" },
     ];
     for (const { re, repl } of patterns) {
       const next = result.replace(re, repl).trim();
@@ -90,8 +147,10 @@ export function stripColourFromName(name: string, tokens: string[]): string {
     }
   }
 
+  result = stripCompoundColourPhrases(result);
+
   result = result
-    .replace(/[,\\s]+(color|colour|цвет|գույն)\s*$/iu, "")
+    .replace(/[,\\s]+(color|colour|цвет|цвета|գույն)\s*$/iu, "")
     .replace(/,\s*,+/g, ",")
     .replace(/\s{2,}/g, " ")
     .replace(/^[,\s·•\-–—/]+/u, "")

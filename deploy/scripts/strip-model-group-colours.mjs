@@ -6,7 +6,7 @@
  *   node --experimental-strip-types deploy/scripts/strip-model-group-colours.mjs          # preview
  *   node --experimental-strip-types deploy/scripts/strip-model-group-colours.mjs --apply  # write DB
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   collectColourTokens,
@@ -22,6 +22,8 @@ import {
 import { buildProductGroups } from "../../src/lib/catalog-grouping.ts";
 
 const APPLY = process.argv.includes("--apply");
+const exportArg = process.argv.find((a) => a.startsWith("--export="));
+const EXPORT_PATH = exportArg ? exportArg.slice("--export=".length) : null;
 
 function loadEnv() {
   const out = {
@@ -184,6 +186,18 @@ for (const r of rows) {
   const after = (r.afterRu || "—").slice(0, 42);
   const keyCol = r.catalogKey !== r.key ? `${r.key} (${r.catalogKey})` : r.key;
   console.log(`${mark} ${shortKey(keyCol).padEnd(12)} ${String(r.colours).padStart(2)} ${String(r.skus).padStart(3)}  ${before.padEnd(42)} → ${after}`);
+}
+
+if (EXPORT_PATH) {
+  const header = ["key", "catalog_key", "colours", "skus", "name_ru_before", "name_ru", "name_en", "name_hy"].join("\t");
+  const lines = rows.map((r) =>
+    [r.key, r.catalogKey, r.colours, r.skus, r.beforeRu, r.afterRu, r.afterEn, r.afterHy]
+      .map((v) => String(v ?? "").replace(/\t/g, " "))
+      .join("\t"),
+  );
+  const out = resolve(EXPORT_PATH);
+  writeFileSync(out, `${header}\n${lines.join("\n")}\n`, "utf8");
+  console.log(`\nЭкспорт: ${out}`);
 }
 
 if (!APPLY) {

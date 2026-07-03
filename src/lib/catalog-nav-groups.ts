@@ -205,6 +205,17 @@ export function resolveNavGroupFilters(
   };
 }
 
+/** Stable cache key for resolved nav-group filters (avoids stale unfiltered catalog). */
+export function navGroupFiltersKey(filters: NavGroupFilters | null | undefined): string {
+  if (!filters) return "";
+  return [
+    filters.skus.join("\u0001"),
+    filters.modelGroups.join("\u0001"),
+    filters.families.join("\u0001"),
+    filters.categoryIn.join("\u0001"),
+  ].join("\u0002");
+}
+
 /** Products matching a nav group (union of members). */
 export function productMatchesNavGroup(
   row: { sku: string; model_group?: string | null; family?: string | null; category?: string | null },

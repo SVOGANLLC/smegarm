@@ -12,6 +12,15 @@ import {
   type GroupSkuRow,
 } from "@/lib/catalog-grouping";
 
+/** Keep PostgREST GET URLs under nginx header limits (long `.in()` lists 414). */
+const SKU_IN_CHUNK = 80;
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
 export type Product = {
   sku: string;
   name: string;
@@ -446,15 +455,21 @@ export async function fetchVariantsByModelGroups(modelGroups: string[]): Promise
   const allRows: Variant[] = [];
 
   if (standardKeys.length) {
-    const { data, error } = await supabase
-      .from("products")
-      .select(VARIANT_COLS)
-      .in("model_group", standardKeys)
-      .eq("is_published", true)
-      .not("colour", "is", null)
-      .order("sku", { ascending: true });
-    if (error) throw error;
-    allRows.push(...((data ?? []) as Variant[]));
+    // Per-key queries: model_group values are long and blow up `.in()` URL length (nginx 414).
+    await Promise.all(
+      standardKeys.map(async (key) => {
+        const { data, error } = await supabase
+          .from("products")
+          .select(VARIANT_COLS)
+          .eq("model_group", key)
+          .eq("is_published", true)
+          .not("colour", "is", null)
+          .order("sku", { ascending: true })
+          .limit(40);
+        if (error) throw error;
+        allRows.push(...((data ?? []) as Variant[]));
+      }),
+    );
   }
 
   for (const prefix of hbacKeys) {
@@ -692,19 +707,22 @@ async function filterSkusByFacets(
     f.flag;
   if (!hasFacet || !skus.length) return skus;
 
-  let q = supabase.from("products").select("sku").in("sku", skus).eq("is_published", true);
-  if (f.colours?.length) q = q.in("colour", f.colours);
-  if (f.aesthetics?.length) q = q.in("aesthetic", f.aesthetics);
-  if (f.families?.length) q = q.in("family", f.families);
-  if (f.categoryIn?.length) q = q.in("category", f.categoryIn);
-  if (f.theme) q = q.eq("theme_key", f.theme);
-  if (f.inStock) q = q.eq("availability", "in_stock");
-  if (f.flag === "sale") q = q.not("price_old", "is", null);
-  else if (f.flag) q = q.eq(f.flag, true);
+  const allowed = new Set<string>();
+  for (const batch of chunk(skus, SKU_IN_CHUNK)) {
+    let q = supabase.from("products").select("sku").in("sku", batch).eq("is_published", true);
+    if (f.colours?.length) q = q.in("colour", f.colours);
+    if (f.aesthetics?.length) q = q.in("aesthetic", f.aesthetics);
+    if (f.families?.length) q = q.in("family", f.families);
+    if (f.categoryIn?.length) q = q.in("category", f.categoryIn);
+    if (f.theme) q = q.eq("theme_key", f.theme);
+    if (f.inStock) q = q.eq("availability", "in_stock");
+    if (f.flag === "sale") q = q.not("price_old", "is", null);
+    else if (f.flag) q = q.eq(f.flag, true);
 
-  const { data, error } = await q;
-  if (error) throw error;
-  const allowed = new Set(((data ?? []) as Array<{ sku: string }>).map((r) => r.sku));
+    const { data, error } = await q;
+    if (error) throw error;
+    for (const row of (data ?? []) as Array<{ sku: string }>) allowed.add(row.sku);
+  }
   return skus.filter((s) => allowed.has(s));
 }
 
@@ -778,20 +796,36 @@ async function fetchGroupedCatalog(
     skus = await filterSkusByFacets(skus, f);
     if (!skus.length) return { items: [], total: 0 };
 
-    const { data, error } = await supabase
-      .from("products")
-      .select(GROUP_SKU_COLS)
-      .in("sku", skus)
-      .eq("is_published", true);
-    if (error) throw error;
-    const bySku = new Map(((data ?? []) as GroupSkuRow[]).map((r) => [r.sku, r]));
+    const bySku = new Map<string, GroupSkuRow>();
+    for (const batch of chunk(skus, SKU_IN_CHUNK)) {
+      const { data, error } = await supabase
+        .from("products")
+        .select(GROUP_SKU_COLS)
+        .in("sku", batch)
+        .eq("is_published", true);
+      if (error) throw error;
+      for (const row of (data ?? []) as GroupSkuRow[]) bySku.set(row.sku, row);
+    }
     rows = skus.map((sku) => bySku.get(sku)).filter((r): r is GroupSkuRow => !!r);
   } else {
-    let sq = supabase.from("products").select(GROUP_SKU_COLS);
-    sq = applyCatalogFilters(sq, f, specSkuIn);
-    const { data, error } = await sq;
-    if (error) throw error;
-    rows = (data ?? []) as GroupSkuRow[];
+    const explicitSkus = f.skuIn?.length ? f.skuIn : specSkuIn;
+    if (explicitSkus && explicitSkus.length > SKU_IN_CHUNK) {
+      const merged: GroupSkuRow[] = [];
+      for (const batch of chunk(explicitSkus, SKU_IN_CHUNK)) {
+        let sq = supabase.from("products").select(GROUP_SKU_COLS);
+        sq = applyCatalogFilters(sq, { ...f, skuIn: batch }, null);
+        const { data, error } = await sq;
+        if (error) throw error;
+        merged.push(...((data ?? []) as GroupSkuRow[]));
+      }
+      rows = merged;
+    } else {
+      let sq = supabase.from("products").select(GROUP_SKU_COLS);
+      sq = applyCatalogFilters(sq, f, specSkuIn);
+      const { data, error } = await sq;
+      if (error) throw error;
+      rows = (data ?? []) as GroupSkuRow[];
+    }
   }
 
   if (!rows.length) return { items: [], total: 0 };

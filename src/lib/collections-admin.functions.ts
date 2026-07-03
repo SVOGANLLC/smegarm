@@ -39,7 +39,6 @@ const updateCollectionSchema = z.object({
   id: z.string().uuid(),
   slug: z.string().min(1),
   patch: collectionPatchSchema,
-  syncSlugFromName: z.boolean().optional(),
   slugFallback: z.string().optional(),
 });
 

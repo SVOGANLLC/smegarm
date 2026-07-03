@@ -7,8 +7,6 @@ import { toast } from "sonner";
 import { ChevronDown, ChevronUp, Eye, EyeOff, Trash2, Upload, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import type { CollectionSection } from "@/lib/products";
-import { isAutoCollectionSlug, applyCollectionMembershipToProduct } from "@/lib/collection-auto-sync";
-import { deriveCollectionSlug } from "@/lib/collection-slug";
 import {
   createCollectionAdmin,
   deleteCollectionAdmin,
@@ -42,8 +40,6 @@ type LinkedProduct = {
     sku: string;
     name: string | null;
     main_image: string | null;
-    aesthetic?: string | null;
-    theme_key?: string | null;
   } | null;
 };
 
@@ -117,7 +113,7 @@ function CollectionProducts({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("collection_products")
-        .select("product_sku, products(sku, name, main_image, aesthetic, theme_key)")
+        .select("product_sku, products(sku, name, main_image)")
         .eq("collection_id", collectionId)
         .order("sort_weight", { ascending: false });
       if (error) throw error;
@@ -166,7 +162,6 @@ function CollectionProducts({
         .maybeSingle();
       if (error) throw error;
       assertRowUpdated(data, t("admin.writeNoRow"));
-      await applyCollectionMembershipToProduct(productSku, collectionSlug, "add");
     },
     onSuccess: () => {
       setQuery("");
@@ -187,19 +182,10 @@ function CollectionProducts({
         .maybeSingle();
       if (error) throw error;
       assertRowUpdated(data, t("admin.writeNoRow"));
-      await applyCollectionMembershipToProduct(productSku, collectionSlug, "remove");
     },
-    onSuccess: (_data, productSku) => {
+    onSuccess: () => {
       invalidateCaches();
-      const row = linked.data?.find((r) => r.product_sku === productSku);
-      const product = row?.products;
-      if (product && isAutoCollectionSlug(collectionSlug, product)) {
-        toast.message(t("admin.collections.productRemoved"), {
-          description: t("admin.collections.themeSynced"),
-        });
-      } else {
-        toast.success(t("admin.collections.productRemoved"));
-      }
+      toast.success(t("admin.collections.productRemoved"));
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : t("admin.error")),
   });
@@ -261,12 +247,6 @@ function CollectionProducts({
                   )}
                   <span className="font-mono text-xs text-muted-foreground">{row.product_sku}</span>
                   <span className="min-w-0 flex-1 truncate">{row.products?.name ?? row.product_sku}</span>
-                  {row.products &&
-                    isAutoCollectionSlug(collectionSlug, row.products) && (
-                      <span className="shrink-0 rounded-sm bg-secondary px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
-                        {t("admin.collections.autoBadge")}
-                      </span>
-                    )}
                   <button
                     type="button"
                     onClick={() => remove.mutate(row.product_sku)}
@@ -292,7 +272,6 @@ type UpdateVars = {
   slug: string;
   patch: Record<string, unknown>;
   notify?: boolean;
-  syncSlugFromName?: boolean;
   slugFallback?: string;
 };
 
@@ -384,7 +363,6 @@ function CollectionEditorCard({
         id: c.id,
         slug: c.slug,
         patch,
-        syncSlugFromName: "name" in patch,
         slugFallback: nameEn,
         notify: true,
       });
@@ -401,7 +379,6 @@ function CollectionEditorCard({
   const fieldClass =
     "w-full rounded-sm border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground";
   const labelClass = "mb-1 block text-[10px] uppercase tracking-[0.18em] text-muted-foreground";
-  const previewSlug = deriveCollectionSlug(name, nameEn, c.slug);
 
   return (
     <div className="rounded-sm border border-border p-4">
@@ -427,12 +404,7 @@ function CollectionEditorCard({
             />
           </div>
           <p className="font-mono text-xs text-muted-foreground">
-            /{previewSlug}
-            {previewSlug !== c.slug && (
-              <span className="ml-2 font-sans normal-case text-foreground/60">
-                ({t("admin.collections.slugPending")})
-              </span>
-            )}
+            /{c.slug}
             {typeof c.product_count === "number" && (
               <span className="ml-2 font-sans normal-case">
                 · {t("admin.collections.productCount", { n: c.product_count })}
