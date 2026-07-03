@@ -7,7 +7,8 @@ import { Footer } from "@/components/site/Footer";
 import { ProductListingShell } from "@/components/site/ProductListingShell";
 import { CARD_COLS, type ProductCard as ProductCardType } from "@/lib/products";
 import { useI18n, getI18nDefaults } from "@/lib/i18n";
-import { canonicalLink, hreflangLinks, seoMeta } from "@/lib/seo";
+import { listingHeadExtras } from "@/lib/catalog-seo";
+import { breadcrumbJsonLd, canonicalLink, hreflangLinks, seoMeta } from "@/lib/seo";
 
 const hyMeta = getI18nDefaults().hy;
 
@@ -22,16 +23,37 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/sale")({
   validateSearch: (s) => searchSchema.parse(s),
-  head: () => ({
-    meta: seoMeta({
-      title: hyMeta["sale.metaTitle"],
-      description: hyMeta["sale.metaDesc"],
-      path: "/sale",
-      keywords: "Smeg sale Armenia, SMEG discount, special offers Yerevan",
-      locale: "hy_AM",
-    }),
-    links: [...hreflangLinks("/sale"), ...canonicalLink("/sale")],
-  }),
+  loader: ({ location }) => ({ saleSearch: searchSchema.parse(location.search) }),
+  head: ({ loaderData }) => {
+    const search = loaderData?.saleSearch ?? {};
+    const extras = listingHeadExtras("/sale", search);
+    const hy = getI18nDefaults().hy;
+    return {
+      meta: [
+        ...seoMeta({
+          title: hyMeta["sale.metaTitle"],
+          description: hyMeta["sale.metaDesc"],
+          path: "/sale",
+          keywords: "Smeg sale Armenia, SMEG discount, special offers Yerevan",
+          locale: "hy_AM",
+        }),
+        ...(extras.meta ?? []),
+      ],
+      links: extras.links.length ? extras.links : [...hreflangLinks("/sale"), ...canonicalLink("/sale")],
+      scripts: [
+        {
+          type: "application/ld+json" as const,
+          children: JSON.stringify(
+            breadcrumbJsonLd([
+              { name: "Smeg Armenia", path: "/" },
+              { name: hy["catalog.title"] ?? "Catalogue", path: "/catalog" },
+              { name: hy["sale.title"] ?? "Sale", path: "/sale" },
+            ]),
+          ),
+        },
+      ],
+    };
+  },
   component: Sale,
 });
 

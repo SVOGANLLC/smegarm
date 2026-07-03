@@ -5,6 +5,7 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { ProductListingShell } from "@/components/site/ProductListingShell";
 import { fetchCollectionWithProducts } from "@/lib/products";
+import { collectionBreadcrumbJsonLd, listingHeadExtras } from "@/lib/catalog-seo";
 import { canonicalLink, hreflangLinks, seoMeta } from "@/lib/seo";
 import { getI18nDefaults, pickLocalized, useI18n } from "@/lib/i18n";
 
@@ -19,15 +20,16 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/collection/$slug")({
   validateSearch: (s) => searchSchema.parse(s),
-  loader: async ({ params, context }) => {
+  loader: async ({ params, context, location }) => {
     const data = await context.queryClient.ensureQueryData({
       queryKey: ["collection", params.slug],
       queryFn: () => fetchCollectionWithProducts(params.slug),
     });
-    return { data };
+    return { data, collectionSearch: searchSchema.parse(location.search) };
   },
   head: ({ loaderData, params }) => {
     const col = loaderData?.data?.collection;
+    const search = loaderData?.collectionSearch ?? {};
     const hy = getI18nDefaults().hy;
     const name = col
       ? pickLocalized(col as unknown as Record<string, unknown>, "name", "hy") || col.name
@@ -37,14 +39,25 @@ export const Route = createFileRoute("/collection/$slug")({
         (pickLocalized(col as unknown as Record<string, unknown>, "description", "hy") ||
           col.description)) ||
       hy["collection.metaFallback"].replace("{name}", name);
+    const basePath = `/collection/${params.slug}`;
+    const extras = listingHeadExtras(basePath, search);
     return {
-      meta: seoMeta({
-        title: `${name} — Smeg Armenia`,
-        description: desc.slice(0, 320),
-        path: `/collection/${params.slug}`,
-        image: col?.cover_image || undefined,
-      }),
-      links: [...hreflangLinks(`/collection/${params.slug}`), ...canonicalLink(`/collection/${params.slug}`)],
+      meta: [
+        ...seoMeta({
+          title: `${name} — Smeg Armenia`,
+          description: desc.slice(0, 320),
+          path: basePath,
+          image: col?.cover_image || undefined,
+        }),
+        ...(extras.meta ?? []),
+      ],
+      links: extras.links.length ? extras.links : [...hreflangLinks(basePath), ...canonicalLink(basePath)],
+      scripts: [
+        {
+          type: "application/ld+json" as const,
+          children: JSON.stringify(collectionBreadcrumbJsonLd(params.slug, name)),
+        },
+      ],
     };
   },
   component: CollectionPage,

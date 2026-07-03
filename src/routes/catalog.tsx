@@ -18,7 +18,7 @@ import {
 import { z } from "zod";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
-import { useI18n, getI18nDefaults } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import { categoryLabel as catLabel, familyLabel } from "@/lib/category-i18n";
 import { parseCatalogOrder, sortCategoriesByOrder } from "@/lib/category-order";
 import { parseCatalogGroupConfig, shouldGroupCatalogDisplay } from "@/lib/catalog-group-config";
@@ -40,7 +40,7 @@ import {
   serializeSpecSearchParam,
   type SpecFilters,
 } from "@/lib/spec-filters";
-import { canonicalLink, hreflangLinks, seoMeta } from "@/lib/seo";
+import { catalogHeadFromSearch } from "@/lib/catalog-seo";
 import { trackSiteSearch } from "@/lib/analytics";
 
 const searchSchema = z.object({
@@ -75,20 +75,13 @@ function patchCatalogSearch(prev: CatalogSearch, patch: Partial<CatalogSearch>):
   return { ...withoutModelView(prev), ...patch };
 }
 
-const hyMeta = getI18nDefaults().hy;
 
 export const Route = createFileRoute("/catalog")({
   validateSearch: (s) => searchSchema.parse(s),
-  head: () => ({
-    meta: seoMeta({
-      title: hyMeta["catalog.metaTitle"],
-      description: hyMeta["catalog.metaDesc"],
-      path: "/catalog",
-      keywords: "Smeg catalog Armenia, SMEG appliances Yerevan, refrigerators, ovens, coffee machines",
-      locale: "hy_AM",
-    }),
-    links: [...hreflangLinks("/catalog"), ...canonicalLink("/catalog")],
+  loader: ({ location }) => ({
+    catalogSearch: searchSchema.parse(location.search),
   }),
+  head: ({ loaderData }) => catalogHeadFromSearch(loaderData?.catalogSearch ?? { page: 1 }),
   errorComponent: ({ error }) => <CatalogErrorView message={error.message} />,
   notFoundComponent: () => <CatalogNotFoundView />,
   component: CatalogPage,

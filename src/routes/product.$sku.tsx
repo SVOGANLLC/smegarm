@@ -9,7 +9,7 @@ import { AddToCartButton } from "@/components/site/AddToCartButton";
 import { useState, useEffect } from "react";
 import { useI18n, pickLocalized, pickLocalizedSpecs } from "@/lib/i18n";
 import { localizedProductColour } from "@/lib/colour-i18n";
-import { categoryLabel } from "@/lib/category-i18n";
+import { canonicalCategoryKey, categoryLabel } from "@/lib/category-i18n";
 import { deliveryLeadDays, isProductInStock } from "@/lib/availability";
 import {
   breadcrumbJsonLd,
@@ -21,6 +21,7 @@ import {
   productTitle,
   seoMeta,
 } from "@/lib/seo";
+import { getI18nDefaults } from "@/lib/i18n";
 import { trackProductView } from "@/lib/analytics";
 
 export const Route = createFileRoute("/product/$sku")({
@@ -39,6 +40,20 @@ export const Route = createFileRoute("/product/$sku")({
     const description = productDescription(p);
     const image = productOgImage(p);
     const path = `/product/${p.sku}`;
+    const hy = getI18nDefaults().hy;
+    const catKey = canonicalCategoryKey(p.category, p.category_en, p.category_hy);
+    const catSlug = catKey ? slugify(catKey) : "";
+    const crumbs: Array<{ name: string; path: string }> = [
+      { name: "Smeg Armenia", path: "/" },
+      { name: hy["catalog.title"] ?? "Catalogue", path: "/catalog" },
+    ];
+    if (catKey && catSlug) {
+      crumbs.push({
+        name: categoryLabel(catKey, "hy", p.category_en, p.category_hy),
+        path: `/catalog?category=${encodeURIComponent(catSlug)}`,
+      });
+    }
+    crumbs.push({ name: productTitle(p, "hy").split(" (")[0], path });
     return {
       meta: seoMeta({ title, description, path, image, type: "product" }),
       links: [...hreflangLinks(path), ...canonicalLink(path)],
@@ -49,13 +64,7 @@ export const Route = createFileRoute("/product/$sku")({
         },
         {
           type: "application/ld+json",
-          children: JSON.stringify(
-            breadcrumbJsonLd([
-              { name: "Smeg Armenia", path: "/" },
-              { name: "Catalogue", path: "/catalog" },
-              { name: title.split(" (")[0], path },
-            ]),
-          ),
+          children: JSON.stringify(breadcrumbJsonLd(crumbs)),
         },
       ],
     };
