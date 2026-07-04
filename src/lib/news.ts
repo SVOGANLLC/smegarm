@@ -57,20 +57,25 @@ export function newsBody(row: NewsRow, lang: Lang): string {
     pickLocalized(row as unknown as Record<string, unknown>, "body", lang) ||
     row.body_en ||
     row.body ||
-    newsExcerpt(row, lang)
+    newsExcerpt(row, lang) ||
+    ""
   );
 }
 
 /** Split body into paragraphs (blank-line separated). */
 export function newsBodyParagraphs(row: NewsRow, lang: Lang): string[] {
-  return newsBody(row, lang)
+  const text = newsBody(row, lang);
+  if (!text) return [];
+  return text
     .split(/\n\s*\n/)
     .map((p) => p.trim())
     .filter(Boolean);
 }
 
 export function formatNewsDate(iso: string, lang: Lang): string {
-  return new Date(iso).toLocaleDateString(lang === "hy" ? "hy-AM" : lang === "ru" ? "ru-RU" : "en-GB", {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(lang === "hy" ? "hy-AM" : lang === "ru" ? "ru-RU" : "en-GB", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -83,7 +88,7 @@ export function slugifyNewsTitle(title: string): string {
     .trim()
     .replace(/[^\p{L}\p{N}]+/gu, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 80) || `news-${Date.now()}`;
+    .slice(0, 72) || `news-${Date.now()}`;
 }
 
 export async function fetchPublishedNews(): Promise<NewsRow[]> {
