@@ -39,7 +39,7 @@ export function Categories() {
           titleKey="section.categories.title"
         />
 
-        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 md:mt-16 lg:grid-cols-3 lg:gap-6">
+        <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 md:mt-16 lg:grid-cols-3 lg:gap-6">
           {main.map((c, i) => (
             <CategoryCard key={`${c.sku}-${i}`} c={c} i={i} lang={lang} t={t} img={imgFor(c.sku)} />
           ))}
@@ -84,8 +84,8 @@ function CategoryCard({
 }) {
   const title = cardLabel(c, lang, t);
   return (
-    <Reveal delay={i * 0.08} className={i === 0 ? "sm:col-span-2 lg:col-span-1" : ""}>
-      <motion.div whileHover="hover" className="group relative block aspect-[4/5] overflow-hidden rounded-sm bg-secondary sm:aspect-[3/4]">
+    <Reveal delay={i * 0.08}>
+      <motion.div whileHover="hover" className="group relative block aspect-[3/4] overflow-hidden rounded-sm bg-secondary">
         <Link
           to="/catalog"
           search={{ category: slugify(c.categoryKey), page: 1 } as never}
@@ -98,13 +98,13 @@ function CategoryCard({
               loading="lazy"
               variants={{ hover: { scale: 1.06 } }}
               transition={{ duration: 1.2, ease: [0.2, 0.7, 0.2, 1] }}
-              className="h-full w-full object-contain p-6 md:p-8"
+              className="h-full w-full object-contain p-3 sm:p-6 md:p-8"
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-foreground/10 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-5 text-background md:p-7">
-            <h3 className="font-serif text-xl leading-tight md:text-2xl">{title}</h3>
-            <span className="opacity-80 transition-transform group-hover:translate-x-1">→</span>
+          <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3 text-background sm:p-5 md:p-7">
+            <h3 className="font-serif text-sm leading-tight sm:text-xl md:text-2xl">{title}</h3>
+            <span className="shrink-0 opacity-80 transition-transform group-hover:translate-x-1">→</span>
           </div>
         </Link>
       </motion.div>

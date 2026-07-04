@@ -317,4 +317,11 @@
     --input: #262626;
     --ring: #ffffff;
   }
+
+  /* Native selects / popup lists inherit theme colors on all admin themes */
+  .admin-shell select,
+  .admin-shell option {
+    color: var(--foreground);
+    background-color: var(--background);
+  }
 }

@@ -88,25 +88,27 @@ export function Featured() {
           </Reveal>
         </div>
       </div>
-      <div className="light-section mt-8 py-10 md:mt-16 md:py-24">
-        <div className="mx-auto max-w-[1400px] md:px-10">
-          <HorizontalScroll className="md:hidden">
-            {ordered.map((p, i) => (
-              <HorizontalScrollItem key={p.sku}>
-                <Reveal delay={i * 0.06}>
-                  <FeaturedCard p={p} lang={lang} />
+      <div className="mt-8 md:mt-12">
+        <div className="mx-auto max-w-[1400px] px-4 md:px-10">
+          <div className="light-section rounded-sm p-4 py-10 md:p-8 md:py-16">
+            <HorizontalScroll className="md:hidden">
+              {ordered.map((p, i) => (
+                <HorizontalScrollItem key={p.sku}>
+                  <Reveal delay={i * 0.06}>
+                    <FeaturedCard p={p} lang={lang} />
+                  </Reveal>
+                </HorizontalScrollItem>
+              ))}
+            </HorizontalScroll>
+            <div className="hidden gap-8 md:grid md:grid-cols-2 lg:grid-cols-4">
+              {ordered.map((p, i) => (
+                <Reveal key={p.sku} delay={i * 0.08}>
+                  <motion.div whileHover={{ y: -6 }} transition={{ type: "spring", stiffness: 200, damping: 20 }} className="h-full">
+                    <FeaturedCard p={p} lang={lang} />
+                  </motion.div>
                 </Reveal>
-              </HorizontalScrollItem>
-            ))}
-          </HorizontalScroll>
-          <div className="hidden gap-8 md:grid md:grid-cols-2 lg:grid-cols-4">
-            {ordered.map((p, i) => (
-              <Reveal key={p.sku} delay={i * 0.08}>
-                <motion.div whileHover={{ y: -6 }} transition={{ type: "spring", stiffness: 200, damping: 20 }} className="h-full">
-                  <FeaturedCard p={p} lang={lang} />
-                </motion.div>
-              </Reveal>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>

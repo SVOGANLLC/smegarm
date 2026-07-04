@@ -744,8 +744,10 @@ async function filterSkusByFacets(
   return skus.filter((s) => allowed.has(s));
 }
 
-function applyNavGroupOr(q: CatalogQuery, nf: NavGroupFilters): CatalogQuery {
-  if (nf.skus.length) return q.in("sku", nf.skus);
+function applyNavGroupOr(q: CatalogQuery, nf: NavGroupFilters, skipSkuIn = false): CatalogQuery {
+  // SKUs already applied via explicit skuIn (possibly chunked) — don't repeat.
+  if (nf.skus.length && !skipSkuIn) return q.in("sku", nf.skus);
+  if (nf.skus.length && skipSkuIn) return q;
   const parts: string[] = [];
   if (nf.modelGroups.length) {
     parts.push(`model_group.in.(${nf.modelGroups.map((v) => `"${v.replace(/"/g, "")}"`).join(",")})`);
@@ -762,12 +764,12 @@ function applyNavGroupOr(q: CatalogQuery, nf: NavGroupFilters): CatalogQuery {
 
 function applyCatalogFilters(q: CatalogQuery, f: CatalogFilters, skuIn?: string[] | null): CatalogQuery {
   q = q.eq("is_published", true);
-  const explicitSkus = f.skuIn?.length ? f.skuIn : skuIn;
+  const explicitSkus = resolveSkuFilter(f, skuIn);
   if (explicitSkus?.length) q = q.in("sku", explicitSkus);
 
   // Nav-group подборки: OR across members — never AND category ∩ family.
   if (f.navGroupFilters) {
-    q = applyNavGroupOr(q, f.navGroupFilters);
+    q = applyNavGroupOr(q, f.navGroupFilters, !!explicitSkus?.length);
   } else {
     if (f.categoryIn?.length) q = q.in("category", f.categoryIn);
     else if (f.category) q = q.eq("category", f.category);
@@ -781,6 +783,43 @@ function applyCatalogFilters(q: CatalogQuery, f: CatalogFilters, skuIn?: string[
   if (f.flag === "sale") q = q.not("price_old", "is", null);
   else if (f.flag) q = q.eq(f.flag, true);
   return q;
+}
+
+/** Intersect optional SKU lists (nav group ∩ specs). */
+function resolveSkuFilter(f: CatalogFilters, skuIn?: string[] | null): string[] | null {
+  const a = f.skuIn?.length ? f.skuIn : null;
+  const b = skuIn?.length ? skuIn : null;
+  if (a && b) {
+    const allowed = new Set(b);
+    const inter = a.filter((s) => allowed.has(s));
+    return inter;
+  }
+  return a ?? b;
+}
+
+async function fetchCatalogRowsBatched(
+  select: string,
+  f: CatalogFilters,
+  skuIn: string[] | null,
+): Promise<Product[]> {
+  const explicitSkus = resolveSkuFilter(f, skuIn);
+  if (explicitSkus && explicitSkus.length === 0) return [];
+  if (explicitSkus && explicitSkus.length > SKU_IN_CHUNK) {
+    const merged: Product[] = [];
+    for (const batch of chunk(explicitSkus, SKU_IN_CHUNK)) {
+      let q = supabase.from("products").select(select);
+      q = applyCatalogFilters(q, { ...f, skuIn: batch }, null);
+      const { data, error } = await q;
+      if (error) throw error;
+      merged.push(...((data ?? []) as Product[]));
+    }
+    return merged;
+  }
+  let q = supabase.from("products").select(select);
+  q = applyCatalogFilters(q, { ...f, skuIn: explicitSkus ?? f.skuIn }, null);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []) as Product[];
 }
 
 const PRODUCT_COLS =
@@ -821,8 +860,10 @@ async function fetchGroupedCatalog(
     }
     rows = skus.map((sku) => bySku.get(sku)).filter((r): r is GroupSkuRow => !!r);
   } else {
-    const explicitSkus = f.skuIn?.length ? f.skuIn : specSkuIn;
-    if (explicitSkus && explicitSkus.length > SKU_IN_CHUNK) {
+    const explicitSkus = resolveSkuFilter(f, specSkuIn);
+    if (explicitSkus && explicitSkus.length === 0) {
+      rows = [];
+    } else if (explicitSkus && explicitSkus.length > SKU_IN_CHUNK) {
       const merged: GroupSkuRow[] = [];
       for (const batch of chunk(explicitSkus, SKU_IN_CHUNK)) {
         let sq = supabase.from("products").select(GROUP_SKU_COLS);
@@ -834,7 +875,7 @@ async function fetchGroupedCatalog(
       rows = merged;
     } else {
       let sq = supabase.from("products").select(GROUP_SKU_COLS);
-      sq = applyCatalogFilters(sq, f, specSkuIn);
+      sq = applyCatalogFilters(sq, { ...f, skuIn: explicitSkus ?? f.skuIn }, null);
       const { data, error } = await sq;
       if (error) throw error;
       rows = (data ?? []) as GroupSkuRow[];
@@ -927,31 +968,43 @@ export async function fetchCatalog(f: CatalogFilters): Promise<{ items: CatalogD
   }
 
   if (!f.sort) {
-    let sq = supabase.from("products").select("sku");
-    sq = applyCatalogFilters(sq, f, specSkuIn);
-    const { data: skuRows, error: skuErr } = await sq;
-    if (skuErr) throw skuErr;
+    const skuRows = await fetchCatalogRowsBatched("sku", f, specSkuIn);
     const skus = shuffleArray(
-      (skuRows ?? []).map((r) => r.sku as string),
+      skuRows.map((r) => r.sku),
       f.shuffleSeed,
     );
     const total = skus.length;
     const pageSkus = skus.slice(offset, offset + limit);
     if (!pageSkus.length) return { items: [], total };
 
-    const { data, error } = await supabase
-      .from("products")
-      .select(PRODUCT_COLS)
-      .in("sku", pageSkus)
-      .eq("is_published", true);
-    if (error) throw error;
-    const bySku = new Map(((data ?? []) as Product[]).map((p) => [p.sku, p]));
+    const bySku = new Map<string, Product>();
+    for (const batch of chunk(pageSkus, SKU_IN_CHUNK)) {
+      const { data, error } = await supabase
+        .from("products")
+        .select(PRODUCT_COLS)
+        .in("sku", batch)
+        .eq("is_published", true);
+      if (error) throw error;
+      for (const p of (data ?? []) as Product[]) bySku.set(p.sku, p);
+    }
     const items = pageSkus.map((sku) => bySku.get(sku)).filter((p): p is Product => !!p);
     return { items, total };
   }
 
+  // Sorted path: batch when SKU filter is large, then sort/paginate in memory.
+  const explicitSkus = resolveSkuFilter(f, specSkuIn);
+  if (explicitSkus && explicitSkus.length === 0) return { items: [], total: 0 };
+  if (explicitSkus && explicitSkus.length > SKU_IN_CHUNK) {
+    let items = await fetchCatalogRowsBatched(PRODUCT_COLS, f, specSkuIn);
+    if (f.sort === "price-asc") items.sort((a, b) => (a.price_amd ?? 0) - (b.price_amd ?? 0));
+    else if (f.sort === "price-desc") items.sort((a, b) => (b.price_amd ?? 0) - (a.price_amd ?? 0));
+    else items.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+    const total = items.length;
+    return { items: items.slice(offset, offset + limit), total };
+  }
+
   let q = supabase.from("products").select(PRODUCT_COLS, { count: "exact" });
-  q = applyCatalogFilters(q, f, specSkuIn);
+  q = applyCatalogFilters(q, { ...f, skuIn: explicitSkus ?? f.skuIn }, null);
   if (f.sort === "price-asc") q = q.order("price_amd", { ascending: true, nullsFirst: false });
   else if (f.sort === "price-desc") q = q.order("price_amd", { ascending: false, nullsFirst: false });
   else q = q.order("name", { ascending: true });

@@ -123,15 +123,15 @@ export function AdminCommandPalette() {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black/50 p-4 pt-[12vh] backdrop-blur-sm">
-      <div className="w-full max-w-lg overflow-hidden rounded-xl border border-border bg-background shadow-2xl">
+      <div className="w-full max-w-lg overflow-hidden rounded-xl border border-border bg-background text-foreground shadow-2xl">
         <div className="flex items-center gap-2 border-b border-border px-4">
-          <Search className="h-4 w-4 text-muted-foreground" />
+          <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
           <input
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={t("admin.search.placeholder")}
-            className="flex-1 bg-transparent py-3.5 text-sm outline-none"
+            className="flex-1 bg-transparent py-3.5 text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
           <button type="button" onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
@@ -148,7 +148,7 @@ export function AdminCommandPalette() {
                 <button
                   type="button"
                   onClick={() => go(item)}
-                  className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-sm hover:bg-secondary/60"
+                  className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-sm text-foreground hover:bg-secondary hover:text-foreground"
                 >
                   <span>{item.label}</span>
                   {item.hint && <span className="text-xs text-muted-foreground">{item.hint}</span>}

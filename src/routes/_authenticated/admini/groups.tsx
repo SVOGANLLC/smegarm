@@ -330,7 +330,7 @@ function VariantGroupsPage() {
         className="mt-4 flex gap-2"
         onSubmit={(e) => {
           e.preventDefault();
-          const key = newKey.trim().toUpperCase();
+          const key = newKey.trim();
           if (!key) return;
           openGroup(key);
           navigate({ to: "/admini/groups", search: { key, ...listSearch } });
@@ -338,8 +338,11 @@ function VariantGroupsPage() {
       >
         <input
           value={newKey}
-          onChange={(e) => setNewKey(e.target.value.toUpperCase())}
+          onChange={(e) => setNewKey(e.target.value)}
           placeholder={t("admin.groups.newKey")}
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
           className="min-w-0 flex-1 rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-foreground"
         />
         <button

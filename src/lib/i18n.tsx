@@ -321,7 +321,7 @@ const dicts: Record<Lang, Dict> = {
     "home.metaTitle": "Smeg Armenia — Official SMEG appliances in Yerevan",
     "home.metaDesc": "Official SMEG representative in Armenia. Italian refrigerators, ovens, coffee machines and iconic 50's Style appliances. Showroom Nar-Dos 2, Yerevan.",
     "home.metaKeywords": "Smeg Armenia, SMEG Yerevan, Smeg refrigerator, Italian appliances Armenia, kitchen appliances Yerevan",
-    "nav.catalog": "SHOP",
+    "nav.catalog": "CATALOG",
     "nav.catalog.allProducts": "All products",
     "nav.catalog.refrigerators": "Refrigerators",
     "nav.catalog.ovens": "Ovens",
