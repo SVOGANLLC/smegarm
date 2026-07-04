@@ -21,6 +21,7 @@ import { Route as BusinessRouteImport } from './routes/business'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NewsIndexRouteImport } from './routes/news.index'
 import { Route as ProductSkuRouteImport } from './routes/product.$sku'
 import { Route as OrderIdRouteImport } from './routes/order.$id'
 import { Route as NewsSlugRouteImport } from './routes/news.$slug'
@@ -107,6 +108,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const NewsIndexRoute = NewsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => NewsRoute,
 } as any)
 const ProductSkuRoute = ProductSkuRouteImport.update({
   id: '/product/$sku',
@@ -279,6 +285,7 @@ export interface FileRoutesByFullPath {
   '/news/$slug': typeof NewsSlugRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$sku': typeof ProductSkuRoute
+  '/news/': typeof NewsIndexRoute
   '/admini/analytics': typeof AuthenticatedAdminiAnalyticsRoute
   '/admini/collections': typeof AuthenticatedAdminiCollectionsRoute
   '/admini/content': typeof AuthenticatedAdminiContentRoute
@@ -308,7 +315,6 @@ export interface FileRoutesByTo {
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/house-of-coffee': typeof HouseOfCoffeeRoute
-  '/news': typeof NewsRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
   '/service': typeof ServiceRoute
@@ -318,6 +324,7 @@ export interface FileRoutesByTo {
   '/news/$slug': typeof NewsSlugRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$sku': typeof ProductSkuRoute
+  '/news': typeof NewsIndexRoute
   '/admini/analytics': typeof AuthenticatedAdminiAnalyticsRoute
   '/admini/collections': typeof AuthenticatedAdminiCollectionsRoute
   '/admini/content': typeof AuthenticatedAdminiContentRoute
@@ -359,6 +366,7 @@ export interface FileRoutesById {
   '/news/$slug': typeof NewsSlugRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$sku': typeof ProductSkuRoute
+  '/news/': typeof NewsIndexRoute
   '/_authenticated/admini/analytics': typeof AuthenticatedAdminiAnalyticsRoute
   '/_authenticated/admini/collections': typeof AuthenticatedAdminiCollectionsRoute
   '/_authenticated/admini/content': typeof AuthenticatedAdminiContentRoute
@@ -401,6 +409,7 @@ export interface FileRouteTypes {
     | '/news/$slug'
     | '/order/$id'
     | '/product/$sku'
+    | '/news/'
     | '/admini/analytics'
     | '/admini/collections'
     | '/admini/content'
@@ -430,7 +439,6 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/checkout'
     | '/house-of-coffee'
-    | '/news'
     | '/robots.txt'
     | '/sale'
     | '/service'
@@ -440,6 +448,7 @@ export interface FileRouteTypes {
     | '/news/$slug'
     | '/order/$id'
     | '/product/$sku'
+    | '/news'
     | '/admini/analytics'
     | '/admini/collections'
     | '/admini/content'
@@ -480,6 +489,7 @@ export interface FileRouteTypes {
     | '/news/$slug'
     | '/order/$id'
     | '/product/$sku'
+    | '/news/'
     | '/_authenticated/admini/analytics'
     | '/_authenticated/admini/collections'
     | '/_authenticated/admini/content'
@@ -611,6 +621,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/news/': {
+      id: '/news/'
+      path: '/'
+      fullPath: '/news/'
+      preLoaderRoute: typeof NewsIndexRouteImport
+      parentRoute: typeof NewsRoute
     }
     '/product/$sku': {
       id: '/product/$sku'
@@ -878,10 +895,12 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface NewsRouteChildren {
   NewsSlugRoute: typeof NewsSlugRoute
+  NewsIndexRoute: typeof NewsIndexRoute
 }
 
 const NewsRouteChildren: NewsRouteChildren = {
   NewsSlugRoute: NewsSlugRoute,
+  NewsIndexRoute: NewsIndexRoute,
 }
 
 const NewsRouteWithChildren = NewsRoute._addFileChildren(NewsRouteChildren)

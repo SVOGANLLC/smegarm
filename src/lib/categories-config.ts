@@ -9,7 +9,7 @@ export type MainCategoryCard = {
 
 export const DEFAULT_MAIN_CARDS: MainCategoryCard[] = [
   { sku: "FAB10HLRD6", categoryKey: "Refrigerators", labelKey: "section.categories.refrigerators" },
-  { sku: "SF6905P1", categoryKey: "Ovens", labelKey: "section.categories.ovens" },
+  { sku: "SF6905P1", categoryKey: "Ovens", labelKey: "section.categories.ovens" }, // cover SKU must exist in products
   { sku: "PV395LN", categoryKey: "Hobs", labelKey: "section.categories.hobs" },
 ];
 
