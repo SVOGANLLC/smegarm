@@ -2,9 +2,12 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronRight, X } from "lucide-react";
 import type { CSSProperties, MouseEvent } from "react";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, type Lang } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import { scrollToHomeSection } from "@/lib/hash-scroll";
 import { CatalogMobileNav } from "@/components/site/CatalogMegaMenu";
+
+const langLabels: Record<Lang, string> = { ru: "RU", en: "EN", hy: "ՀՅ" };
 
 type SideMenuProps = {
   open: boolean;
@@ -32,7 +35,7 @@ const panelVars = {
 } as CSSProperties;
 
 export function SideMenu({ open, onClose, includePrimaryNav = false }: SideMenuProps) {
-  const { t } = useI18n();
+  const { t, lang, setLang } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const items: MenuItem[] = [
@@ -140,6 +143,28 @@ export function SideMenu({ open, onClose, includePrimaryNav = false }: SideMenuP
                 ))}
               </ul>
             </nav>
+
+            <div className="shrink-0 border-t border-border px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:px-10">
+              <p className="mb-3 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                {t("header.language")}
+              </p>
+              <div className="flex items-center gap-1 rounded-full border border-border p-1">
+                {(Object.keys(langLabels) as Lang[]).map((l) => (
+                  <button
+                    key={l}
+                    type="button"
+                    onClick={() => setLang(l)}
+                    className={cn(
+                      "flex-1 rounded-full px-3 py-2 text-[11px] font-medium tracking-wider transition-colors",
+                      lang === l ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
+                    )}
+                    aria-pressed={lang === l}
+                  >
+                    {langLabels[l]}
+                  </button>
+                ))}
+              </div>
+            </div>
           </motion.aside>
         </>
       )}
