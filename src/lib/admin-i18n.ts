@@ -58,9 +58,9 @@ const E: Record<string, T3> = {
   "admin.nav.partners": ["Партнёры", "Partners", "Գործընկերներ"],
   "admin.news.title": ["Новости", "News", "Նորություններ"],
   "admin.news.intro": [
-    "Список /news: текст слева, фото справа. Страница статьи — как на smeg.com: категория, заголовок, лид, фото, текст.",
-    "List /news: text left, photo right. Article page like smeg.com: category, title, lead, photo, body.",
-    "/news ցուցակ՝ տեքստ ձախ, լուսանկար աջ։ Հոդվածի էջ՝ ինչպես smeg.com։",
+    "Редактируйте новости на RU / EN / HY: заголовок, категория, лид, полный текст и фото. Пустые языки подставляют RU. Список на сайте — текст слева, фото справа; клик открывает полную статью.",
+    "Edit news in RU / EN / HY: title, category, lead, full body and photo. Empty languages fall back to RU. Site list is text left / photo right; click opens the full article.",
+    "Խմբագրեք նորությունները RU / EN / HY լեզուներով՝ վերնագիր, կատեգորիա, լիդ, ամբողջ տեքստ և լուսանկար։",
   ],
   "admin.news.newTitle": ["Заголовок новости", "News title", "Նորության վերնագիր"],
   "admin.news.create": ["Добавить", "Add", "Ավելացնել"],

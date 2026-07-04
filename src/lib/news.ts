@@ -92,23 +92,39 @@ export function slugifyNewsTitle(title: string): string {
 }
 
 export async function fetchPublishedNews(): Promise<NewsRow[]> {
-  const { data, error } = await supabase
-    .from("news")
-    .select("*")
-    .eq("is_published", true)
-    .order("sort_order", { ascending: false })
-    .order("published_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as NewsRow[];
+  try {
+    const { data, error } = await supabase
+      .from("news")
+      .select("*")
+      .eq("is_published", true)
+      .order("sort_order", { ascending: false })
+      .order("published_at", { ascending: false });
+    if (error) {
+      console.error("[news] list", error.message);
+      return [];
+    }
+    return (data ?? []) as NewsRow[];
+  } catch (e) {
+    console.error("[news] list", e);
+    return [];
+  }
 }
 
 export async function fetchPublishedNewsBySlug(slug: string): Promise<NewsRow | null> {
-  const { data, error } = await supabase
-    .from("news")
-    .select("*")
-    .eq("slug", slug)
-    .eq("is_published", true)
-    .maybeSingle();
-  if (error) throw error;
-  return (data as NewsRow | null) ?? null;
+  try {
+    const { data, error } = await supabase
+      .from("news")
+      .select("*")
+      .eq("slug", slug)
+      .eq("is_published", true)
+      .maybeSingle();
+    if (error) {
+      console.error("[news] by slug", slug, error.message);
+      return null;
+    }
+    return (data as NewsRow | null) ?? null;
+  } catch (e) {
+    console.error("[news] by slug", slug, e);
+    return null;
+  }
 }

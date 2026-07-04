@@ -7,6 +7,7 @@ import { Hero } from "@/components/site/Hero";
 import { Featured } from "@/components/site/Featured";
 import { Marquee } from "@/components/site/Marquee";
 import { Collections } from "@/components/site/Collections";
+import { LatestNews } from "@/components/site/LatestNews";
 import { Categories } from "@/components/site/Categories";
 import { Benefits } from "@/components/site/Benefits";
 import { Story } from "@/components/site/Story";
@@ -61,6 +62,7 @@ function Index() {
         <ShowcaseStrip flag="is_special_offer" eyebrow="showcase.special.eyebrow" title="showcase.special.title" to="/sale" ctaLabel="cta.allOffers" />
         <ShowcaseStrip flag="is_new" eyebrow="showcase.new.eyebrow" title="showcase.new.title" to="/catalog" ctaLabel="cta.catalog" bg />
         <Collections />
+        <LatestNews />
         <Categories />
         <Benefits />
         <Story />

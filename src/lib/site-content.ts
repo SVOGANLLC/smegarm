@@ -53,9 +53,17 @@ export function buildSiteContentBundle(
 }
 
 export async function fetchSiteContentBundle(): Promise<SiteContentBundle> {
-  const { data, error } = await supabase.from("site_content").select("key,value");
-  if (error) throw error;
-  return buildSiteContentBundle(data ?? []);
+  try {
+    const { data, error } = await supabase.from("site_content").select("key,value");
+    if (error) {
+      console.error("[site-content]", error.message);
+      return buildSiteContentBundle([]);
+    }
+    return buildSiteContentBundle(data ?? []);
+  } catch (e) {
+    console.error("[site-content]", e);
+    return buildSiteContentBundle([]);
+  }
 }
 
 export function applySiteContentStyles(stylesMap: ContentStylesMap): void {

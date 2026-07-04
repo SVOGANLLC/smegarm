@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { fetchProductBySku, fetchTheme, slugify } from "@/lib/products";
@@ -101,15 +101,15 @@ function ProductNotFoundView() {
 
 function ProductPage() {
   const { sku } = Route.useParams();
+  const { product } = Route.useLoaderData();
   const { lang, t } = useI18n();
-  const { data: product } = useSuspenseQuery({
-    queryKey: ["product", sku],
-    queryFn: () => fetchProductBySku(sku),
-  });
-  const { data: theme } = useSuspenseQuery({
+  const themeQ = useQuery({
     queryKey: ["theme", product?.theme_key ?? null],
     queryFn: () => (product?.theme_key ? fetchTheme(product.theme_key) : Promise.resolve(null)),
+    enabled: !!product?.theme_key,
+    staleTime: 60_000,
   });
+  const theme = themeQ.data ?? null;
   const gallery = product?.images?.length ? product.images : product?.main_image ? [product.main_image] : [];
   const [active, setActive] = useState(0);
 
