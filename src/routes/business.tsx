@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { Reveal } from "@/components/site/Section";
@@ -15,8 +15,6 @@ const UNITS = [
       "https://www.smeg.com/binaries/content/gallery/smeg/content-elements/visual-boxes/foodservice-banner_divisioni_960x690.jpg/foodservice-banner_divisioni_960x690.jpg",
     titleKey: "business.professional.title",
     bodyKey: "business.professional.body",
-    ctaKey: "business.professional.cta",
-    href: "https://www.smegfoodservice.com/",
   },
   {
     id: "instruments",
@@ -25,8 +23,6 @@ const UNITS = [
       "https://www.smeg.com/binaries/content/gallery/smeg/content-elements/visual-boxes/instruments-banner_divisioni_960x690.jpg/instruments-banner_divisioni_960x690.jpg",
     titleKey: "business.instruments.title",
     bodyKey: "business.instruments.body",
-    ctaKey: "business.instruments.cta",
-    href: "https://www.smeginstruments.com/",
   },
   {
     id: "pavoni",
@@ -35,8 +31,6 @@ const UNITS = [
       "https://www.smeg.com/binaries/content/gallery/smeg/content-elements/visual-boxes/pavoni-banner_divisioni_960x690.jpg/pavoni-banner_divisioni_960x690.jpg",
     titleKey: "business.pavoni.title",
     bodyKey: "business.pavoni.body",
-    ctaKey: "business.pavoni.cta",
-    href: "https://www.lapavoni.com/",
   },
 ] as const;
 
@@ -101,15 +95,13 @@ function BusinessPage() {
                     <p className="mt-4 flex-1 text-sm leading-relaxed text-white/70 md:text-[15px]">
                       {t(unit.bodyKey)}
                     </p>
-                    <a
-                      href={unit.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-8 inline-flex items-center gap-3 text-[11px] uppercase tracking-[0.2em] text-white transition hover:opacity-80"
+                    <Link
+                      to="/"
+                      hash="contact"
+                      className="mt-8 inline-flex w-fit items-center justify-center rounded-full border border-white/80 bg-white px-6 py-3 text-[11px] uppercase tracking-[0.18em] text-[#0a0a0a] transition hover:bg-transparent hover:text-white"
                     >
-                      <span className="h-px w-8 bg-white/70" aria-hidden />
-                      {t(unit.ctaKey)}
-                    </a>
+                      {t("business.cta")}
+                    </Link>
                   </article>
                 </Reveal>
               ))}

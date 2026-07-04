@@ -56,15 +56,13 @@ const dicts: Record<Lang, Dict> = {
     "business.professional.title": "Smeg Professional",
     "business.professional.body":
       "Линейка профессиональной техники Smeg для баров, кафе, ресторанов и отелей: минибары, морозильники и льдогенераторы. Надёжные и функциональные решения, рассчитанные на долгий срок службы.",
-    "business.professional.cta": "Discover Smeg Professional",
+    "business.cta": "Связаться",
     "business.instruments.title": "Smeg Instruments",
     "business.instruments.body":
       "Более 30 лет Smeg проектирует системы мойки и термодезинфекторы для больниц, лабораторий, фармацевтики, стоматологии и промышленности.",
-    "business.instruments.cta": "Discover Smeg Instruments",
     "business.pavoni.title": "La Pavoni",
     "business.pavoni.body":
       "С 1905 года в Милане создаёт эспрессо-машины Made in Milan. La Pavoni превращает кофейную технику в объекты дизайна и предметы искусства.",
-    "business.pavoni.cta": "Discover La Pavoni",
     "nav.houseOfCoffee": "ДОМ КОФЕ",
     "news.metaTitle": "Новости — Smeg Armenia",
     "news.metaDesc": "Новости и анонсы Smeg Armenia: коллекции, техника и события бренда.",
@@ -414,15 +412,13 @@ const dicts: Record<Lang, Dict> = {
     "business.professional.title": "Smeg Professional",
     "business.professional.body":
       "Designed exclusively for bars, cafes, restaurants and hotels, the range of Smeg professional appliances includes minibar refrigerators, freezers and ice makers. Solid, functional products, destined to endure over time.",
-    "business.professional.cta": "Discover Smeg Professional",
+    "business.cta": "Contact us",
     "business.instruments.title": "Smeg Instruments",
     "business.instruments.body":
       "Smeg has been studying and designing washing systems and thermo washer disinfectors for over 30 years for professionals in the assistance sector, hospitals, rest homes, factories, laboratories, pharma industries, and dental cabinets.",
-    "business.instruments.cta": "Discover Smeg Instruments",
     "business.pavoni.title": "La Pavoni",
     "business.pavoni.body":
       "Since 1905 it designs and produces coffee machines Made in Milan. It means worldwide espresso and La Pavoni transforms coffee machines into luxury objects and artworks.",
-    "business.pavoni.cta": "Discover La Pavoni",
     "nav.houseOfCoffee": "HOUSE OF COFFEE",
     "news.metaTitle": "News — Smeg Armenia",
     "news.metaDesc": "News and announcements from Smeg Armenia: collections, appliances and brand stories.",
@@ -772,15 +768,13 @@ const dicts: Record<Lang, Dict> = {
     "business.professional.title": "Smeg Professional",
     "business.professional.body":
       "Smeg պրոֆեսիոնալ տեխնիկա բարերի, սրճարանների, ռեստորանների և հյուրանոցների համար՝ մինիբարեր, սառցարաններ և սառույցի մեքենաներ։",
-    "business.professional.cta": "Discover Smeg Professional",
+    "business.cta": "Կապվել",
     "business.instruments.title": "Smeg Instruments",
     "business.instruments.body":
       "Ավելի քան 30 տարի Smeg-ը նախագծում է լվացման համակարգեր և թերմոդեզինֆեկտորներ հիվանդանոցների, լաբորատորիաների և արդյունաբերության համար։",
-    "business.instruments.cta": "Discover Smeg Instruments",
     "business.pavoni.title": "La Pavoni",
     "business.pavoni.body":
       "1905-ից Միլանում արտադրում է էսպրեսո մեքենաներ Made in Milan՝ վերածելով սուրճի տեխնիկան դիզայնի օբյեկտների։",
-    "business.pavoni.cta": "Discover La Pavoni",
     "nav.houseOfCoffee": "ՍՈՒՐՃԻ ՏՈՒՆ",
     "news.metaTitle": "Նորություններ — Smeg Armenia",
     "news.metaDesc": "Smeg Armenia-ի նորություններ և հայտարարություններ։",
