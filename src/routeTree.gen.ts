@@ -17,6 +17,7 @@ import { Route as NewsRouteImport } from './routes/news'
 import { Route as HouseOfCoffeeRouteImport } from './routes/house-of-coffee'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CatalogRouteImport } from './routes/catalog'
+import { Route as BusinessRouteImport } from './routes/business'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -86,6 +87,11 @@ const CheckoutRoute = CheckoutRouteImport.update({
 const CatalogRoute = CatalogRouteImport.update({
   id: '/catalog',
   path: '/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessRoute = BusinessRouteImport.update({
+  id: '/business',
+  path: '/business',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -258,6 +264,7 @@ const ApiPublicEmailQueueProcessRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/business': typeof BusinessRoute
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/house-of-coffee': typeof HouseOfCoffeeRoute
@@ -297,6 +304,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/business': typeof BusinessRoute
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/house-of-coffee': typeof HouseOfCoffeeRoute
@@ -336,6 +344,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/business': typeof BusinessRoute
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/house-of-coffee': typeof HouseOfCoffeeRoute
@@ -377,6 +386,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/business'
     | '/catalog'
     | '/checkout'
     | '/house-of-coffee'
@@ -416,6 +426,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/business'
     | '/catalog'
     | '/checkout'
     | '/house-of-coffee'
@@ -454,6 +465,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/business'
     | '/catalog'
     | '/checkout'
     | '/house-of-coffee'
@@ -495,6 +507,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BusinessRoute: typeof BusinessRoute
   CatalogRoute: typeof CatalogRoute
   CheckoutRoute: typeof CheckoutRoute
   HouseOfCoffeeRoute: typeof HouseOfCoffeeRoute
@@ -569,6 +582,13 @@ declare module '@tanstack/react-router' {
       path: '/catalog'
       fullPath: '/catalog'
       preLoaderRoute: typeof CatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/business': {
+      id: '/business'
+      path: '/business'
+      fullPath: '/business'
+      preLoaderRoute: typeof BusinessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -870,6 +890,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  BusinessRoute: BusinessRoute,
   CatalogRoute: CatalogRoute,
   CheckoutRoute: CheckoutRoute,
   HouseOfCoffeeRoute: HouseOfCoffeeRoute,

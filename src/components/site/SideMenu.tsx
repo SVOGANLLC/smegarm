@@ -14,7 +14,12 @@ type SideMenuProps = {
 };
 
 type MenuItem =
-  | { id: string; label: string; to: "/news" | "/service" | "/house-of-coffee" | "/catalog"; kind: "route" }
+  | {
+      id: string;
+      label: string;
+      to: "/news" | "/service" | "/business" | "/house-of-coffee" | "/catalog";
+      kind: "route";
+    }
   | { id: string; label: string; hash: string; kind: "hash" };
 
 /** Invert tokens so nested nav (catalog accordion) stays readable on the dark panel. */
@@ -35,6 +40,7 @@ export function SideMenu({ open, onClose, includePrimaryNav = false }: SideMenuP
     { id: "contact", label: t("nav.contact"), hash: "contact", kind: "hash" },
     { id: "news", label: t("nav.news"), to: "/news", kind: "route" },
     { id: "service", label: t("nav.service"), to: "/service", kind: "route" },
+    { id: "business", label: t("nav.business"), to: "/business", kind: "route" },
   ];
 
   const onHashNav = (e: MouseEvent, hash: string) => {
