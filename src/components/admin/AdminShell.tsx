@@ -20,6 +20,7 @@ import {
   LayoutGrid,
   Palette,
   BarChart3,
+  Newspaper,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n, type Lang } from "@/lib/i18n";
@@ -39,6 +40,7 @@ const mainNav: NavItem[] = [
   { to: "/admini/menu", labelKey: "admin.nav.menuGroups", icon: LayoutGrid, adminOnly: true },
   { to: "/admini/groups", labelKey: "admin.nav.variantGroups", icon: Palette, adminOnly: true },
   { to: "/admini/content", labelKey: "admin.nav.content", icon: FileText, adminOnly: true },
+  { to: "/admini/news", labelKey: "admin.nav.news", icon: Newspaper, adminOnly: true },
 ];
 
 const extraNav: NavItem[] = [

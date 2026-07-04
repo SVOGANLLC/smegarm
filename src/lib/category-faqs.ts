@@ -79,11 +79,17 @@ export async function fetchCategoryFaqs(
   categorySlug: string,
   lang: Lang = "hy",
 ): Promise<FaqItem[] | null> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin
-    .from("site_content")
-    .select("value")
-    .eq("key", "category-faqs")
-    .maybeSingle();
-  return parseCategoryFaqsFromBlock(data?.value, categorySlug, lang);
+  try {
+    // Public read (RLS) — never use service-role here; catalog SSR must not depend on it.
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data, error } = await supabase
+      .from("site_content")
+      .select("value")
+      .eq("key", "category-faqs")
+      .maybeSingle();
+    if (error) return null;
+    return parseCategoryFaqsFromBlock(data?.value, categorySlug, lang);
+  } catch {
+    return null;
+  }
 }

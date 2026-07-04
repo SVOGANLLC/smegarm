@@ -24,6 +24,8 @@ const STATIC: Result[] = [
   { id: "menu", label: "Подборки меню", to: "/admini/menu" },
   { id: "groups", label: "Цветовые группы", to: "/admini/groups" },
   { id: "content", label: "Контент сайта", to: "/admini/content" },
+  { id: "news", label: "Новости", to: "/admini/news" },
+
   { id: "help", label: "Справка", to: "/admini/help" },
 ];
 

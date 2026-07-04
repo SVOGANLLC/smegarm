@@ -83,17 +83,21 @@ export const Route = createFileRoute("/catalog")({
     const catalogSearch = searchSchema.parse(location.search);
     let faqs: ReturnType<typeof getStoreFaqs> | undefined;
 
-    if (!catalogShouldNoindex(catalogSearch)) {
-      if (catalogSearch.category && !catalogSearch.family && !catalogSearch.q?.trim()) {
-        faqs = (await fetchCategoryFaqs(catalogSearch.category)) ?? undefined;
-      } else if (
-        !catalogSearch.category &&
-        !catalogSearch.section &&
-        !catalogSearch.navGroup &&
-        !catalogSearch.q?.trim()
-      ) {
-        faqs = getStoreFaqs("hy");
+    try {
+      if (!catalogShouldNoindex(catalogSearch)) {
+        if (catalogSearch.category && !catalogSearch.family && !catalogSearch.q?.trim()) {
+          faqs = (await fetchCategoryFaqs(catalogSearch.category)) ?? undefined;
+        } else if (
+          !catalogSearch.category &&
+          !catalogSearch.section &&
+          !catalogSearch.navGroup &&
+          !catalogSearch.q?.trim()
+        ) {
+          faqs = getStoreFaqs("hy");
+        }
       }
+    } catch {
+      // SEO extras must never block the catalog.
     }
 
     return { catalogSearch, faqs };

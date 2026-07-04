@@ -221,7 +221,14 @@ export function CatalogMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 /** Mobile / tablet accordion for catalog links */
-export function CatalogMobileNav({ onNavigate }: { onNavigate?: () => void }) {
+export function CatalogMobileNav({
+  onNavigate,
+  compact = false,
+}: {
+  onNavigate?: () => void;
+  /** Smaller uppercase style for the right-side drawer */
+  compact?: boolean;
+}) {
   const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
   const columns = useCatalogNavColumns();
@@ -235,7 +242,12 @@ export function CatalogMobileNav({ onNavigate }: { onNavigate?: () => void }) {
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
-        className="flex w-full items-center justify-between py-3 font-serif text-[clamp(1.75rem,8vw,2.25rem)] uppercase leading-tight tracking-[0.06em] text-foreground"
+        className={cn(
+          "flex w-full items-center justify-between py-3 uppercase text-foreground",
+          compact
+            ? "text-sm tracking-[0.2em]"
+            : "font-serif text-[clamp(1.75rem,8vw,2.25rem)] leading-tight tracking-[0.06em]",
+        )}
       >
         {t("nav.catalog")}
         <ChevronDown className={cn("h-5 w-5 shrink-0 transition-transform", expanded && "rotate-180")} />

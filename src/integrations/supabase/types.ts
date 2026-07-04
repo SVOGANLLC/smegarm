@@ -319,6 +319,57 @@ export type Database = {
           },
         ]
       }
+      news: {
+        Row: {
+          created_at: string
+          excerpt: string | null
+          excerpt_en: string | null
+          excerpt_hy: string | null
+          id: string
+          image_url: string | null
+          is_published: boolean
+          published_at: string
+          slug: string
+          sort_order: number
+          title: string
+          title_en: string | null
+          title_hy: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          excerpt?: string | null
+          excerpt_en?: string | null
+          excerpt_hy?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          published_at?: string
+          slug: string
+          sort_order?: number
+          title: string
+          title_en?: string | null
+          title_hy?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          excerpt?: string | null
+          excerpt_en?: string | null
+          excerpt_hy?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          published_at?: string
+          slug?: string
+          sort_order?: number
+          title?: string
+          title_en?: string | null
+          title_hy?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           address: string | null

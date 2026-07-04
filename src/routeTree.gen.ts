@@ -10,8 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ServiceRouteImport } from './routes/service'
 import { Route as SaleRouteImport } from './routes/sale'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as NewsRouteImport } from './routes/news'
 import { Route as HouseOfCoffeeRouteImport } from './routes/house-of-coffee'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CatalogRouteImport } from './routes/catalog'
@@ -31,6 +33,7 @@ import { Route as AuthenticatedAdminiProductsRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminiPartnersRouteImport } from './routes/_authenticated/admini/partners'
 import { Route as AuthenticatedAdminiOrdersRouteImport } from './routes/_authenticated/admini/orders'
 import { Route as AuthenticatedAdminiNotificationsRouteImport } from './routes/_authenticated/admini/notifications'
+import { Route as AuthenticatedAdminiNewsRouteImport } from './routes/_authenticated/admini/news'
 import { Route as AuthenticatedAdminiMenuRouteImport } from './routes/_authenticated/admini/menu'
 import { Route as AuthenticatedAdminiInquiriesRouteImport } from './routes/_authenticated/admini/inquiries'
 import { Route as AuthenticatedAdminiHelpRouteImport } from './routes/_authenticated/admini/help'
@@ -49,6 +52,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ServiceRoute = ServiceRouteImport.update({
+  id: '/service',
+  path: '/service',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SaleRoute = SaleRouteImport.update({
   id: '/sale',
   path: '/sale',
@@ -57,6 +65,11 @@ const SaleRoute = SaleRouteImport.update({
 const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   id: '/robots.txt',
   path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsRoute = NewsRouteImport.update({
+  id: '/news',
+  path: '/news',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HouseOfCoffeeRoute = HouseOfCoffeeRouteImport.update({
@@ -161,6 +174,11 @@ const AuthenticatedAdminiNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AuthenticatedAdminiRouteRoute,
   } as any)
+const AuthenticatedAdminiNewsRoute = AuthenticatedAdminiNewsRouteImport.update({
+  id: '/news',
+  path: '/news',
+  getParentRoute: () => AuthenticatedAdminiRouteRoute,
+} as any)
 const AuthenticatedAdminiMenuRoute = AuthenticatedAdminiMenuRouteImport.update({
   id: '/menu',
   path: '/menu',
@@ -237,8 +255,10 @@ export interface FileRoutesByFullPath {
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/house-of-coffee': typeof HouseOfCoffeeRoute
+  '/news': typeof NewsRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
+  '/service': typeof ServiceRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admini': typeof AuthenticatedAdminiRouteRouteWithChildren
   '/admin/{-$splat}': typeof AdminChar123SplatChar125Route
@@ -252,6 +272,7 @@ export interface FileRoutesByFullPath {
   '/admini/help': typeof AuthenticatedAdminiHelpRoute
   '/admini/inquiries': typeof AuthenticatedAdminiInquiriesRoute
   '/admini/menu': typeof AuthenticatedAdminiMenuRoute
+  '/admini/news': typeof AuthenticatedAdminiNewsRoute
   '/admini/notifications': typeof AuthenticatedAdminiNotificationsRoute
   '/admini/orders': typeof AuthenticatedAdminiOrdersRoute
   '/admini/partners': typeof AuthenticatedAdminiPartnersRoute
@@ -272,8 +293,10 @@ export interface FileRoutesByTo {
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/house-of-coffee': typeof HouseOfCoffeeRoute
+  '/news': typeof NewsRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
+  '/service': typeof ServiceRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/{-$splat}': typeof AdminChar123SplatChar125Route
   '/collection/$slug': typeof CollectionSlugRoute
@@ -286,6 +309,7 @@ export interface FileRoutesByTo {
   '/admini/help': typeof AuthenticatedAdminiHelpRoute
   '/admini/inquiries': typeof AuthenticatedAdminiInquiriesRoute
   '/admini/menu': typeof AuthenticatedAdminiMenuRoute
+  '/admini/news': typeof AuthenticatedAdminiNewsRoute
   '/admini/notifications': typeof AuthenticatedAdminiNotificationsRoute
   '/admini/orders': typeof AuthenticatedAdminiOrdersRoute
   '/admini/partners': typeof AuthenticatedAdminiPartnersRoute
@@ -307,8 +331,10 @@ export interface FileRoutesById {
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/house-of-coffee': typeof HouseOfCoffeeRoute
+  '/news': typeof NewsRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
+  '/service': typeof ServiceRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admini': typeof AuthenticatedAdminiRouteRouteWithChildren
   '/admin/{-$splat}': typeof AdminChar123SplatChar125Route
@@ -322,6 +348,7 @@ export interface FileRoutesById {
   '/_authenticated/admini/help': typeof AuthenticatedAdminiHelpRoute
   '/_authenticated/admini/inquiries': typeof AuthenticatedAdminiInquiriesRoute
   '/_authenticated/admini/menu': typeof AuthenticatedAdminiMenuRoute
+  '/_authenticated/admini/news': typeof AuthenticatedAdminiNewsRoute
   '/_authenticated/admini/notifications': typeof AuthenticatedAdminiNotificationsRoute
   '/_authenticated/admini/orders': typeof AuthenticatedAdminiOrdersRoute
   '/_authenticated/admini/partners': typeof AuthenticatedAdminiPartnersRoute
@@ -344,8 +371,10 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/checkout'
     | '/house-of-coffee'
+    | '/news'
     | '/robots.txt'
     | '/sale'
+    | '/service'
     | '/sitemap.xml'
     | '/admini'
     | '/admin/{-$splat}'
@@ -359,6 +388,7 @@ export interface FileRouteTypes {
     | '/admini/help'
     | '/admini/inquiries'
     | '/admini/menu'
+    | '/admini/news'
     | '/admini/notifications'
     | '/admini/orders'
     | '/admini/partners'
@@ -379,8 +409,10 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/checkout'
     | '/house-of-coffee'
+    | '/news'
     | '/robots.txt'
     | '/sale'
+    | '/service'
     | '/sitemap.xml'
     | '/admin/{-$splat}'
     | '/collection/$slug'
@@ -393,6 +425,7 @@ export interface FileRouteTypes {
     | '/admini/help'
     | '/admini/inquiries'
     | '/admini/menu'
+    | '/admini/news'
     | '/admini/notifications'
     | '/admini/orders'
     | '/admini/partners'
@@ -413,8 +446,10 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/checkout'
     | '/house-of-coffee'
+    | '/news'
     | '/robots.txt'
     | '/sale'
+    | '/service'
     | '/sitemap.xml'
     | '/_authenticated/admini'
     | '/admin/{-$splat}'
@@ -428,6 +463,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admini/help'
     | '/_authenticated/admini/inquiries'
     | '/_authenticated/admini/menu'
+    | '/_authenticated/admini/news'
     | '/_authenticated/admini/notifications'
     | '/_authenticated/admini/orders'
     | '/_authenticated/admini/partners'
@@ -450,8 +486,10 @@ export interface RootRouteChildren {
   CatalogRoute: typeof CatalogRoute
   CheckoutRoute: typeof CheckoutRoute
   HouseOfCoffeeRoute: typeof HouseOfCoffeeRoute
+  NewsRoute: typeof NewsRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SaleRoute: typeof SaleRoute
+  ServiceRoute: typeof ServiceRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AdminChar123SplatChar125Route: typeof AdminChar123SplatChar125Route
   CollectionSlugRoute: typeof CollectionSlugRoute
@@ -472,6 +510,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/service': {
+      id: '/service'
+      path: '/service'
+      fullPath: '/service'
+      preLoaderRoute: typeof ServiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sale': {
       id: '/sale'
       path: '/sale'
@@ -484,6 +529,13 @@ declare module '@tanstack/react-router' {
       path: '/robots.txt'
       fullPath: '/robots.txt'
       preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news': {
+      id: '/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof NewsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/house-of-coffee': {
@@ -619,6 +671,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminiNotificationsRouteImport
       parentRoute: typeof AuthenticatedAdminiRouteRoute
     }
+    '/_authenticated/admini/news': {
+      id: '/_authenticated/admini/news'
+      path: '/news'
+      fullPath: '/admini/news'
+      preLoaderRoute: typeof AuthenticatedAdminiNewsRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
     '/_authenticated/admini/menu': {
       id: '/_authenticated/admini/menu'
       path: '/menu'
@@ -731,6 +790,7 @@ interface AuthenticatedAdminiRouteRouteChildren {
   AuthenticatedAdminiHelpRoute: typeof AuthenticatedAdminiHelpRoute
   AuthenticatedAdminiInquiriesRoute: typeof AuthenticatedAdminiInquiriesRoute
   AuthenticatedAdminiMenuRoute: typeof AuthenticatedAdminiMenuRoute
+  AuthenticatedAdminiNewsRoute: typeof AuthenticatedAdminiNewsRoute
   AuthenticatedAdminiNotificationsRoute: typeof AuthenticatedAdminiNotificationsRoute
   AuthenticatedAdminiOrdersRoute: typeof AuthenticatedAdminiOrdersRoute
   AuthenticatedAdminiPartnersRoute: typeof AuthenticatedAdminiPartnersRoute
@@ -749,6 +809,7 @@ const AuthenticatedAdminiRouteRouteChildren: AuthenticatedAdminiRouteRouteChildr
     AuthenticatedAdminiHelpRoute: AuthenticatedAdminiHelpRoute,
     AuthenticatedAdminiInquiriesRoute: AuthenticatedAdminiInquiriesRoute,
     AuthenticatedAdminiMenuRoute: AuthenticatedAdminiMenuRoute,
+    AuthenticatedAdminiNewsRoute: AuthenticatedAdminiNewsRoute,
     AuthenticatedAdminiNotificationsRoute:
       AuthenticatedAdminiNotificationsRoute,
     AuthenticatedAdminiOrdersRoute: AuthenticatedAdminiOrdersRoute,
@@ -783,8 +844,10 @@ const rootRouteChildren: RootRouteChildren = {
   CatalogRoute: CatalogRoute,
   CheckoutRoute: CheckoutRoute,
   HouseOfCoffeeRoute: HouseOfCoffeeRoute,
+  NewsRoute: NewsRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SaleRoute: SaleRoute,
+  ServiceRoute: ServiceRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   AdminChar123SplatChar125Route: AdminChar123SplatChar125Route,
   CollectionSlugRoute: CollectionSlugRoute,
