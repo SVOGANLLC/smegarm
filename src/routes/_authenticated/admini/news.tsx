@@ -151,7 +151,12 @@ function Field({
     <label className="block text-xs text-muted-foreground">
       {label}
       {multiline ? (
-        <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={3} className={cls} />
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={label.toLowerCase().includes("body") || label.includes("Текст") ? 6 : 3}
+          className={cls}
+        />
       ) : (
         <input value={value} onChange={(e) => onChange(e.target.value)} className={cls} />
       )}
@@ -178,6 +183,12 @@ function NewsEditor({
   const [excerpt, setExcerpt] = useState(row.excerpt ?? "");
   const [excerptEn, setExcerptEn] = useState(row.excerpt_en ?? "");
   const [excerptHy, setExcerptHy] = useState(row.excerpt_hy ?? "");
+  const [category, setCategory] = useState(row.category ?? "");
+  const [categoryEn, setCategoryEn] = useState(row.category_en ?? "");
+  const [categoryHy, setCategoryHy] = useState(row.category_hy ?? "");
+  const [body, setBody] = useState(row.body ?? "");
+  const [bodyEn, setBodyEn] = useState(row.body_en ?? "");
+  const [bodyHy, setBodyHy] = useState(row.body_hy ?? "");
   const [slug, setSlug] = useState(row.slug);
   const [uploading, setUploading] = useState(false);
 
@@ -237,9 +248,21 @@ function NewsEditor({
             <Field label="Slug" value={slug} onChange={setSlug} />
             <Field label={`${t("admin.news.titleField")} (EN)`} value={titleEn} onChange={setTitleEn} />
             <Field label={`${t("admin.news.titleField")} (HY)`} value={titleHy} onChange={setTitleHy} />
+            <Field label={`${t("admin.news.category")} (RU)`} value={category} onChange={setCategory} />
+            <Field label={`${t("admin.news.category")} (EN)`} value={categoryEn} onChange={setCategoryEn} />
+            <Field label={`${t("admin.news.category")} (HY)`} value={categoryHy} onChange={setCategoryHy} />
             <Field label={`${t("admin.news.excerpt")} (RU)`} value={excerpt} onChange={setExcerpt} multiline />
             <Field label={`${t("admin.news.excerpt")} (EN)`} value={excerptEn} onChange={setExcerptEn} multiline />
             <Field label={`${t("admin.news.excerpt")} (HY)`} value={excerptHy} onChange={setExcerptHy} multiline />
+            <div className="sm:col-span-2">
+              <Field label={`${t("admin.news.body")} (RU)`} value={body} onChange={setBody} multiline />
+            </div>
+            <div className="sm:col-span-2">
+              <Field label={`${t("admin.news.body")} (EN)`} value={bodyEn} onChange={setBodyEn} multiline />
+            </div>
+            <div className="sm:col-span-2">
+              <Field label={`${t("admin.news.body")} (HY)`} value={bodyHy} onChange={setBodyHy} multiline />
+            </div>
           </div>
           <div className="flex flex-wrap gap-2 pt-1">
             <button
@@ -250,9 +273,15 @@ function NewsEditor({
                   title,
                   title_en: titleEn || null,
                   title_hy: titleHy || null,
+                  category: category || null,
+                  category_en: categoryEn || null,
+                  category_hy: categoryHy || null,
                   excerpt: excerpt || null,
                   excerpt_en: excerptEn || null,
                   excerpt_hy: excerptHy || null,
+                  body: body || null,
+                  body_en: bodyEn || null,
+                  body_hy: bodyHy || null,
                   slug: slug.trim() || row.slug,
                 })
               }

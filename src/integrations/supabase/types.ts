@@ -321,6 +321,12 @@ export type Database = {
       }
       news: {
         Row: {
+          body: string | null
+          body_en: string | null
+          body_hy: string | null
+          category: string | null
+          category_en: string | null
+          category_hy: string | null
           created_at: string
           excerpt: string | null
           excerpt_en: string | null
@@ -337,6 +343,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          body?: string | null
+          body_en?: string | null
+          body_hy?: string | null
+          category?: string | null
+          category_en?: string | null
+          category_hy?: string | null
           created_at?: string
           excerpt?: string | null
           excerpt_en?: string | null
@@ -353,6 +365,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          body?: string | null
+          body_en?: string | null
+          body_hy?: string | null
+          category?: string | null
+          category_en?: string | null
+          category_hy?: string | null
           created_at?: string
           excerpt?: string | null
           excerpt_en?: string | null

@@ -11,6 +11,12 @@ export type NewsRow = {
   excerpt: string | null;
   excerpt_en: string | null;
   excerpt_hy: string | null;
+  category: string | null;
+  category_en: string | null;
+  category_hy: string | null;
+  body: string | null;
+  body_en: string | null;
+  body_hy: string | null;
   image_url: string | null;
   published_at: string;
   is_published: boolean;
@@ -37,6 +43,40 @@ export function newsExcerpt(row: NewsRow, lang: Lang): string {
   );
 }
 
+export function newsCategory(row: NewsRow, lang: Lang): string {
+  return (
+    pickLocalized(row as unknown as Record<string, unknown>, "category", lang) ||
+    row.category_en ||
+    row.category ||
+    ""
+  );
+}
+
+export function newsBody(row: NewsRow, lang: Lang): string {
+  return (
+    pickLocalized(row as unknown as Record<string, unknown>, "body", lang) ||
+    row.body_en ||
+    row.body ||
+    newsExcerpt(row, lang)
+  );
+}
+
+/** Split body into paragraphs (blank-line separated). */
+export function newsBodyParagraphs(row: NewsRow, lang: Lang): string[] {
+  return newsBody(row, lang)
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+}
+
+export function formatNewsDate(iso: string, lang: Lang): string {
+  return new Date(iso).toLocaleDateString(lang === "hy" ? "hy-AM" : lang === "ru" ? "ru-RU" : "en-GB", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export function slugifyNewsTitle(title: string): string {
   return title
     .toLowerCase()
@@ -55,4 +95,15 @@ export async function fetchPublishedNews(): Promise<NewsRow[]> {
     .order("published_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as NewsRow[];
+}
+
+export async function fetchPublishedNewsBySlug(slug: string): Promise<NewsRow | null> {
+  const { data, error } = await supabase
+    .from("news")
+    .select("*")
+    .eq("slug", slug)
+    .eq("is_published", true)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as NewsRow | null) ?? null;
 }

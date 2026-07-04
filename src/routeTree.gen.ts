@@ -22,6 +22,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductSkuRouteImport } from './routes/product.$sku'
 import { Route as OrderIdRouteImport } from './routes/order.$id'
+import { Route as NewsSlugRouteImport } from './routes/news.$slug'
 import { Route as CollectionSlugRouteImport } from './routes/collection.$slug'
 import { Route as AdminChar123SplatChar125RouteImport } from './routes/admin.{-$splat}'
 import { Route as AuthenticatedAdminiRouteRouteImport } from './routes/_authenticated/admini/route'
@@ -110,6 +111,11 @@ const OrderIdRoute = OrderIdRouteImport.update({
   id: '/order/$id',
   path: '/order/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const NewsSlugRoute = NewsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => NewsRoute,
 } as any)
 const CollectionSlugRoute = CollectionSlugRouteImport.update({
   id: '/collection/$slug',
@@ -255,7 +261,7 @@ export interface FileRoutesByFullPath {
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/house-of-coffee': typeof HouseOfCoffeeRoute
-  '/news': typeof NewsRoute
+  '/news': typeof NewsRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
   '/service': typeof ServiceRoute
@@ -263,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/admini': typeof AuthenticatedAdminiRouteRouteWithChildren
   '/admin/{-$splat}': typeof AdminChar123SplatChar125Route
   '/collection/$slug': typeof CollectionSlugRoute
+  '/news/$slug': typeof NewsSlugRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$sku': typeof ProductSkuRoute
   '/admini/analytics': typeof AuthenticatedAdminiAnalyticsRoute
@@ -293,13 +300,14 @@ export interface FileRoutesByTo {
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/house-of-coffee': typeof HouseOfCoffeeRoute
-  '/news': typeof NewsRoute
+  '/news': typeof NewsRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
   '/service': typeof ServiceRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/{-$splat}': typeof AdminChar123SplatChar125Route
   '/collection/$slug': typeof CollectionSlugRoute
+  '/news/$slug': typeof NewsSlugRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$sku': typeof ProductSkuRoute
   '/admini/analytics': typeof AuthenticatedAdminiAnalyticsRoute
@@ -331,7 +339,7 @@ export interface FileRoutesById {
   '/catalog': typeof CatalogRoute
   '/checkout': typeof CheckoutRoute
   '/house-of-coffee': typeof HouseOfCoffeeRoute
-  '/news': typeof NewsRoute
+  '/news': typeof NewsRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sale': typeof SaleRoute
   '/service': typeof ServiceRoute
@@ -339,6 +347,7 @@ export interface FileRoutesById {
   '/_authenticated/admini': typeof AuthenticatedAdminiRouteRouteWithChildren
   '/admin/{-$splat}': typeof AdminChar123SplatChar125Route
   '/collection/$slug': typeof CollectionSlugRoute
+  '/news/$slug': typeof NewsSlugRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$sku': typeof ProductSkuRoute
   '/_authenticated/admini/analytics': typeof AuthenticatedAdminiAnalyticsRoute
@@ -379,6 +388,7 @@ export interface FileRouteTypes {
     | '/admini'
     | '/admin/{-$splat}'
     | '/collection/$slug'
+    | '/news/$slug'
     | '/order/$id'
     | '/product/$sku'
     | '/admini/analytics'
@@ -416,6 +426,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin/{-$splat}'
     | '/collection/$slug'
+    | '/news/$slug'
     | '/order/$id'
     | '/product/$sku'
     | '/admini/analytics'
@@ -454,6 +465,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admini'
     | '/admin/{-$splat}'
     | '/collection/$slug'
+    | '/news/$slug'
     | '/order/$id'
     | '/product/$sku'
     | '/_authenticated/admini/analytics'
@@ -486,7 +498,7 @@ export interface RootRouteChildren {
   CatalogRoute: typeof CatalogRoute
   CheckoutRoute: typeof CheckoutRoute
   HouseOfCoffeeRoute: typeof HouseOfCoffeeRoute
-  NewsRoute: typeof NewsRoute
+  NewsRoute: typeof NewsRouteWithChildren
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SaleRoute: typeof SaleRoute
   ServiceRoute: typeof ServiceRoute
@@ -593,6 +605,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/order/$id'
       preLoaderRoute: typeof OrderIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/news/$slug': {
+      id: '/news/$slug'
+      path: '/$slug'
+      fullPath: '/news/$slug'
+      preLoaderRoute: typeof NewsSlugRouteImport
+      parentRoute: typeof NewsRoute
     }
     '/collection/$slug': {
       id: '/collection/$slug'
@@ -837,6 +856,16 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface NewsRouteChildren {
+  NewsSlugRoute: typeof NewsSlugRoute
+}
+
+const NewsRouteChildren: NewsRouteChildren = {
+  NewsSlugRoute: NewsSlugRoute,
+}
+
+const NewsRouteWithChildren = NewsRoute._addFileChildren(NewsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -844,7 +873,7 @@ const rootRouteChildren: RootRouteChildren = {
   CatalogRoute: CatalogRoute,
   CheckoutRoute: CheckoutRoute,
   HouseOfCoffeeRoute: HouseOfCoffeeRoute,
-  NewsRoute: NewsRoute,
+  NewsRoute: NewsRouteWithChildren,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SaleRoute: SaleRoute,
   ServiceRoute: ServiceRoute,

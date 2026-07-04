@@ -1,10 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { Reveal } from "@/components/site/Section";
-import { useI18n, getI18nDefaults, pickLocalized } from "@/lib/i18n";
-import { fetchPublishedNews, type NewsRow } from "@/lib/news";
+import { useI18n, getI18nDefaults } from "@/lib/i18n";
+import {
+  fetchPublishedNews,
+  formatNewsDate,
+  newsCategory,
+  newsExcerpt,
+  newsTitle,
+  type NewsRow,
+} from "@/lib/news";
 import { breadcrumbJsonLd, canonicalLink, hreflangLinks, seoMeta } from "@/lib/seo";
 
 const hy = getI18nDefaults().hy;
@@ -35,39 +42,49 @@ export const Route = createFileRoute("/news")({
 
 function NewsBlock({ item, index }: { item: NewsRow; index: number }) {
   const { lang } = useI18n();
-  const title =
-    pickLocalized(item as unknown as Record<string, unknown>, "title", lang) || item.title;
-  const excerpt =
-    pickLocalized(item as unknown as Record<string, unknown>, "excerpt", lang) || item.excerpt || "";
-  const date = item.published_at
-    ? new Date(item.published_at).toLocaleDateString(lang === "hy" ? "hy-AM" : lang === "ru" ? "ru-RU" : "en-GB", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : "";
+  const title = newsTitle(item, lang);
+  const excerpt = newsExcerpt(item, lang);
+  const category = newsCategory(item, lang);
+  const date = formatNewsDate(item.published_at, lang);
 
   return (
     <Reveal delay={Math.min(index * 0.05, 0.2)}>
-      <article className="grid grid-cols-1 items-center gap-8 border-b border-border/60 py-10 md:grid-cols-2 md:gap-12 md:py-16">
-        <div className="order-2 md:order-1">
-          {date && <p className="eyebrow text-muted-foreground">{date}</p>}
-          <h2 className="mt-3 font-serif text-[clamp(1.5rem,3vw,2.25rem)] leading-tight">{title}</h2>
-          {excerpt && <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">{excerpt}</p>}
+      <Link
+        to="/news/$slug"
+        params={{ slug: item.slug }}
+        className="group grid grid-cols-1 items-center gap-8 border-b border-border/60 py-12 md:grid-cols-12 md:gap-12 md:py-16"
+      >
+        {/* Text left — Smeg list rhythm */}
+        <div className="order-2 md:order-1 md:col-span-5">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            {category && <span>{category}</span>}
+            {category && date && <span aria-hidden>·</span>}
+            <time dateTime={item.published_at}>{date}</time>
+          </div>
+          <h2 className="mt-4 font-serif text-[clamp(1.6rem,3vw,2.4rem)] leading-[1.15] tracking-tight transition group-hover:opacity-80">
+            {title}
+          </h2>
+          {excerpt && (
+            <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground">{excerpt}</p>
+          )}
+          <span className="mt-6 inline-block text-xs uppercase tracking-[0.18em] text-foreground/70 transition group-hover:text-foreground">
+            →
+          </span>
         </div>
-        <div className="order-1 md:order-2 md:justify-self-end">
-          <div className="aspect-[4/3] w-full overflow-hidden rounded-sm bg-secondary md:max-w-xl">
+        {/* Photo right */}
+        <div className="order-1 md:order-2 md:col-span-7">
+          <div className="aspect-[16/10] w-full overflow-hidden bg-secondary">
             {item.image_url ? (
               <img
                 src={item.image_url}
                 alt={title}
                 loading="lazy"
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.02]"
               />
             ) : null}
           </div>
         </div>
-      </article>
+      </Link>
     </Reveal>
   );
 }
@@ -87,18 +104,18 @@ function NewsPage() {
       <Header />
       <main className="pt-14 md:pt-20">
         <section className="border-b border-border/60">
-          <div className="mx-auto max-w-[1400px] px-4 py-12 md:px-10 md:py-16">
+          <div className="mx-auto max-w-[1200px] px-4 py-12 md:px-10 md:py-16">
             <p className="eyebrow text-muted-foreground">{t("news.eyebrow")}</p>
-            <h1 className="mt-3 font-serif text-[clamp(2rem,5vw,3.5rem)] leading-tight">{t("news.title")}</h1>
+            <h1 className="mt-3 font-serif text-[clamp(2.25rem,5vw,3.75rem)] leading-tight">{t("news.title")}</h1>
             <p className="mt-4 max-w-2xl text-muted-foreground">{t("news.intro")}</p>
           </div>
         </section>
 
-        <section className="mx-auto max-w-[1400px] px-4 md:px-10">
+        <section className="mx-auto max-w-[1200px] px-4 md:px-10">
           {newsQ.isLoading ? (
             <div className="space-y-8 py-12">
               {[0, 1, 2].map((i) => (
-                <div key={i} className="h-48 animate-pulse rounded-sm bg-secondary" />
+                <div key={i} className="h-56 animate-pulse bg-secondary" />
               ))}
             </div>
           ) : items.length === 0 ? (
