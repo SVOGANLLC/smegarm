@@ -12,17 +12,17 @@ const UNITS = [
     id: "professional",
     border: "border-white/80",
     image:
-      "https://www.smeg.com/binaries/content/gallery/smeg/stories/marchio-globale-1.jpg/marchio-globale-1.jpg",
+      "https://www.smeg.com/binaries/content/gallery/smeg/content-elements/visual-boxes/foodservice-banner_divisioni_960x690.jpg/foodservice-banner_divisioni_960x690.jpg",
     titleKey: "business.professional.title",
     bodyKey: "business.professional.body",
     ctaKey: "business.professional.cta",
-    href: "https://www.smeg.com/professional",
+    href: "https://www.smegfoodservice.com/",
   },
   {
     id: "instruments",
     border: "border-emerald-500/80",
     image:
-      "https://www.smeg.com/binaries/content/gallery/smeg/stories/1smegconnect_news1.jpg/1smegconnect_news1.jpg",
+      "https://www.smeg.com/binaries/content/gallery/smeg/content-elements/visual-boxes/instruments-banner_divisioni_960x690.jpg/instruments-banner_divisioni_960x690.jpg",
     titleKey: "business.instruments.title",
     bodyKey: "business.instruments.body",
     ctaKey: "business.instruments.cta",
@@ -32,7 +32,7 @@ const UNITS = [
     id: "pavoni",
     border: "border-red-600/80",
     image:
-      "https://www.smeg.com/binaries/content/gallery/smeg/stories/smeg_milk_frother_mff01pbeu_l202_2.jpg/smeg_milk_frother_mff01pbeu_l202_2.jpg",
+      "https://www.smeg.com/binaries/content/gallery/smeg/content-elements/visual-boxes/pavoni-banner_divisioni_960x690.jpg/pavoni-banner_divisioni_960x690.jpg",
     titleKey: "business.pavoni.title",
     bodyKey: "business.pavoni.body",
     ctaKey: "business.pavoni.cta",
