@@ -6,9 +6,24 @@
 
 /*
  * SMEG Armenia — premium luxury appliance design system.
- * Cream paper background, deep ink text, signature SMEG red accent,
- * Playfair Display editorial headings, Inter body.
+ * Futura Std (Book + Medium) for brand typography.
  */
+
+@font-face {
+  font-family: "Futura Std";
+  src: url("/fonts/FuturaStd-Book.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Futura Std";
+  src: url("/fonts/FuturaStd-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -54,9 +69,9 @@
   --color-cream: var(--cream);
   --color-ink: var(--ink);
   --color-brand: var(--brand);
-  --font-serif: "Futura PT", "Futura", "Montserrat", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Helvetica Neue", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Futura PT", "Futura", "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Futura Std", "Futura", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Futura Std", "Futura", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Futura Std", "Futura", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
@@ -153,6 +168,10 @@
     font-family: var(--font-display);
     font-weight: 500;
     letter-spacing: 0.02em;
+  }
+
+  strong, b, .font-bold, .font-semibold, .font-medium {
+    font-weight: 500;
   }
 
   a, button {

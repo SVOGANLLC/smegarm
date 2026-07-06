@@ -18,7 +18,7 @@ export function LatestNews() {
     staleTime: 60_000,
   });
 
-  const items = (newsQ.data ?? []).slice(0, 3);
+  const items = (newsQ.data ?? []).slice(0, 1);
   if (!newsQ.isLoading && items.length === 0) return null;
 
   return (
@@ -38,9 +38,9 @@ export function LatestNews() {
 
         <div className="mt-10 space-y-0 md:mt-14">
           {newsQ.isLoading
-            ? [0, 1, 2].map((i) => (
-                <div key={i} className="h-40 animate-pulse border-b border-border/60 bg-secondary/40" />
-              ))
+            ? (
+                <div className="h-40 animate-pulse border-b border-border/60 bg-secondary/40" />
+              )
             : items.map((item, i) => {
                 const title = newsTitle(item, lang);
                 const excerpt = newsExcerpt(item, lang);

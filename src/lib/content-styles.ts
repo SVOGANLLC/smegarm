@@ -14,8 +14,7 @@ export type ContentStylesMap = Record<string, ContentStyle>;
 /** Curated Google Fonts the admin can pick. The first entries are local stack fallbacks. */
 export const FONT_OPTIONS: { label: string; value: string; google?: string }[] = [
   { label: "По умолчанию", value: "" },
-  { label: "Futura PT (сайт)", value: '"Futura PT", "Futura", "Montserrat", sans-serif' },
-  { label: "Helvetica Neue (сайт)", value: '"Helvetica Neue", "Inter", sans-serif' },
+  { label: "Futura Std (сайт)", value: '"Futura Std", "Futura", sans-serif' },
   { label: "Playfair Display", value: '"Playfair Display", serif', google: "Playfair+Display:wght@400;500;600;700;800" },
   { label: "Cormorant Garamond", value: '"Cormorant Garamond", serif', google: "Cormorant+Garamond:wght@300;400;500;600;700" },
   { label: "EB Garamond", value: '"EB Garamond", serif', google: "EB+Garamond:wght@400;500;600;700" },
