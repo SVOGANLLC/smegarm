@@ -154,7 +154,6 @@ export function Hero() {
 
         <div className="relative z-10 mx-auto flex h-full max-w-[1480px] flex-col justify-center px-10 pb-36 pt-32">
           <div className="flex items-center gap-3 animate-hero-rise" style={{ animationDelay: "100ms" }}>
-            <span className="inline-block h-2 w-2 rounded-full bg-[color:var(--brand)]" />
             <span data-ck="hero.eyebrow" className="eyebrow text-foreground/70">
               {t("hero.eyebrow")}
             </span>
