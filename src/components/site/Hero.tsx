@@ -64,7 +64,7 @@ function ColorSwatches({ activeId, onSelect }: { activeId: string; onSelect: (id
               }`}
               style={{
                 backgroundColor: c.hex,
-                boxShadow: !isActive ? `inset 0 0 0 1px ${c.ring ?? "rgba(0,0,0,0.18)"}` : undefined,
+                boxShadow: !isActive ? `0px 0px 0px 1px ${c.ring ?? "rgba(250, 250, 250, 0.18)"}` : undefined,
               }}
             />
           );
@@ -123,7 +123,6 @@ export function Hero() {
         </div>
         <div className="relative z-10 -mt-5 rounded-t-[1.25rem] bg-background px-4 pb-8 pt-7">
           <div className="flex items-center gap-2">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--brand)]" />
             <span data-ck="hero.eyebrow" className="eyebrow text-foreground/70">
               {t("hero.eyebrow")}
             </span>
