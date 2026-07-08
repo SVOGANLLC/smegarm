@@ -84,7 +84,7 @@ export function Hero() {
   const headline = (
     <h1
       data-ck="hero.title"
-      className="font-sans font-bold uppercase leading-[1.08] tracking-tight text-foreground md:max-w-[18ch] md:text-[clamp(1.5rem,4.5vw,3.5rem)] md:leading-[1.05] md:tracking-tighter"
+      className="font-sans font-medium uppercase leading-[1.12] tracking-[0.04em] text-foreground md:max-w-[20ch] md:text-[clamp(1.5rem,4.5vw,3.5rem)] md:leading-[1.1] md:tracking-[0.06em]"
     >
       {titleLines.map((line, i) => (
         <span key={i} className="block text-[clamp(1.5rem,8.5vw,2rem)] md:animate-hero-rise md:text-inherit" style={{ animationDelay: `${250 + i * 120}ms` }}>
