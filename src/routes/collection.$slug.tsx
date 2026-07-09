@@ -5,7 +5,8 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { ProductListingShell } from "@/components/site/ProductListingShell";
 import { fetchCollectionWithProducts, fetchTheme } from "@/lib/products";
-import { resolveCollectionBackgroundThemeKey, themeBackgroundStyle } from "@/lib/theme-background";
+import { resolveCollectionBackgroundThemeKey } from "@/lib/theme-background";
+import { ThemePageBackground } from "@/components/site/ThemePageBackground";
 import { collectionBreadcrumbJsonLd, listingHeadExtras } from "@/lib/catalog-seo";
 import { canonicalLink, hreflangLinks, seoMeta } from "@/lib/seo";
 import { getI18nDefaults, pickLocalized, useI18n } from "@/lib/i18n";
@@ -104,7 +105,7 @@ function CollectionPage() {
     enabled: !!backgroundThemeKey,
     staleTime: 60_000,
   });
-  const themeStyle = themeBackgroundStyle(themeQ.data);
+  const theme = themeQ.data;
   const name = col
     ? pickLocalized(col as unknown as Record<string, unknown>, "name", lang) || col.name
     : "";
@@ -113,8 +114,9 @@ function CollectionPage() {
     : "";
 
   return (
-    <div className="min-h-screen transition-colors duration-700" style={themeStyle}>
-      <Header solid={!!themeQ.data} />
+    <div className="min-h-screen transition-colors duration-700">
+      <ThemePageBackground theme={theme} />
+      <Header solid={!!theme} />
       <main className="mx-auto max-w-[1400px] px-6 py-20 md:px-10 md:py-28">
         {isLoading || !data ? (
           <p className="text-muted-foreground">{t("catalog.loading")}</p>

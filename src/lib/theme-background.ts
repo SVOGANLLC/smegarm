@@ -133,13 +133,69 @@ export function resolveCollectionBackgroundThemeKey(
   return null;
 }
 
-export function themeBackgroundStyle(theme: Theme | null | undefined): CSSProperties {
-  if (!theme) return {};
-  return {
+const REPEATING_THEME_KEYS = new Set([
+  "porsche_green",
+  "porsche_white",
+  "porsche_917",
+  "porsche",
+  "dg_sicily",
+  "dg",
+  "dg_divina_cucina",
+]);
+
+/** Half native width so 2x displays map 1 image pixel ≈ 1 device pixel. */
+const REPEAT_TILE_WIDTH: Record<string, string> = {
+  porsche_green: "768px",
+  porsche_white: "768px",
+  porsche_917: "960px",
+  porsche: "960px",
+  dg_sicily: "960px",
+  dg: "960px",
+  dg_divina_cucina: "960px",
+};
+
+type ThemePageBackgroundLayer = CSSProperties & {
+  mode: "cover" | "repeat";
+  image?: string;
+};
+
+export function themePageBackgroundLayerStyle(
+  theme: Theme | null | undefined,
+): ThemePageBackgroundLayer | null {
+  if (!theme) return null;
+
+  const image = theme.background_image;
+  const base: ThemePageBackgroundLayer = {
+    mode: "cover",
     backgroundColor: theme.background_color ?? undefined,
-    backgroundImage: theme.background_image ? `url(${theme.background_image})` : undefined,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundAttachment: "fixed",
   };
+
+  if (!image) {
+    return theme.background_color ? { ...base, mode: "repeat" } : null;
+  }
+
+  if (REPEATING_THEME_KEYS.has(theme.key)) {
+    return {
+      ...base,
+      mode: "repeat",
+      backgroundImage: `url(${image})`,
+      backgroundRepeat: "repeat",
+      backgroundPosition: "top left",
+      backgroundSize: REPEAT_TILE_WIDTH[theme.key] ?? "auto",
+    };
+  }
+
+  return {
+    ...base,
+    mode: "cover",
+    image,
+  };
+}
+
+/** @deprecated Prefer ThemePageBackground — inline styles blur with background-attachment: fixed. */
+export function themeBackgroundStyle(theme: Theme | null | undefined): CSSProperties {
+  const layer = themePageBackgroundLayerStyle(theme);
+  if (!layer) return {};
+  const { mode: _mode, image: _image, ...style } = layer;
+  return style;
 }

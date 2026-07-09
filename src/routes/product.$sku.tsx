@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { fetchProductBySku, fetchTheme, slugify } from "@/lib/products";
-import { resolveBackgroundThemeKey, themeBackgroundStyle } from "@/lib/theme-background";
+import { resolveBackgroundThemeKey } from "@/lib/theme-background";
+import { ThemePageBackground } from "@/components/site/ThemePageBackground";
 import { ProductImageZoom } from "@/components/site/ProductImageZoom";
 import { ColorSwitcher } from "@/components/site/ColorSwitcher";
 import { AddToCartButton } from "@/components/site/AddToCartButton";
@@ -129,10 +130,9 @@ function ProductPage() {
   const themeName = pickLocalized(theme as unknown as Record<string, unknown> | null, "name", lang);
   const specEntries = Object.entries(pickLocalizedSpecs(product as unknown as Record<string, unknown>, lang));
 
-  const themeStyle = themeBackgroundStyle(theme);
-
   return (
-    <div className="min-h-screen transition-colors duration-700" style={themeStyle}>
+    <div className="min-h-screen transition-colors duration-700">
+      <ThemePageBackground theme={theme} />
       <Header solid={!!theme} />
       <main className="pb-28 pt-20 md:pb-24 md:pt-32">
         <div className="mx-auto max-w-[1400px] px-4 md:px-10">
