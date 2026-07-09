@@ -22,6 +22,30 @@ const BLU_MEDITERRANEO_SKUS = new Set([
   "KLF03DGBEU",
 ]);
 
+export const BLU_MEDITERRANEO_SWATCH_IMAGE = "/brand/themes/dg-blu.png";
+
+export function isBluMediterraneoSku(sku: string | null | undefined): boolean {
+  return !!sku && BLU_MEDITERRANEO_SKUS.has(sku.trim().toUpperCase());
+}
+
+export function swatchImageForProduct(
+  sku: string | null | undefined,
+  colourEn: string | null | undefined,
+  mainImage?: string | null,
+): string | null {
+  if (isBluMediterraneoSku(sku)) return BLU_MEDITERRANEO_SWATCH_IMAGE;
+  if (colourEn === "Decorated / Special") return mainImage ?? null;
+  return null;
+}
+
+export function swatchImageForDecoratedFacet(
+  products: Array<{ sku: string; colour_en?: string | null; main_image?: string | null }>,
+): string | null {
+  if (products.some((p) => isBluMediterraneoSku(p.sku))) return BLU_MEDITERRANEO_SWATCH_IMAGE;
+  const decorated = products.find((p) => (p.colour_en ?? "") === "Decorated / Special");
+  return decorated?.main_image ?? null;
+}
+
 const BLUE_RE = /\b(blue|blu|azzur|azure|navy|голуб|син|կապույ|lan)\b/i;
 const YELLOW_RE = /\b(yellow|giall|gold|amber|желт|նարնջ|oro)\b/i;
 const RED_RE = /\b(red|salzburg|917|cherry|красн|կարմիր|rosso)\b/i;

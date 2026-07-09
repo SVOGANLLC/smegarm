@@ -24,6 +24,7 @@ import {
 import { SpecFiltersPanel } from "@/components/site/SpecFiltersPanel";
 import { ProductGrid } from "@/components/site/ProductCard";
 import { colourLabel as colourI18n } from "@/lib/colour-i18n";
+import { swatchImageForDecoratedFacet, swatchImageForProduct } from "@/lib/theme-background";
 
 export type ListingSearch = {
   colour?: string;
@@ -194,6 +195,10 @@ export function ProductListingShell({
               const canonical = row?.colour_en ?? c.value;
               const hex = swatchHex(canonical);
               const active = colours.includes(c.value);
+              const imageUrl =
+                canonical === "Decorated / Special"
+                  ? swatchImageForDecoratedFacet(products)
+                  : swatchImageForProduct(row?.sku, canonical, row?.main_image);
               return (
                 <ColorSwatchDot
                   key={c.value}
@@ -202,6 +207,7 @@ export function ProductListingShell({
                   size="md"
                   active={active}
                   title={`${colourLabel(c.value)} (${c.count})`}
+                  imageUrl={imageUrl}
                   onClick={() => toggleList("colour", c.value)}
                 />
               );

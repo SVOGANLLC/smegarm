@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { colourLabel } from "@/lib/colour-i18n";
 import { useI18n, pickLocalized } from "@/lib/i18n";
 import type { Variant } from "@/lib/products";
+import { swatchImageForProduct } from "@/lib/theme-background";
 import { ColorSwatchDot } from "@/components/site/ColorSwatchDot";
 
 const MAX_VISIBLE = 6;
@@ -38,7 +39,7 @@ export function CardColorSwatches({
           size: "sm" as const,
           active: isCurrent,
           title,
-          imageUrl: canonical === "Decorated / Special" ? v.main_image : null,
+          imageUrl: swatchImageForProduct(v.sku, canonical, v.main_image),
         };
         if (isCurrent) {
           return <ColorSwatchDot key={v.sku} {...common} />;

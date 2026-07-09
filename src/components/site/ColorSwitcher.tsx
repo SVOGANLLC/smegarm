@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useI18n, pickLocalized } from "@/lib/i18n";
 import { colourLabel } from "@/lib/colour-i18n";
 import { fetchColorSwatches, fetchProductVariants } from "@/lib/products";
+import { swatchImageForProduct } from "@/lib/theme-background";
 import { ColorSwatchDot } from "@/components/site/ColorSwatchDot";
 
 export function ColorSwitcher({
@@ -80,7 +81,7 @@ export function ColorSwitcher({
               size="lg"
               active={isCurrent}
               title={labelFor(v)}
-              imageUrl={canonical === "Decorated / Special" ? v.main_image : null}
+              imageUrl={swatchImageForProduct(v.sku, canonical, v.main_image)}
               href={isCurrent ? undefined : { to: "/product/$sku", params: { sku: v.sku } }}
             />
           );
