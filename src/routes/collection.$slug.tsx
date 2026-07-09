@@ -23,11 +23,25 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/collection/$slug")({
   validateSearch: (s) => searchSchema.parse(s),
   loader: async ({ params, context, location }) => {
+    const collectionSearch = searchSchema.parse(location.search);
     const data = await context.queryClient.ensureQueryData({
       queryKey: ["collection", params.slug],
       queryFn: () => fetchCollectionWithProducts(params.slug),
     });
-    return { data, collectionSearch: searchSchema.parse(location.search) };
+    if (data) {
+      const backgroundThemeKey = resolveCollectionBackgroundThemeKey(
+        params.slug,
+        collectionSearch.colour,
+        data.products,
+      );
+      if (backgroundThemeKey) {
+        await context.queryClient.ensureQueryData({
+          queryKey: ["theme", backgroundThemeKey],
+          queryFn: () => fetchTheme(backgroundThemeKey),
+        });
+      }
+    }
+    return { data, collectionSearch };
   },
   head: ({ loaderData, params }) => {
     const col = loaderData?.data?.collection;

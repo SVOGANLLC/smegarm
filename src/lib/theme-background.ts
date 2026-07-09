@@ -133,11 +133,15 @@ export function resolveCollectionBackgroundThemeKey(
   return null;
 }
 
+export const THEME_BG_ASSET_VERSION = 3;
+
+export function themeBackgroundImageUrl(image: string | null | undefined): string | null {
+  if (!image) return null;
+  const sep = image.includes("?") ? "&" : "?";
+  return `${image}${sep}v=${THEME_BG_ASSET_VERSION}`;
+}
+
 const REPEATING_THEME_KEYS = new Set([
-  "porsche_green",
-  "porsche_white",
-  "porsche_917",
-  "porsche",
   "dg_sicily",
   "dg",
   "dg_divina_cucina",
@@ -145,10 +149,6 @@ const REPEATING_THEME_KEYS = new Set([
 
 /** Half native width so 2x displays map 1 image pixel ≈ 1 device pixel. */
 const REPEAT_TILE_WIDTH: Record<string, string> = {
-  porsche_green: "768px",
-  porsche_white: "768px",
-  porsche_917: "960px",
-  porsche: "960px",
   dg_sicily: "960px",
   dg: "960px",
   dg_divina_cucina: "960px",
@@ -175,10 +175,11 @@ export function themePageBackgroundLayerStyle(
   }
 
   if (REPEATING_THEME_KEYS.has(theme.key)) {
+    const bgUrl = themeBackgroundImageUrl(image);
     return {
       ...base,
       mode: "repeat",
-      backgroundImage: `url(${image})`,
+      backgroundImage: bgUrl ? `url(${bgUrl})` : undefined,
       backgroundRepeat: "repeat",
       backgroundPosition: "top left",
       backgroundSize: REPEAT_TILE_WIDTH[theme.key] ?? "auto",
@@ -188,7 +189,7 @@ export function themePageBackgroundLayerStyle(
   return {
     ...base,
     mode: "cover",
-    image,
+    image: themeBackgroundImageUrl(image) ?? undefined,
   };
 }
 

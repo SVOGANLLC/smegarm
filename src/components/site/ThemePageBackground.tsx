@@ -13,7 +13,7 @@ export function ThemePageBackground({ theme }: { theme: Theme | null | undefined
     return (
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden [transform:translateZ(0)]"
         style={style}
       >
         <img
@@ -22,6 +22,7 @@ export function ThemePageBackground({ theme }: { theme: Theme | null | undefined
           className="h-full w-full object-cover object-center"
           decoding="async"
           fetchPriority="low"
+          sizes="100vw"
         />
       </div>
     );
@@ -30,7 +31,7 @@ export function ThemePageBackground({ theme }: { theme: Theme | null | undefined
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-0 -z-10"
+      className="pointer-events-none fixed inset-0 -z-10 [transform:translateZ(0)]"
       style={style}
     />
   );

@@ -33,6 +33,13 @@ export const Route = createFileRoute("/product/$sku")({
       queryFn: () => fetchProductBySku(params.sku),
     });
     if (!product) throw notFound();
+    const backgroundThemeKey = resolveBackgroundThemeKey(product);
+    if (backgroundThemeKey) {
+      await context.queryClient.ensureQueryData({
+        queryKey: ["theme", backgroundThemeKey],
+        queryFn: () => fetchTheme(backgroundThemeKey),
+      });
+    }
     return { product };
   },
   head: ({ loaderData }) => {
