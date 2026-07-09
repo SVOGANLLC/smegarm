@@ -7,24 +7,22 @@ export function ThemePageBackground({ theme }: { theme: Theme | null | undefined
   const layerStyle = themePageBackgroundLayerStyle(theme);
   if (!layerStyle) return null;
 
-  const { mode, image, srcSet, objectPosition, themeKey, ...style } = layerStyle;
+  const { mode, image, objectPosition, themeKey, ...style } = layerStyle;
 
   if (mode === "cover" && image) {
     return (
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden [transform:translateZ(0)]"
+        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
         style={style}
       >
         <img
           src={image}
-          srcSet={srcSet ?? undefined}
           alt=""
-          className="absolute left-1/2 top-1/2 min-h-full min-w-full max-w-none -translate-x-1/2 -translate-y-1/2"
-          style={{ objectFit: "cover", objectPosition: objectPosition ?? "center center" }}
+          className="block h-[100dvh] w-full object-cover"
+          style={{ objectPosition: objectPosition ?? "center center" }}
           decoding="async"
           fetchPriority="high"
-          sizes="100vw"
         />
       </div>
     );
@@ -34,7 +32,7 @@ export function ThemePageBackground({ theme }: { theme: Theme | null | undefined
     return (
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden [transform:translateZ(0)]"
+        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
         style={{ backgroundColor: style.backgroundColor }}
       >
         <div
@@ -51,7 +49,7 @@ export function ThemePageBackground({ theme }: { theme: Theme | null | undefined
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-0 -z-10 [transform:translateZ(0)]"
+      className="pointer-events-none fixed inset-0 -z-10"
       style={style}
     />
   );
