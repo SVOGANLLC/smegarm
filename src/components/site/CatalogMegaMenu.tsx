@@ -33,7 +33,7 @@ function NavLink({ item, onClick }: { item: CatalogNavItem; onClick?: () => void
   }
   if (item.to === "/sale") {
     return (
-      <Link to="/sale" onClick={onClick} className="block text-sm text-foreground/70 transition hover:text-foreground">
+      <Link to="/sale" onClick={onClick} className="block text-sm uppercase tracking-[0.14em] text-foreground/70 transition hover:text-foreground">
         {label}
       </Link>
     );
