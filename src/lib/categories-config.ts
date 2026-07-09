@@ -13,6 +13,16 @@ export const DEFAULT_MAIN_CARDS: MainCategoryCard[] = [
   { sku: "PV395LN", categoryKey: "Hobs", labelKey: "section.categories.hobs" },
 ];
 
+const CATEGORY_LABEL_KEYS: Record<string, string> = {
+  Refrigerators: "section.categories.refrigerators",
+  Ovens: "section.categories.ovens",
+  Hobs: "section.categories.hobs",
+};
+
+export function labelKeyForCategory(categoryKey: string): string | undefined {
+  return CATEGORY_LABEL_KEYS[categoryKey];
+}
+
 export const DEFAULT_SMALL_CATEGORIES = [
   "Kettles",
   "Toasters",
@@ -72,6 +82,7 @@ export function serializeSmallCategories(keys: string[]): string {
 export function cardLabel(card: MainCategoryCard, lang: Lang, t: (k: string) => string): string {
   const custom = card.labels?.[lang]?.trim();
   if (custom) return custom;
-  if (card.labelKey) return t(card.labelKey);
+  const labelKey = CATEGORY_LABEL_KEYS[card.categoryKey] ?? card.labelKey;
+  if (labelKey) return t(labelKey);
   return card.categoryKey;
 }

@@ -2,6 +2,7 @@ import type { Lang } from "@/lib/i18n";
 import {
   DEFAULT_MAIN_CARDS,
   DEFAULT_SMALL_CATEGORIES,
+  labelKeyForCategory,
   type MainCategoryCard,
   parseMainCards,
   parseSmallCategories,
@@ -34,7 +35,10 @@ export function CategoriesContentEditor({
   const updateCard = (index: number, patch: Partial<MainCategoryCard>) => {
     const next = [...cards];
     while (next.length < 3) next.push({ ...DEFAULT_MAIN_CARDS[next.length] });
-    next[index] = { ...next[index], ...patch };
+    const merged = { ...next[index], ...patch };
+    const syncedLabelKey = labelKeyForCategory(merged.categoryKey);
+    if (syncedLabelKey) merged.labelKey = syncedLabelKey;
+    next[index] = merged;
     setConfig("config.mainCards", serializeMainCards(next.slice(0, 3)));
   };
 
