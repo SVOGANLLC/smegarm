@@ -113,29 +113,28 @@ function CollectionPage() {
     : "";
 
   return (
-    <div className="min-h-screen text-foreground transition-colors duration-700" style={themeStyle}>
-      <Header />
+    <div className="min-h-screen transition-colors duration-700" style={themeStyle}>
+      <Header solid={!!themeQ.data} />
       <main className="mx-auto max-w-[1400px] px-6 py-20 md:px-10 md:py-28">
         {isLoading || !data ? (
-          <p className={themeQ.data ? "text-foreground/80" : "text-muted-foreground"}>{t("catalog.loading")}</p>
+          <p className="text-muted-foreground">{t("catalog.loading")}</p>
         ) : (
           <>
-            <div className="mb-12">
-              <Link
-                to="/"
-                className={`eyebrow hover:text-foreground ${themeQ.data ? "text-foreground/70" : "text-muted-foreground"}`}
-              >
+            <div
+              className={
+                themeQ.data ? "light-section mb-12 rounded-sm p-6 shadow-sm md:p-8" : "mb-12"
+              }
+            >
+              <Link to="/" className="eyebrow text-muted-foreground hover:text-foreground">
                 ← {t("common.home")}
               </Link>
               <h1 className="mt-4 font-serif text-5xl md:text-6xl">{name}</h1>
-              {description && (
-                <p className={`mt-4 max-w-2xl ${themeQ.data ? "text-foreground/85" : "text-foreground/70"}`}>
-                  {description}
-                </p>
-              )}
+              {description && <p className="mt-4 max-w-2xl text-foreground/70">{description}</p>}
             </div>
             {data.products.length === 0 ? (
-              <p className="text-muted-foreground">{t("collection.empty")}</p>
+              <p className={themeQ.data ? "light-section inline-block rounded-sm px-4 py-2 text-foreground/70" : "text-muted-foreground"}>
+                {t("collection.empty")}
+              </p>
             ) : (
               <ProductListingShell
                 products={data.products}

@@ -274,7 +274,7 @@ export function ProductListingShell({
       <div className="grid grid-cols-1 gap-10 md:grid-cols-[240px_1fr]">
         <aside
           className={`hidden md:block md:sticky md:top-28 md:self-start md:max-h-[calc(100vh-8rem)] md:overflow-y-auto md:pr-2 ${
-            filtersOnPanel ? "rounded-sm bg-white p-5 shadow-sm" : ""
+            filtersOnPanel ? "light-section rounded-sm p-5 shadow-sm" : ""
           }`}
         >
           {filters}

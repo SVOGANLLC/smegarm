@@ -13,7 +13,7 @@ import { SideMenu } from "@/components/site/SideMenu";
 
 const langLabels: Record<Lang, string> = { ru: "RU", en: "EN", hy: "ՀՅ" };
 
-export function Header() {
+export function Header({ solid = false }: { solid?: boolean }) {
   const { t, lang, setLang } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [scrolled, setScrolled] = useState(false);
@@ -57,7 +57,7 @@ export function Header() {
         transition={{ duration: 0.8, ease: [0.2, 0.7, 0.2, 1] }}
         className={cn(
           "fixed inset-x-0 top-0 z-50 transition-all duration-500",
-          scrolled || menuOpen
+          scrolled || menuOpen || solid
             ? "bg-background/90 backdrop-blur-xl border-b border-border/60"
             : "bg-transparent",
         )}

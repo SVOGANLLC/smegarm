@@ -132,22 +132,26 @@ function ProductPage() {
   const themeStyle = themeBackgroundStyle(theme);
 
   return (
-    <div className="min-h-screen text-foreground transition-colors duration-700" style={themeStyle}>
-      <Header />
+    <div className="min-h-screen transition-colors duration-700" style={themeStyle}>
+      <Header solid={!!theme} />
       <main className="pb-28 pt-20 md:pb-24 md:pt-32">
         <div className="mx-auto max-w-[1400px] px-4 md:px-10">
           {theme && product.theme_key && (
             <Link
               to="/catalog"
               search={{ theme: product.theme_key, page: 1 }}
-              className="eyebrow mb-6 inline-block rounded-full bg-background/85 backdrop-blur-sm px-4 py-1.5 text-foreground shadow-sm transition hover:bg-background"
+              className="light-section eyebrow mb-6 inline-block rounded-full px-4 py-1.5 shadow-sm transition hover:opacity-90"
               style={theme.accent_color ? { color: theme.accent_color } : undefined}
             >
               ✦ {themeName || theme.name} →
             </Link>
           )}
           <nav
-            className={`mb-8 flex items-center gap-2 text-xs uppercase tracking-[0.18em] ${theme ? "text-foreground/80 [text-shadow:0_1px_2px_rgba(255,255,255,0.6)]" : "text-muted-foreground"}`}
+            className={`mb-8 flex items-center gap-2 text-xs uppercase tracking-[0.18em] ${
+              theme
+                ? "light-section inline-flex rounded-full px-4 py-2 shadow-sm text-muted-foreground"
+                : "text-muted-foreground"
+            }`}
           >
             <Link to="/catalog" className="hover:text-foreground">
               {t("catalog.title")}
@@ -192,7 +196,7 @@ function ProductPage() {
               )}
             </div>
 
-            <div className={theme ? "rounded-lg bg-background/92 backdrop-blur-sm p-6 md:p-8 shadow-xl" : ""}>
+            <div className={theme ? "light-section rounded-lg p-6 shadow-xl md:p-8" : ""}>
               {product.category && (
                 <Link
                   to="/catalog"
@@ -300,7 +304,7 @@ function ProductPage() {
           </div>
 
           {specEntries.length > 0 && (
-            <section className={`mt-16 ${theme ? "rounded-lg bg-background/92 backdrop-blur-sm p-6 md:p-8 shadow-xl" : ""}`}>
+            <section className={`mt-16 ${theme ? "light-section rounded-lg p-6 shadow-xl md:p-8" : ""}`}>
               <details className="group">
                 <summary className="flex cursor-pointer items-center justify-between gap-6 list-none border-b border-border pb-4">
                   <h2 className="font-serif text-2xl md:text-3xl">{t("product.specs")}</h2>
