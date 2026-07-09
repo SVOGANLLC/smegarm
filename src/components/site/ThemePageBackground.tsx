@@ -7,7 +7,7 @@ export function ThemePageBackground({ theme }: { theme: Theme | null | undefined
   const layerStyle = themePageBackgroundLayerStyle(theme);
   if (!layerStyle) return null;
 
-  const { mode, image, themeKey, ...style } = layerStyle;
+  const { mode, image, srcSet, objectPosition, themeKey, ...style } = layerStyle;
 
   if (mode === "cover" && image) {
     return (
@@ -18,10 +18,12 @@ export function ThemePageBackground({ theme }: { theme: Theme | null | undefined
       >
         <img
           src={image}
+          srcSet={srcSet ?? undefined}
           alt=""
-          className="h-full w-full object-cover object-center"
+          className="absolute left-1/2 top-1/2 min-h-full min-w-full max-w-none -translate-x-1/2 -translate-y-1/2"
+          style={{ objectFit: "cover", objectPosition: objectPosition ?? "center center" }}
           decoding="async"
-          fetchPriority="low"
+          fetchPriority="high"
           sizes="100vw"
         />
       </div>

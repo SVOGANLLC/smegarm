@@ -133,12 +133,33 @@ export function resolveCollectionBackgroundThemeKey(
   return null;
 }
 
-export const THEME_BG_ASSET_VERSION = 5;
+export const THEME_BG_ASSET_VERSION = 6;
 
 export function themeBackgroundImageUrl(image: string | null | undefined): string | null {
   if (!image) return null;
   const sep = image.includes("?") ? "&" : "?";
   return `${image}${sep}v=${THEME_BG_ASSET_VERSION}`;
+}
+
+/** Retina @2x sibling (generated at 2× native resolution). */
+export function themeBackgroundSrcSet(image: string | null | undefined): string | null {
+  if (!image) return null;
+  const dot = image.lastIndexOf(".");
+  if (dot < 0) return themeBackgroundImageUrl(image);
+  const x1 = themeBackgroundImageUrl(image);
+  const x2 = themeBackgroundImageUrl(`${image.slice(0, dot)}@2x.jpg`);
+  return `${x1} 1x, ${x2} 2x`;
+}
+
+const THEME_OBJECT_POSITION: Record<string, string> = {
+  porsche_green: "center bottom",
+  porsche_white: "center bottom",
+  porsche_917: "center center",
+  porsche: "center center",
+};
+
+export function themeObjectPosition(themeKey: string): string {
+  return THEME_OBJECT_POSITION[themeKey] ?? "center center";
 }
 
 const REPEATING_THEME_KEYS = new Set<string>();
@@ -150,6 +171,8 @@ export function themeRepeatCssClass(_themeKey: string): string {
 type ThemePageBackgroundLayer = CSSProperties & {
   mode: "cover" | "repeat";
   image?: string;
+  srcSet?: string;
+  objectPosition?: string;
   themeKey?: string;
 };
 
@@ -182,6 +205,9 @@ export function themePageBackgroundLayerStyle(
     ...base,
     mode: "cover",
     image: themeBackgroundImageUrl(image) ?? undefined,
+    srcSet: themeBackgroundSrcSet(image) ?? undefined,
+    objectPosition: themeObjectPosition(theme.key),
+    themeKey: theme.key,
   };
 }
 
