@@ -133,7 +133,7 @@ export function resolveCollectionBackgroundThemeKey(
   return null;
 }
 
-export const THEME_BG_ASSET_VERSION = 4;
+export const THEME_BG_ASSET_VERSION = 5;
 
 export function themeBackgroundImageUrl(image: string | null | undefined): string | null {
   if (!image) return null;
@@ -141,20 +141,10 @@ export function themeBackgroundImageUrl(image: string | null | undefined): strin
   return `${image}${sep}v=${THEME_BG_ASSET_VERSION}`;
 }
 
-const REPEATING_THEME_KEYS = new Set([
-  "porsche_green",
-  "porsche_white",
-  "porsche_917",
-  "porsche",
-  "dg_sicily",
-  "dg",
-  "dg_divina_cucina",
-]);
+const REPEATING_THEME_KEYS = new Set<string>();
 
-export function themeRepeatCssClass(themeKey: string): string {
-  if (themeKey === "porsche_917" || themeKey === "porsche") return "theme-bg-repeat theme-bg-repeat--wide";
-  if (themeKey.startsWith("porsche")) return "theme-bg-repeat theme-bg-repeat--porsche";
-  return "theme-bg-repeat theme-bg-repeat--dg";
+export function themeRepeatCssClass(_themeKey: string): string {
+  return "theme-bg-repeat";
 }
 
 type ThemePageBackgroundLayer = CSSProperties & {
