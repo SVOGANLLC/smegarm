@@ -2,11 +2,25 @@ import type { CSSProperties } from "react";
 import type { Theme } from "@/lib/products";
 
 type ColourSource = {
+  sku?: string | null;
   theme_key?: string | null;
   colour?: string | null;
   colour_en?: string | null;
   name?: string | null;
 };
+
+const BLU_MEDITERRANEO_SKUS = new Set([
+  "FAB28RDGME6",
+  "FAB5RDGME6",
+  "KT90DGME",
+  "TR90DGME9",
+  "MFF01DGBEU",
+  "ECF02DGBEU",
+  "CJF01DGBEU",
+  "CGF01DGBEU",
+  "TSF01DGBEU",
+  "KLF03DGBEU",
+]);
 
 const BLUE_RE = /\b(blue|blu|azzur|azure|navy|голуб|син|կապույ|lan)\b/i;
 const YELLOW_RE = /\b(yellow|giall|gold|amber|желт|նարնջ|oro)\b/i;
@@ -40,6 +54,9 @@ function isWhitish(p: ColourSource): boolean {
 
 /** Theme key used to load the background image for a product. */
 export function resolveBackgroundThemeKey(product: ColourSource): string | null {
+  const sku = product.sku?.trim().toUpperCase();
+  if (sku && BLU_MEDITERRANEO_SKUS.has(sku)) return "dg_blu_mediterraneo";
+
   const key = product.theme_key ?? null;
   if (!key) return null;
 
