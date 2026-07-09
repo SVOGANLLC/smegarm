@@ -754,7 +754,7 @@ const dicts: Record<Lang, Dict> = {
     "nav.catalog.allSmall": "Բոլոր փոքր տեխնիկան",
     "nav.catalog.more": "Ավելին",
     "nav.catalog.sale": "Ակցիաներ",
-    "nav.collections": "Հավաքածու",
+    "nav.collections": "ՀԱՎԱԿԱԾՈՒ",
     "nav.story": "ԱՊՐԱՆՔԱՆԻՇ",
     "nav.dealer": "ԴԻԼԵՐ ՀԱՅԱՍՏԱՆՈՒՄ",
     "nav.partners": "ԳՈՐԾԸՆԿԵՐՆԵՐ",

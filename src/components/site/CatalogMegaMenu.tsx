@@ -25,7 +25,7 @@ function NavLink({ item, onClick }: { item: CatalogNavItem; onClick?: () => void
         to="/"
         hash="collections"
         onClick={onClick}
-        className="block text-sm text-foreground/70 transition hover:text-foreground"
+        className="block text-sm uppercase tracking-[0.14em] text-foreground/70 transition hover:text-foreground"
       >
         {label}
       </Link>
@@ -43,7 +43,7 @@ function NavLink({ item, onClick }: { item: CatalogNavItem; onClick?: () => void
       to={item.to}
       search={item.search}
       onClick={onClick}
-      className="block text-sm text-foreground/70 transition hover:text-foreground"
+      className="block text-sm uppercase tracking-[0.14em] text-foreground/70 transition hover:text-foreground"
     >
       {label}
     </Link>

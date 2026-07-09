@@ -216,7 +216,8 @@ export function serializeCatalogNav(columns: CatalogNavColumn[]): string {
 
 export function navItemLabel(item: CatalogNavItem, lang: Lang, t: (k: string) => string): string {
   if (item.labels) {
-    return item.labels[lang] || item.labels.en || item.labels.ru || item.id;
+    const raw = item.labels[lang] || item.labels.en || item.labels.ru || item.id;
+    return lang === "hy" ? raw.toLocaleUpperCase("hy-AM") : raw;
   }
   return item.labelKey ? t(item.labelKey) : item.id;
 }

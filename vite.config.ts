@@ -22,7 +22,7 @@ export default defineConfig({
         headers: { "cache-control": "public, max-age=31536000, immutable" },
       },
       "/**": {
-        headers: { "cache-control": "no-cache, must-revalidate" },
+        headers: { "cache-control": "no-store, must-revalidate" },
       },
     },
   },

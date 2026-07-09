@@ -117,6 +117,8 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta httpEquiv="Cache-Control" content="no-store, must-revalidate" />
+        <meta httpEquiv="Pragma" content="no-cache" />
         <HeadContent />
       </head>
       <body>

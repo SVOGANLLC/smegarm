@@ -1,9 +1,9 @@
 {
-  "id": "/?source=pwa",
+  "id": "/?source=pwa&v=2",
   "name": "SMEG ARM",
   "short_name": "SMEG ARM",
   "description": "Official SMEG in Armenia. Iconic Italian appliances.",
-  "start_url": "/",
+  "start_url": "/?v=2",
   "scope": "/",
   "display": "standalone",
   "background_color": "#FFFFFF",

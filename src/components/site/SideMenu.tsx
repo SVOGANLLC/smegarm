@@ -108,7 +108,7 @@ export function SideMenu({ open, onClose, includePrimaryNav = false }: SideMenuP
                     to="/"
                     hash="collections"
                     onClick={(e) => onHashNav(e, "collections")}
-                    className="flex items-center justify-between py-3 text-sm tracking-[0.04em] text-foreground/90 transition hover:text-foreground"
+                    className="flex items-center justify-between py-3 text-sm uppercase tracking-[0.18em] text-foreground/90 transition hover:text-foreground"
                   >
                     {t("nav.collections")}
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
