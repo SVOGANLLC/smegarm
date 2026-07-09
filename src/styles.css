@@ -195,6 +195,23 @@
     background-color: #ffffff;
     color: #0a0a0a;
   }
+  /* Tiled theme backgrounds: 100vw tiles on phones avoid upscaling blurry cover crops. */
+  .theme-bg-repeat {
+    background-repeat: repeat;
+    background-position: top left;
+    background-size: 100vw auto;
+  }
+  @media (min-width: 768px) {
+    .theme-bg-repeat--porsche {
+      background-size: 768px auto;
+    }
+    .theme-bg-repeat--wide {
+      background-size: 960px auto;
+    }
+    .theme-bg-repeat--dg {
+      background-size: 960px auto;
+    }
+  }
   .display-xl {
     font-family: var(--font-display);
     font-weight: 500;

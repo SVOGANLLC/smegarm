@@ -133,7 +133,7 @@ export function resolveCollectionBackgroundThemeKey(
   return null;
 }
 
-export const THEME_BG_ASSET_VERSION = 3;
+export const THEME_BG_ASSET_VERSION = 4;
 
 export function themeBackgroundImageUrl(image: string | null | undefined): string | null {
   if (!image) return null;
@@ -142,21 +142,25 @@ export function themeBackgroundImageUrl(image: string | null | undefined): strin
 }
 
 const REPEATING_THEME_KEYS = new Set([
+  "porsche_green",
+  "porsche_white",
+  "porsche_917",
+  "porsche",
   "dg_sicily",
   "dg",
   "dg_divina_cucina",
 ]);
 
-/** Half native width so 2x displays map 1 image pixel ≈ 1 device pixel. */
-const REPEAT_TILE_WIDTH: Record<string, string> = {
-  dg_sicily: "960px",
-  dg: "960px",
-  dg_divina_cucina: "960px",
-};
+export function themeRepeatCssClass(themeKey: string): string {
+  if (themeKey === "porsche_917" || themeKey === "porsche") return "theme-bg-repeat theme-bg-repeat--wide";
+  if (themeKey.startsWith("porsche")) return "theme-bg-repeat theme-bg-repeat--porsche";
+  return "theme-bg-repeat theme-bg-repeat--dg";
+}
 
 type ThemePageBackgroundLayer = CSSProperties & {
   mode: "cover" | "repeat";
   image?: string;
+  themeKey?: string;
 };
 
 export function themePageBackgroundLayerStyle(
@@ -179,10 +183,8 @@ export function themePageBackgroundLayerStyle(
     return {
       ...base,
       mode: "repeat",
+      themeKey: theme.key,
       backgroundImage: bgUrl ? `url(${bgUrl})` : undefined,
-      backgroundRepeat: "repeat",
-      backgroundPosition: "top left",
-      backgroundSize: REPEAT_TILE_WIDTH[theme.key] ?? "auto",
     };
   }
 

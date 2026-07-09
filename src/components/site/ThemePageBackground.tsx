@@ -1,5 +1,5 @@
 import type { Theme } from "@/lib/products";
-import { themePageBackgroundLayerStyle } from "@/lib/theme-background";
+import { themePageBackgroundLayerStyle, themeRepeatCssClass } from "@/lib/theme-background";
 
 export function ThemePageBackground({ theme }: { theme: Theme | null | undefined }) {
   if (!theme) return null;
@@ -7,7 +7,7 @@ export function ThemePageBackground({ theme }: { theme: Theme | null | undefined
   const layerStyle = themePageBackgroundLayerStyle(theme);
   if (!layerStyle) return null;
 
-  const { mode, image, ...style } = layerStyle;
+  const { mode, image, themeKey, ...style } = layerStyle;
 
   if (mode === "cover" && image) {
     return (
@@ -23,6 +23,24 @@ export function ThemePageBackground({ theme }: { theme: Theme | null | undefined
           decoding="async"
           fetchPriority="low"
           sizes="100vw"
+        />
+      </div>
+    );
+  }
+
+  if (mode === "repeat" && themeKey && style.backgroundImage) {
+    return (
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden [transform:translateZ(0)]"
+        style={{ backgroundColor: style.backgroundColor }}
+      >
+        <div
+          className={`absolute inset-0 ${themeRepeatCssClass(themeKey)}`}
+          style={{
+            backgroundImage: style.backgroundImage,
+            backgroundColor: style.backgroundColor,
+          }}
         />
       </div>
     );
