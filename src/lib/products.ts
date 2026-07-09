@@ -233,7 +233,7 @@ export async function fetchFeatured(skus: string[]): Promise<Product[]> {
 }
 
 export const CARD_COLS =
-  "sku,name,name_en,name_hy,category,category_en,category_hy,aesthetic,colour,colour_en,colour_hy,model_group,main_image,price_amd,price_old,discount_percent,availability,stock_qty,stock_reserved,lead_time_days,is_published,is_featured,is_new,is_bestseller,is_special_offer,badge_text";
+  "sku,name,name_en,name_hy,category,category_en,category_hy,aesthetic,colour,colour_en,colour_hy,model_group,theme_key,main_image,price_amd,price_old,discount_percent,availability,stock_qty,stock_reserved,lead_time_days,is_published,is_featured,is_new,is_bestseller,is_special_offer,badge_text";
 
 export async function fetchProductsBySkus(skus: string[]): Promise<ProductCard[]> {
   const unique = [...new Set(skus.filter(Boolean))];

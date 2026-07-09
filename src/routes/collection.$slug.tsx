@@ -4,7 +4,8 @@ import { z } from "zod";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { ProductListingShell } from "@/components/site/ProductListingShell";
-import { fetchCollectionWithProducts } from "@/lib/products";
+import { fetchCollectionWithProducts, fetchTheme } from "@/lib/products";
+import { resolveCollectionBackgroundThemeKey, themeBackgroundStyle } from "@/lib/theme-background";
 import { collectionBreadcrumbJsonLd, listingHeadExtras } from "@/lib/catalog-seo";
 import { canonicalLink, hreflangLinks, seoMeta } from "@/lib/seo";
 import { getI18nDefaults, pickLocalized, useI18n } from "@/lib/i18n";
@@ -94,6 +95,16 @@ function CollectionPage() {
   });
 
   const col = data?.collection;
+  const backgroundThemeKey = data
+    ? resolveCollectionBackgroundThemeKey(slug, search.colour, data.products)
+    : null;
+  const themeQ = useQuery({
+    queryKey: ["theme", backgroundThemeKey],
+    queryFn: () => (backgroundThemeKey ? fetchTheme(backgroundThemeKey) : Promise.resolve(null)),
+    enabled: !!backgroundThemeKey,
+    staleTime: 60_000,
+  });
+  const themeStyle = themeBackgroundStyle(themeQ.data);
   const name = col
     ? pickLocalized(col as unknown as Record<string, unknown>, "name", lang) || col.name
     : "";
@@ -102,20 +113,25 @@ function CollectionPage() {
     : "";
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground transition-colors duration-700" style={themeStyle}>
       <Header />
       <main className="mx-auto max-w-[1400px] px-6 py-20 md:px-10 md:py-28">
         {isLoading || !data ? (
-          <p className="text-muted-foreground">{t("catalog.loading")}</p>
+          <p className={themeQ.data ? "text-foreground/80" : "text-muted-foreground"}>{t("catalog.loading")}</p>
         ) : (
           <>
             <div className="mb-12">
-              <Link to="/" className="eyebrow text-muted-foreground hover:text-foreground">
+              <Link
+                to="/"
+                className={`eyebrow hover:text-foreground ${themeQ.data ? "text-foreground/70" : "text-muted-foreground"}`}
+              >
                 ← {t("common.home")}
               </Link>
               <h1 className="mt-4 font-serif text-5xl md:text-6xl">{name}</h1>
               {description && (
-                <p className="mt-4 max-w-2xl text-foreground/70">{description}</p>
+                <p className={`mt-4 max-w-2xl ${themeQ.data ? "text-foreground/85" : "text-foreground/70"}`}>
+                  {description}
+                </p>
               )}
             </div>
             {data.products.length === 0 ? (

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { fetchProductBySku, fetchTheme, slugify } from "@/lib/products";
+import { resolveBackgroundThemeKey, themeBackgroundStyle } from "@/lib/theme-background";
 import { ProductImageZoom } from "@/components/site/ProductImageZoom";
 import { ColorSwitcher } from "@/components/site/ColorSwitcher";
 import { AddToCartButton } from "@/components/site/AddToCartButton";
@@ -103,10 +104,11 @@ function ProductPage() {
   const { sku } = Route.useParams();
   const { product } = Route.useLoaderData();
   const { lang, t } = useI18n();
+  const backgroundThemeKey = product ? resolveBackgroundThemeKey(product) : null;
   const themeQ = useQuery({
-    queryKey: ["theme", product?.theme_key ?? null],
-    queryFn: () => (product?.theme_key ? fetchTheme(product.theme_key) : Promise.resolve(null)),
-    enabled: !!product?.theme_key,
+    queryKey: ["theme", backgroundThemeKey],
+    queryFn: () => (backgroundThemeKey ? fetchTheme(backgroundThemeKey) : Promise.resolve(null)),
+    enabled: !!backgroundThemeKey,
     staleTime: 60_000,
   });
   const theme = themeQ.data ?? null;
@@ -127,15 +129,7 @@ function ProductPage() {
   const themeName = pickLocalized(theme as unknown as Record<string, unknown> | null, "name", lang);
   const specEntries = Object.entries(pickLocalizedSpecs(product as unknown as Record<string, unknown>, lang));
 
-  const themeStyle: React.CSSProperties = theme
-    ? {
-        backgroundColor: theme.background_color ?? undefined,
-        backgroundImage: theme.background_image ? `url(${theme.background_image})` : undefined,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundAttachment: "fixed",
-      }
-    : {};
+  const themeStyle = themeBackgroundStyle(theme);
 
   return (
     <div className="min-h-screen text-foreground transition-colors duration-700" style={themeStyle}>
