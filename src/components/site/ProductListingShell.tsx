@@ -39,11 +39,19 @@ type Props = {
   search: ListingSearch;
   onSearchChange: (next: ListingSearch) => void;
   groupByColor?: boolean;
+  /** White panel behind desktop filters — for themed collection backgrounds. */
+  filtersOnPanel?: boolean;
 };
 
 const split = (v?: string) => (v ? v.split(",").filter(Boolean) : []);
 
-export function ProductListingShell({ products, search, onSearchChange, groupByColor = true }: Props) {
+export function ProductListingShell({
+  products,
+  search,
+  onSearchChange,
+  groupByColor = true,
+  filtersOnPanel = false,
+}: Props) {
   const { lang, t } = useI18n();
   const [mobileOpen, setMobileOpen] = useState(false);
   const colours = split(search.colour);
@@ -264,7 +272,11 @@ export function ProductListingShell({ products, search, onSearchChange, groupByC
       </div>
 
       <div className="grid grid-cols-1 gap-10 md:grid-cols-[240px_1fr]">
-        <aside className="hidden md:block md:sticky md:top-28 md:self-start md:max-h-[calc(100vh-8rem)] md:overflow-y-auto md:pr-2">
+        <aside
+          className={`hidden md:block md:sticky md:top-28 md:self-start md:max-h-[calc(100vh-8rem)] md:overflow-y-auto md:pr-2 ${
+            filtersOnPanel ? "rounded-sm bg-white p-5 shadow-sm" : ""
+          }`}
+        >
           {filters}
         </aside>
         <section className="light-section rounded-sm p-4 md:p-8">

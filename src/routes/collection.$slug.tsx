@@ -141,6 +141,7 @@ function CollectionPage() {
                 products={data.products}
                 search={search}
                 onSearchChange={(next) => navigate({ search: next })}
+                filtersOnPanel={!!themeQ.data}
               />
             )}
           </>
