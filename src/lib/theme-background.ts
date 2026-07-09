@@ -133,11 +133,12 @@ export function resolveCollectionBackgroundThemeKey(
   return null;
 }
 
-export const THEME_BG_ASSET_VERSION = 7;
+export const THEME_BG_ASSET_VERSION = 8;
 
 export function themeMasterImagePath(image: string): string {
   const dot = image.lastIndexOf(".");
   const base = dot >= 0 ? image.slice(0, dot) : image;
+  if (base.startsWith("porsche-")) return `${base}-master.jpg`;
   return `${base}-2560.jpg`;
 }
 
