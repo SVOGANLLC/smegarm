@@ -15,7 +15,17 @@ export default defineConfig({
     server: { entry: "server" },
   },
   // Build a self-contained Node HTTP server (.output/server/index.mjs) for the VPS.
-  nitro: { preset: "node-server" },
+  nitro: {
+    preset: "node-server",
+    routeRules: {
+      "/assets/**": {
+        headers: { "cache-control": "public, max-age=31536000, immutable" },
+      },
+      "/**": {
+        headers: { "cache-control": "no-cache, must-revalidate" },
+      },
+    },
+  },
   // Local dev: mirror production nginx — Supabase API on same origin as the app.
   vite: {
     server: {
