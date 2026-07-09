@@ -63,27 +63,33 @@ export function resolveBackgroundThemeKey(product: ColourSource): string | null 
   return key;
 }
 
-const COLLECTION_DEFAULT_THEME: Record<string, string> = {
-  porsche: "porsche_917",
+const FIXED_COLLECTION_THEME: Record<string, string> = {
   "blu-mediterraneo": "dg_blu_mediterraneo",
   "dolce-gabbana-sicily": "dg_sicily",
-  "divina-cucina": "dg_sicily",
   "dolce-gabbana": "dg_sicily",
 };
+
+const COLOUR_AWARE_COLLECTIONS = new Set(["porsche", "divina-cucina"]);
 
 export function resolveCollectionBackgroundThemeKey(
   slug: string,
   colourFilter: string | undefined,
   products: ColourSource[],
 ): string | null {
+  if (FIXED_COLLECTION_THEME[slug]) return FIXED_COLLECTION_THEME[slug];
+
+  if (!COLOUR_AWARE_COLLECTIONS.has(slug)) return null;
+
   const colours = colourFilter?.split(",").map((c) => c.trim()).filter(Boolean) ?? [];
   const sample =
     colours.length > 0
       ? products.find((p) => colours.includes(p.colour ?? "") || colours.includes(p.colour_en ?? ""))
-      : products[0];
+      : products.find((p) => p.theme_key) ?? products[0];
 
   if (sample?.theme_key) return resolveBackgroundThemeKey(sample);
-  return COLLECTION_DEFAULT_THEME[slug] ?? null;
+  if (slug === "porsche") return "porsche_917";
+  if (slug === "divina-cucina") return "dg_sicily";
+  return null;
 }
 
 export function themeBackgroundStyle(theme: Theme | null | undefined): CSSProperties {
