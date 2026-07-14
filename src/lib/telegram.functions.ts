@@ -33,25 +33,43 @@ export const saveMyTelegram = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Test ping — ONLY the signed-in user's own Chat ID (never the whole team). */
 export const sendMyTelegramTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: profile, error } = await supabaseAdmin
       .from("profiles")
       .select("telegram_chat_id,full_name")
       .eq("id", context.userId)
       .maybeSingle();
-    const chat = data?.telegram_chat_id as string | null | undefined;
+    if (error) throw new Error(error.message);
+
+    const chat = profile?.telegram_chat_id as string | null | undefined;
     if (!chat) throw new Error("Сначала сохраните Chat ID");
+
+    const who = (profile?.full_name as string | null)?.trim() || "сотрудник";
     const ok = await tgSend(
       chat,
-      `✅ <b>Smeg Armenia</b>\n\nТестовое уведомление успешно доставлено${data?.full_name ? `, ${data.full_name}` : ""}.`,
+      [
+        `✅ <b>Smeg Armenia — личный тест</b>`,
+        ``,
+        `Это сообщение только для вашего аккаунта (<b>${who}</b>).`,
+        `Другим сотрудникам оно не отправлялось.`,
+        ``,
+        `Chat ID: <code>${chat}</code>`,
+      ].join("\n"),
     );
-    if (!ok) throw new Error("Не удалось отправить — проверьте Chat ID и что вы написали боту @smegarmbot хотя бы раз");
-    return { ok: true };
+    if (!ok) {
+      throw new Error(
+        "Не удалось отправить — проверьте Chat ID и что вы написали боту @smegarmbot хотя бы раз",
+      );
+    }
+    return { ok: true, chat_id: chat };
   });
 
-/** Internal helper — broadcast a message to every admin/manager with a saved chat_id. */
+/** Broadcast to every admin/manager with a saved chat_id (orders / inquiries). */
 export async function broadcastToTeam(text: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: roles } = await supabaseAdmin
@@ -65,6 +83,8 @@ export async function broadcastToTeam(text: string) {
     .select("telegram_chat_id")
     .in("id", ids)
     .not("telegram_chat_id", "is", null);
-  const chats = (profs ?? []).map((p: any) => p.telegram_chat_id).filter(Boolean);
-  await Promise.all(chats.map((c: string) => tgSend(c, text)));
+  const chats = Array.from(
+    new Set((profs ?? []).map((p: any) => p.telegram_chat_id as string).filter(Boolean)),
+  );
+  await Promise.all(chats.map((c) => tgSend(c, text)));
 }

@@ -406,8 +406,8 @@ const E: Record<string, T3> = {
   "admin.notify.chatIdPlaceholder": ["например, 123456789", "e.g. 123456789", "օր. 123456789"],
   "admin.notify.sendTest": ["Отправить тест", "Send test", "Ուղարկել թեստ"],
   "admin.notify.disconnect": ["Отключить", "Disconnect", "Անջատել"],
-  "admin.notify.testSent": ["Тестовое сообщение отправлено", "Test message sent", "Թեստային հաղորդագրությունը ուղարկված է"],
-  "admin.notify.footer": ["Уведомления получают все сотрудники с сохранённым Chat ID. Если тест не приходит — убедитесь, что вы написали боту хотя бы один раз (Telegram запрещает писать первым).", "All team members with a saved Chat ID receive notifications. If the test fails, message the bot at least once (Telegram blocks unsolicited messages).", "Ծանուցումներ են ստանում բոլոր աշխատակիցները պահպանված Chat ID-ով։ Եթե թեստը չի գալիս՝ գոնե մեկ անգամ գրեք բոտին (Telegram-ը արգելում է առաջինը գրել)։"],
+  "admin.notify.testSent": ["Тест отправлен только вам", "Test sent only to you", "Թեստը ուղարկված է միայն ձեզ"],
+  "admin.notify.footer": ["«Отправить тест» — только на ваш Chat ID. Новые заказы и заявки приходят всем сотрудникам с сохранённым Chat ID. Если тест не приходит — напишите боту хотя бы раз.", "“Send test” goes only to your Chat ID. New orders go to every teammate with a saved Chat ID. If the test fails, message the bot at least once.", "«Ուղարկել թեստ»՝ միայն ձեր Chat ID։ Նոր պատվերները գալիս են բոլոր աշխատակիցներին պահպանված Chat ID-ով։ Եթե թեստը չի գալիս՝ գոնե մեկ անգամ գրեք բոտին։"],
 
   // Orders
   "admin.orders.title": ["Заказы", "Orders", "Պատվերներ"],
