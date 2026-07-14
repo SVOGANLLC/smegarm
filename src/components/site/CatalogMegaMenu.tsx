@@ -19,32 +19,24 @@ import { cn } from "@/lib/utils";
 function NavLink({ item, onClick }: { item: CatalogNavItem; onClick?: () => void }) {
   const { lang, t } = useI18n();
   const label = navItemLabel(item, lang, t);
+  const className =
+    "smeg-underline inline text-sm text-foreground/70 transition hover:text-foreground";
   if (item.to === "/#collections") {
     return (
-      <Link
-        to="/"
-        hash="collections"
-        onClick={onClick}
-        className="block text-sm text-foreground/70 transition hover:text-foreground"
-      >
+      <Link to="/" hash="collections" onClick={onClick} className={className}>
         {label}
       </Link>
     );
   }
   if (item.to === "/sale") {
     return (
-      <Link to="/sale" onClick={onClick} className="block text-sm text-foreground/70 transition hover:text-foreground">
+      <Link to="/sale" onClick={onClick} className={className}>
         {label}
       </Link>
     );
   }
   return (
-    <Link
-      to={item.to}
-      search={item.search}
-      onClick={onClick}
-      className="block text-sm text-foreground/70 transition hover:text-foreground"
-    >
+    <Link to={item.to} search={item.search} onClick={onClick} className={className}>
       {label}
     </Link>
   );
