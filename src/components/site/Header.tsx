@@ -18,6 +18,8 @@ export function Header({ solid = false }: { solid?: boolean }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const navCaps = (label: string) =>
+    label.toLocaleUpperCase(lang === "hy" ? "hy-AM" : lang === "ru" ? "ru-RU" : "en-US");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -38,8 +40,8 @@ export function Header({ solid = false }: { solid?: boolean }) {
   }, [pathname]);
 
   const primaryNav = [
-    { to: "/house-of-coffee" as const, label: t("nav.houseOfCoffee"), internal: true as const },
-    { to: "/#collections", label: t("nav.collections"), hash: "collections" },
+    { to: "/house-of-coffee" as const, label: navCaps(t("nav.houseOfCoffee")), internal: true as const },
+    { to: "/#collections", label: navCaps(t("nav.collections")), hash: "collections" },
   ];
 
   const onHashNav = (e: MouseEvent, hash: string) => {

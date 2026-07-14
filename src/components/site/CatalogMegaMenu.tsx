@@ -146,10 +146,12 @@ function NavColumns({ columns, onNavigate }: { columns: CatalogNavColumn[]; onNa
 }
 
 export function CatalogMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const columns = useCatalogNavColumns();
+  const catalogTrigger =
+    lang === "hy" ? t("nav.catalog").toLocaleUpperCase("hy-AM") : t("nav.catalog").toLocaleUpperCase("en-US");
 
   useEffect(() => {
     if (!open) return;
@@ -186,14 +188,14 @@ export function CatalogMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
       <button
         type="button"
         className={cn(
-          "smeg-underline inline-flex items-center gap-1.5 text-[13px] tracking-[0.04em] text-foreground/80 hover:text-foreground",
+          "smeg-underline inline-flex items-center gap-1.5 text-[13px] uppercase tracking-[0.18em] text-foreground/80 hover:text-foreground",
           open && "text-foreground",
         )}
         aria-expanded={open}
         aria-haspopup="true"
         onClick={() => setOpen((o) => !o)}
       >
-        {t("nav.catalog")}
+        {catalogTrigger}
         <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
       </button>
 

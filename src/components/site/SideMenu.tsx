@@ -37,6 +37,8 @@ const panelVars = {
 export function SideMenu({ open, onClose, includePrimaryNav = false }: SideMenuProps) {
   const { t, lang, setLang } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navCaps = (label: string) =>
+    label.toLocaleUpperCase(lang === "hy" ? "hy-AM" : lang === "ru" ? "ru-RU" : "en-US");
 
   const items: MenuItem[] = [
     { id: "story", label: t("nav.story"), hash: "story", kind: "hash" },
@@ -101,7 +103,7 @@ export function SideMenu({ open, onClose, includePrimaryNav = false }: SideMenuP
                     onClick={onClose}
                     className="mt-2 flex items-center justify-between py-3 text-sm uppercase tracking-[0.18em] text-foreground/90 transition hover:text-foreground"
                   >
-                    {t("nav.houseOfCoffee")}
+                    {navCaps(t("nav.houseOfCoffee"))}
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </Link>
                   <Link
@@ -110,7 +112,7 @@ export function SideMenu({ open, onClose, includePrimaryNav = false }: SideMenuP
                     onClick={(e) => onHashNav(e, "collections")}
                     className="flex items-center justify-between py-3 text-sm uppercase tracking-[0.18em] text-foreground/90 transition hover:text-foreground"
                   >
-                    {t("nav.collections")}
+                    {navCaps(t("nav.collections"))}
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </Link>
                 </div>
