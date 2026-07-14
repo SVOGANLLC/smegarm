@@ -25,7 +25,7 @@ function NavLink({ item, onClick }: { item: CatalogNavItem; onClick?: () => void
         to="/"
         hash="collections"
         onClick={onClick}
-        className="block text-sm uppercase tracking-[0.14em] text-foreground/70 transition hover:text-foreground"
+        className="block text-sm text-foreground/70 transition hover:text-foreground"
       >
         {label}
       </Link>
@@ -33,7 +33,7 @@ function NavLink({ item, onClick }: { item: CatalogNavItem; onClick?: () => void
   }
   if (item.to === "/sale") {
     return (
-      <Link to="/sale" onClick={onClick} className="block text-sm uppercase tracking-[0.14em] text-foreground/70 transition hover:text-foreground">
+      <Link to="/sale" onClick={onClick} className="block text-sm text-foreground/70 transition hover:text-foreground">
         {label}
       </Link>
     );
@@ -43,7 +43,7 @@ function NavLink({ item, onClick }: { item: CatalogNavItem; onClick?: () => void
       to={item.to}
       search={item.search}
       onClick={onClick}
-      className="block text-sm uppercase tracking-[0.14em] text-foreground/70 transition hover:text-foreground"
+      className="block text-sm text-foreground/70 transition hover:text-foreground"
     >
       {label}
     </Link>
@@ -80,7 +80,7 @@ function CategoryColumn({ col, onNavigate }: { col: CatalogNavColumn; onNavigate
 
   return (
     <div className="flex min-w-0 flex-col">
-      <p className="eyebrow mb-3 text-muted-foreground">{t(col.titleKey)}</p>
+      <p className="mb-3 text-xs font-medium text-muted-foreground">{t(col.titleKey)}</p>
       <ul className="max-h-[min(52vh,380px)] space-y-1.5 overflow-y-auto pr-1">
         {mainItems.map((item) => (
           <li key={item.id}>
@@ -102,10 +102,10 @@ function CategoryColumn({ col, onNavigate }: { col: CatalogNavColumn; onNavigate
 }
 
 function CollectionsColumn({ col, onNavigate }: { col: CatalogNavColumn; onNavigate?: () => void }) {
-  const { lang, t } = useI18n();
+  const { t } = useI18n();
   return (
     <div className="flex min-w-0 flex-col md:min-w-[9.5rem] lg:min-w-[10.5rem]">
-      <p className="eyebrow mb-3 text-muted-foreground">{t(col.titleKey)}</p>
+      <p className="mb-3 text-xs font-medium text-muted-foreground">{t(col.titleKey)}</p>
       <ul className="max-h-[min(52vh,380px)] space-y-2 overflow-y-auto pr-1">
         {col.items.map((item) => (
           <li key={item.id}>
@@ -131,7 +131,7 @@ function NavColumns({ columns, onNavigate }: { columns: CatalogNavColumn[]; onNa
       {small && <CategoryColumn col={small} onNavigate={onNavigate} />}
       {more && (
         <div>
-          <p className="eyebrow mb-3 text-muted-foreground">{t(more.titleKey)}</p>
+          <p className="mb-3 text-xs font-medium text-muted-foreground">{t(more.titleKey)}</p>
           <ul className="space-y-2">
             {more.items.map((item) => (
               <li key={item.id}>
@@ -186,7 +186,7 @@ export function CatalogMegaMenu({ onNavigate }: { onNavigate?: () => void }) {
       <button
         type="button"
         className={cn(
-          "smeg-underline inline-flex items-center gap-1.5 text-[13px] uppercase tracking-[0.18em] text-foreground/80 hover:text-foreground",
+          "smeg-underline inline-flex items-center gap-1.5 text-[13px] tracking-[0.04em] text-foreground/80 hover:text-foreground",
           open && "text-foreground",
         )}
         aria-expanded={open}
@@ -243,9 +243,9 @@ export function CatalogMobileNav({
         type="button"
         onClick={() => setExpanded((e) => !e)}
         className={cn(
-          "flex w-full items-center justify-between py-3 uppercase text-foreground",
+          "flex w-full items-center justify-between py-3 text-foreground",
           compact
-            ? "text-sm tracking-[0.2em]"
+            ? "text-sm tracking-[0.04em]"
             : "font-serif text-[clamp(1.75rem,8vw,2.25rem)] leading-tight tracking-[0.06em]",
         )}
       >
@@ -258,13 +258,13 @@ export function CatalogMobileNav({
             to="/catalog"
             search={{}}
             onClick={onNavigate}
-            className="block text-sm font-medium uppercase tracking-[0.14em] text-foreground"
+            className="block text-sm font-medium text-foreground"
           >
             {t("nav.catalog.allProducts")}
           </Link>
           {collections && (
             <div>
-              <p className="eyebrow mb-2 text-muted-foreground">{t(collections.titleKey)}</p>
+              <p className="mb-2 text-xs font-medium text-muted-foreground">{t(collections.titleKey)}</p>
               <ul className="space-y-2">
                 {collections.items.map((item) => (
                   <li key={item.id}>
@@ -278,7 +278,7 @@ export function CatalogMobileNav({
           {small && <CategoryColumn col={small} onNavigate={onNavigate} />}
           {more && (
             <div>
-              <p className="eyebrow mb-2 text-muted-foreground">{t(more.titleKey)}</p>
+              <p className="mb-2 text-xs font-medium text-muted-foreground">{t(more.titleKey)}</p>
               <ul className="space-y-2">
                 {more.items.map((item) => (
                   <li key={item.id}>

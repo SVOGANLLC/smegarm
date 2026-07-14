@@ -9,6 +9,7 @@ import {
   deleteVariantGroup,
   fetchAdminVariantGroups,
   filterVariantGroupsByProducts,
+  normalizeVariantGroupKey,
   removeProductFromVariantGroup,
   searchProductsForGroup,
   type AdminVariantGroup,
@@ -91,10 +92,8 @@ export const Route = createFileRoute("/_authenticated/admini/groups")({
     let products: VariantGroupProductFilter = "all";
     if (productsRaw === "with" || productsRaw === "without") products = productsRaw;
     else if (empty) products = "without";
-    return {
-      key: typeof s.key === "string" ? s.key : undefined,
-      products,
-    };
+    const key = typeof s.key === "string" ? normalizeVariantGroupKey(s.key) || undefined : undefined;
+    return { key, products };
   },
   component: VariantGroupsPage,
 });
@@ -119,10 +118,11 @@ function VariantGroupsPage() {
     staleTime: 10_000,
   });
 
-  const selected = useMemo(
-    () => groupsQ.data?.find((g) => g.key === selectedKey) ?? null,
-    [groupsQ.data, selectedKey],
-  );
+  const selected = useMemo(() => {
+    if (!selectedKey) return null;
+    const key = normalizeVariantGroupKey(selectedKey);
+    return groupsQ.data?.find((g) => g.key === key) ?? null;
+  }, [groupsQ.data, selectedKey]);
 
   const draftDirtyRef = useRef(false);
 
@@ -330,9 +330,10 @@ function VariantGroupsPage() {
         className="mt-4 flex gap-2"
         onSubmit={(e) => {
           e.preventDefault();
-          const key = newKey.trim();
+          const key = normalizeVariantGroupKey(newKey);
           if (!key) return;
           openGroup(key);
+          setNewKey("");
           navigate({ to: "/admini/groups", search: { key, ...listSearch } });
         }}
       >

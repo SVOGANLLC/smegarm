@@ -15,7 +15,6 @@ import {
   fetchSkusForNavGroup,
   slugify,
 } from "@/lib/products";
-import { z } from "zod";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -44,24 +43,75 @@ import { catalogHeadFromSearch, catalogShouldNoindex } from "@/lib/catalog-seo";
 import { fetchCategoryFaqs, getStoreFaqs } from "@/lib/category-faqs";
 import { trackSiteSearch } from "@/lib/analytics";
 
-const searchSchema = z.object({
-  category: z.string().optional(),
-  family: z.string().optional(),
-  q: z.string().optional(),
-  colour: z.string().optional(), // csv
-  aesthetic: z.string().optional(),
-  theme: z.string().optional(),
-  flag: z.enum(["is_featured", "is_new", "is_bestseller", "is_special_offer", "sale"]).optional(),
-  inStock: z.boolean().optional(),
-  sort: z.enum(["name", "price-asc", "price-desc"]).optional(),
-  spec: z.string().optional(),
-  section: z.enum(["large", "small", "accessories"]).optional(),
-  navGroup: z.string().optional(),
-  model: z.string().optional(),
-  modelSkus: z.string().optional(),
-  page: z.number().int().min(1).default(1),
-});
-type CatalogSearch = z.infer<typeof searchSchema>;
+const FLAG_VALUES = ["is_featured", "is_new", "is_bestseller", "is_special_offer", "sale"] as const;
+const SORT_VALUES = ["name", "price-asc", "price-desc"] as const;
+const SECTION_VALUES = ["large", "small", "accessories"] as const;
+
+type CatalogFlag = (typeof FLAG_VALUES)[number];
+type CatalogSort = (typeof SORT_VALUES)[number];
+type CatalogSectionSearch = (typeof SECTION_VALUES)[number];
+
+function asOptionalString(v: unknown): string | undefined {
+  if (typeof v !== "string") return undefined;
+  const t = v.trim();
+  return t.length ? t : undefined;
+}
+
+function asOptionalBoolean(v: unknown): boolean | undefined {
+  if (v === true || v === "true" || v === 1 || v === "1") return true;
+  if (v === false || v === "false" || v === 0 || v === "0") return false;
+  return undefined;
+}
+
+function asPage(v: unknown): number {
+  if (typeof v === "number" && Number.isFinite(v)) return Math.max(1, Math.floor(v));
+  if (typeof v === "string" && /^\d+$/.test(v.trim())) return Math.max(1, parseInt(v.trim(), 10));
+  return 1;
+}
+
+function asEnum<T extends string>(v: unknown, allowed: readonly T[]): T | undefined {
+  return typeof v === "string" && (allowed as readonly string[]).includes(v) ? (v as T) : undefined;
+}
+
+type CatalogSearch = {
+  category?: string;
+  family?: string;
+  q?: string;
+  colour?: string;
+  aesthetic?: string;
+  theme?: string;
+  flag?: CatalogFlag;
+  inStock?: boolean;
+  sort?: CatalogSort;
+  spec?: string;
+  section?: CatalogSectionSearch;
+  navGroup?: string;
+  model?: string;
+  modelSkus?: string;
+  page?: number;
+};
+
+/** Soft parse so shared / messenger-rewritten URLs still open the catalog. */
+function parseCatalogSearch(raw: unknown): CatalogSearch {
+  const s = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  return {
+    category: asOptionalString(s.category),
+    family: asOptionalString(s.family),
+    q: asOptionalString(s.q),
+    colour: asOptionalString(s.colour),
+    aesthetic: asOptionalString(s.aesthetic),
+    theme: asOptionalString(s.theme),
+    flag: asEnum(s.flag, FLAG_VALUES),
+    inStock: asOptionalBoolean(s.inStock),
+    sort: asEnum(s.sort, SORT_VALUES),
+    spec: asOptionalString(s.spec),
+    section: asEnum(s.section, SECTION_VALUES),
+    navGroup: asOptionalString(s.navGroup),
+    model: asOptionalString(s.model),
+    modelSkus: asOptionalString(s.modelSkus),
+    page: asPage(s.page),
+  };
+}
 
 const split = (v?: string) => (v ? v.split(",").filter(Boolean) : []);
 const join = (arr: string[]) => (arr.length ? arr.join(",") : undefined);
@@ -78,9 +128,9 @@ function patchCatalogSearch(prev: CatalogSearch, patch: Partial<CatalogSearch>):
 
 
 export const Route = createFileRoute("/catalog")({
-  validateSearch: (s) => searchSchema.parse(s),
+  validateSearch: (s) => parseCatalogSearch(s),
   loader: async ({ location }) => {
-    const catalogSearch = searchSchema.parse(location.search);
+    const catalogSearch = parseCatalogSearch(location.search);
     let faqs: ReturnType<typeof getStoreFaqs> | undefined;
 
     try {
@@ -155,7 +205,8 @@ function findCategoryBySlug(
 
 function CatalogPage() {
   const search = Route.useSearch();
-  const { category, family, q, page, flag, sort, theme, inStock, spec: specRaw, section, navGroup, model, modelSkus: modelSkusRaw } = search;
+  const { category, family, q, page: pageRaw, flag, sort, theme, inStock, spec: specRaw, section, navGroup, model, modelSkus: modelSkusRaw } = search;
+  const page = pageRaw ?? 1;
   const colours = split(search.colour);
   const aesthetics = split(search.aesthetic);
   const specFilters = parseSpecSearchParam(specRaw);
@@ -256,8 +307,22 @@ function CatalogPage() {
   const navGroupCatalogReady = !navGroupOnly || catsQuery.isSuccess;
 
   const categoryAwaitingList = !!category && catsQuery.isLoading;
+  const hasOtherCatalogSignal =
+    !!navGroup ||
+    !!section ||
+    !!family ||
+    !!q ||
+    colours.length > 0 ||
+    aesthetics.length > 0 ||
+    !!flag ||
+    !!inStock ||
+    !!theme ||
+    countActiveSpecFilters(specFilters) > 0;
   const unknownCategory =
-    !!category && catsQuery.isSuccess && !categoryRawList && !navGroup && !section && !family && !q;
+    !!category &&
+    catsQuery.isSuccess &&
+    !categoryRawList &&
+    !hasOtherCatalogSignal;
 
   const effectiveFamilies = family
     ? [family]
@@ -329,9 +394,11 @@ function CatalogPage() {
   const modelGroupLabels = grouping.modelGroupLabels;
   const hideSpecFilters = !!model;
 
-  // colour value (canonical) → localized label for current lang
+  // colour value (localized or en) → localized label for current lang
   const colourLabel = (value: string) => {
-    const f = activeFacets?.colours.find((c) => c.value === value);
+    const f =
+      activeFacets?.colours.find((c) => c.value === value) ??
+      activeFacets?.colours.find((c) => c.value_en === value);
     const canonical = f?.value_en ?? value;
     if (lang === "hy") return f?.label_hy || colourI18n(canonical, lang);
     if (lang === "en") return f?.label_en || colourI18n(canonical, lang);
@@ -416,7 +483,7 @@ function CatalogPage() {
     enabled:
       navGroupCatalogReady &&
       !categoryAwaitingList &&
-      (!category || !!categoryRawList || !!navGroup || !!section || !!family || !!q),
+      (!category || !!categoryRawList || hasOtherCatalogSignal),
   });
 
   const lastSearchLogRef = useRef<string | null>(null);
@@ -657,8 +724,9 @@ function CatalogPage() {
             .filter((c) => (c.value_en ?? c.value) !== "Decorated / Special")
             .slice(0, 30)
             .map((c) => {
+            const shareValue = (c.value_en?.trim() || c.value).trim();
             const hex = swatchesQuery.data?.find((s) => s.colour === (c.value_en ?? c.value))?.hex ?? "#d4d4d4";
-            const active = colours.includes(c.value);
+            const active = colours.includes(c.value) || colours.includes(shareValue);
             const label = colourLabel(c.value);
             const canonical = c.value_en ?? c.value;
             return (
@@ -669,7 +737,7 @@ function CatalogPage() {
                 size="md"
                 active={active}
                 title={`${label} (${c.count})`}
-                onClick={() => toggleIn("colour", c.value)}
+                onClick={() => toggleIn("colour", shareValue)}
               />
             );
           })}

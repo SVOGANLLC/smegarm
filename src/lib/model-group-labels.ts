@@ -29,24 +29,49 @@ export function parseModelGroupLabels(block: BlockValue | undefined): ModelGroup
   try {
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
-    return parsed
-      .map((row) => {
-        const r = row as Record<string, unknown>;
-        const key = String(r.key ?? r.model_group ?? "").trim();
-        if (!key) return null;
-        return {
-          key,
-          name_ru: r.name_ru != null ? String(r.name_ru) : undefined,
-          name_en: r.name_en != null ? String(r.name_en) : undefined,
-          name_hy: r.name_hy != null ? String(r.name_hy) : undefined,
-          image: r.image != null ? String(r.image) : undefined,
-          image_sku: r.image_sku != null ? String(r.image_sku).trim().toUpperCase() || undefined : undefined,
-        } satisfies ModelGroupLabel;
-      })
-      .filter((x): x is ModelGroupLabel => !!x);
+    const rows: ModelGroupLabel[] = [];
+    for (const row of parsed) {
+      const r = row as Record<string, unknown>;
+      const key = String(r.key ?? r.model_group ?? "")
+        .trim()
+        .toUpperCase();
+      if (!key) continue;
+      rows.push({
+        key,
+        name_ru: r.name_ru != null ? String(r.name_ru) : undefined,
+        name_en: r.name_en != null ? String(r.name_en) : undefined,
+        name_hy: r.name_hy != null ? String(r.name_hy) : undefined,
+        image: r.image != null ? String(r.image) : undefined,
+        image_sku: r.image_sku != null ? String(r.image_sku).trim().toUpperCase() || undefined : undefined,
+      });
+    }
+    return mergeModelGroupLabels(rows);
   } catch {
     return [];
   }
+}
+
+/** Merge case/duplicate keys so one group has one label row (all languages). */
+export function mergeModelGroupLabels(labels: ModelGroupLabel[]): ModelGroupLabel[] {
+  const map = new Map<string, ModelGroupLabel>();
+  for (const l of labels) {
+    const key = l.key.trim().toUpperCase();
+    if (!key) continue;
+    const prev = map.get(key);
+    if (!prev) {
+      map.set(key, { ...l, key });
+      continue;
+    }
+    map.set(key, {
+      key,
+      name_ru: prev.name_ru || l.name_ru,
+      name_en: prev.name_en || l.name_en,
+      name_hy: prev.name_hy || l.name_hy,
+      image: prev.image || l.image,
+      image_sku: prev.image_sku || l.image_sku,
+    });
+  }
+  return Array.from(map.values());
 }
 
 export function serializeModelGroupLabels(rows: ModelGroupLabel[]): string {
@@ -85,9 +110,9 @@ export function resolveModelGroupLabel(
   sku?: string,
   opts?: { variants?: ImageSource[]; imageBySku?: Record<string, string | null | undefined> },
 ): { name?: string; image?: string } {
-  const keys = [modelGroup?.trim(), sku ? skuModelPrefix(sku) : null].filter(Boolean) as string[];
+  const keys = [modelGroup?.trim().toUpperCase(), sku ? skuModelPrefix(sku) : null].filter(Boolean) as string[];
   for (const key of keys) {
-    const row = labels.find((l) => l.key === key);
+    const row = labels.find((l) => l.key.trim().toUpperCase() === key);
     if (!row) continue;
     const name =
       (lang === "ru" && row.name_ru) ||
@@ -103,7 +128,8 @@ export function resolveModelGroupLabel(
 }
 
 export function labelForModelGroup(labels: ModelGroupLabel[], modelGroup: string): ModelGroupLabel | undefined {
-  return labels.find((l) => l.key === modelGroup);
+  const key = modelGroup.trim().toUpperCase();
+  return labels.find((l) => l.key.trim().toUpperCase() === key);
 }
 
 export function upsertModelGroupLabel(
@@ -111,25 +137,26 @@ export function upsertModelGroupLabel(
   key: string,
   patch: Partial<Omit<ModelGroupLabel, "key">>,
 ): ModelGroupLabel[] {
-  const trimmed = key.trim();
+  const trimmed = key.trim().toUpperCase();
   if (!trimmed) return labels;
-  const idx = labels.findIndex((l) => l.key === trimmed);
+  const merged = mergeModelGroupLabels(labels);
+  const idx = merged.findIndex((l) => l.key === trimmed);
   if (idx >= 0) {
-    const next = [...labels];
+    const next = [...merged];
     next[idx] = { ...next[idx], ...patch, key: trimmed };
     return next;
   }
-  return [...labels, { key: trimmed, ...patch }];
+  return [...merged, { key: trimmed, ...patch }];
 }
 
 export function removeModelGroupLabel(labels: ModelGroupLabel[], key: string): ModelGroupLabel[] {
-  const trimmed = key.trim();
+  const trimmed = key.trim().toUpperCase();
   if (!trimmed) return labels;
-  return labels.filter((l) => l.key !== trimmed);
+  return labels.filter((l) => l.key.trim().toUpperCase() !== trimmed);
 }
 
 export async function persistModelGroupLabels(labels: ModelGroupLabel[]): Promise<void> {
-  const json = serializeModelGroupLabels(labels);
+  const json = serializeModelGroupLabels(mergeModelGroupLabels(labels));
   const { data: existing, error: readErr } = await supabase
     .from("site_content")
     .select("value")

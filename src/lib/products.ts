@@ -711,6 +711,17 @@ function shuffleArray<T>(items: T[], seed?: number): T[] {
 
 type CatalogQuery = ReturnType<ReturnType<typeof supabase.from>["select"]>;
 
+function escapePostgrestInValue(v: string): string {
+  return `"${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
+
+/** Match URL colours against either localized `colour` or canonical `colour_en`. */
+function applyColourFilter(q: CatalogQuery, colours: string[]): CatalogQuery {
+  if (!colours.length) return q;
+  const list = colours.map(escapePostgrestInValue).join(",");
+  return q.or(`colour.in.(${list}),colour_en.in.(${list})`);
+}
+
 async function filterSkusByFacets(
   skus: string[],
   f: Pick<CatalogFilters, "colours" | "aesthetics" | "families" | "categoryIn" | "theme" | "inStock" | "flag">,
@@ -728,7 +739,7 @@ async function filterSkusByFacets(
   const allowed = new Set<string>();
   for (const batch of chunk(skus, SKU_IN_CHUNK)) {
     let q = supabase.from("products").select("sku").in("sku", batch).eq("is_published", true);
-    if (f.colours?.length) q = q.in("colour", f.colours);
+    if (f.colours?.length) q = applyColourFilter(q, f.colours);
     if (f.aesthetics?.length) q = q.in("aesthetic", f.aesthetics);
     if (f.families?.length) q = q.in("family", f.families);
     if (f.categoryIn?.length) q = q.in("category", f.categoryIn);
@@ -777,7 +788,7 @@ function applyCatalogFilters(q: CatalogQuery, f: CatalogFilters, skuIn?: string[
   }
 
   if (f.aesthetics?.length) q = q.in("aesthetic", f.aesthetics);
-  if (f.colours?.length) q = q.in("colour", f.colours);
+  if (f.colours?.length) q = applyColourFilter(q, f.colours);
   if (f.theme) q = q.eq("theme_key", f.theme);
   if (f.inStock) q = q.eq("availability", "in_stock");
   if (f.flag === "sale") q = q.not("price_old", "is", null);
