@@ -11,7 +11,7 @@ import {
 } from "@/lib/spec-filters";
 
 /** Hidden from catalog sidebar — too noisy or low value for shoppers. */
-const HIDDEN_SPEC_SLUGS = new Set(["energy_class", "power_source"]);
+const HIDDEN_SPEC_SLUGS = new Set(["power_source"]);
 
 type Props = {
   facets: SpecFacet[];
