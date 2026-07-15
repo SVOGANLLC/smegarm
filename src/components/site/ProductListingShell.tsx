@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { fetchColorSwatches, fetchProductsBySkus, fetchVariantsByModelGroups, type ProductCard } from "@/lib/products";
 import { ColorSwatchDot } from "@/components/site/ColorSwatchDot";
+import { FacetCheckbox } from "@/components/site/FacetCheckbox";
 import { ModelColorPickerView } from "@/components/site/ModelColorPickerView";
 import { parseCatalogGroupConfig } from "@/lib/catalog-group-config";
 import { parseModelGroupLabels } from "@/lib/model-group-labels";
@@ -220,18 +221,16 @@ export function ProductListingShell({
         <div>
           <p className="eyebrow mb-3 text-muted-foreground">{t("facet.aesthetic")}</p>
           <div className="space-y-1.5">
-            {aestheticFacets.map((item) => (
-              <label key={item.value} className="flex cursor-pointer items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={aesthetics.includes(item.value)}
-                  onChange={() => toggleList("aesthetic", item.value)}
-                  className="h-3.5 w-3.5 accent-foreground"
-                />
-                <span className="flex-1">{item.value}</span>
-                <span className="text-[11px] text-muted-foreground">{item.count}</span>
-              </label>
-            ))}
+            {aestheticFacets.map((item) => {
+              const isOn = aesthetics.includes(item.value);
+              return (
+                <label key={item.value} className="flex cursor-pointer items-center gap-2 text-sm">
+                  <FacetCheckbox checked={isOn} onChange={() => toggleList("aesthetic", item.value)} />
+                  <span className={`flex-1 ${isOn ? "font-medium text-foreground" : "text-foreground/80"}`}>{item.value}</span>
+                  <span className="text-[11px] text-muted-foreground">{item.count}</span>
+                </label>
+              );
+            })}
           </div>
         </div>
       )}

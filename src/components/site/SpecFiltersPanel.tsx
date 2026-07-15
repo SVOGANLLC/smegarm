@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { FacetCheckbox } from "@/components/site/FacetCheckbox";
 import { useI18n } from "@/lib/i18n";
 import {
   specEnumValueLabel,
@@ -95,18 +96,18 @@ function SpecEnumGroup({
               × {t("catalog.reset")}
             </button>
           )}
-          {shown.map((item) => (
-            <label key={item.value} className="flex cursor-pointer items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={selected.includes(item.value)}
-                onChange={() => onToggle(item.value)}
-                className="h-3.5 w-3.5 accent-foreground"
-              />
-              <span className="flex-1">{specEnumValueLabel(facet.slug, item.value, lang)}</span>
-              <span className="text-[11px] text-muted-foreground">{item.count}</span>
-            </label>
-          ))}
+          {shown.map((item) => {
+            const isOn = selected.includes(item.value);
+            return (
+              <label key={item.value} className="flex cursor-pointer items-center gap-2 text-sm">
+                <FacetCheckbox checked={isOn} onChange={() => onToggle(item.value)} />
+                <span className={`flex-1 ${isOn ? "font-medium text-foreground" : "text-foreground/80"}`}>
+                  {specEnumValueLabel(facet.slug, item.value, lang)}
+                </span>
+                <span className="text-[11px] text-muted-foreground">{item.count}</span>
+              </label>
+            );
+          })}
           {facet.values.length > 6 && (
             <button
               type="button"

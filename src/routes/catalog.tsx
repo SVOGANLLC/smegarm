@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
+import { FacetCheckbox } from "@/components/site/FacetCheckbox";
 import {
   fetchCatalog,
   fetchCategories,
@@ -1014,18 +1015,16 @@ function ScrollableFacet({
   const shown = expanded ? items : items.slice(0, 8);
   return (
     <div className="space-y-1.5">
-      {shown.map((item) => (
-        <label key={item.value} className="flex cursor-pointer items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={selected.includes(item.value)}
-            onChange={() => onToggle(item.value)}
-            className="h-3.5 w-3.5 accent-foreground"
-          />
-          <span className="flex-1">{item.value}</span>
-          <span className="text-[11px] text-muted-foreground">{item.count}</span>
-        </label>
-      ))}
+      {shown.map((item) => {
+        const isOn = selected.includes(item.value);
+        return (
+          <label key={item.value} className="flex cursor-pointer items-center gap-2 text-sm">
+            <FacetCheckbox checked={isOn} onChange={() => onToggle(item.value)} />
+            <span className={`flex-1 ${isOn ? "font-medium text-foreground" : "text-foreground/80"}`}>{item.value}</span>
+            <span className="text-[11px] text-muted-foreground">{item.count}</span>
+          </label>
+        );
+      })}
       {items.length > 8 && (
         <button
           type="button"
