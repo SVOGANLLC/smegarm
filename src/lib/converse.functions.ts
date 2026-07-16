@@ -138,8 +138,35 @@ export const checkConversePayment = createServerFn({ method: "POST" })
     else if (status === "3") payment_status = "cancelled";
     else if (status === "4") payment_status = "refunded";
 
+    const prevPayment = order.payment_status ?? "pending";
     const updates: { payment_status: string; status?: string } = { payment_status };
     if (payment_status === "paid" && order.status === "new") updates.status = "confirmed";
     await supabaseAdmin.from("orders").update(updates).eq("id", order.id);
+
+    if (payment_status !== prevPayment) {
+      try {
+        const { broadcastToTeam } = await import("./telegram.functions");
+        if (payment_status === "paid") {
+          await broadcastToTeam(
+            [
+              `💳 <b>Оплата получена · заказ №${order.order_no}</b>`,
+              `Статус заказа: ${updates.status ?? order.status}`,
+            ].join("\n"),
+            "payment_paid",
+          );
+        } else if (payment_status === "failed" || payment_status === "cancelled" || payment_status === "refunded") {
+          await broadcastToTeam(
+            [
+              `⚠️ <b>Проблема с оплатой · заказ №${order.order_no}</b>`,
+              `Статус оплаты: ${payment_status}`,
+            ].join("\n"),
+            "payment_failed",
+          );
+        }
+      } catch (e) {
+        console.error("telegram payment notify failed", e);
+      }
+    }
+
     return { payment_status, order_no: order.order_no };
   });

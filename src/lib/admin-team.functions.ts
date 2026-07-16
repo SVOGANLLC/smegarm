@@ -67,6 +67,10 @@ export const setTeamRole = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: target } = await supabaseAdmin.auth.admin.getUserById(data.user_id);
+    const targetEmail = target?.user?.email ?? data.user_id;
+
     // wipe non-default roles, set the new one (skip 'user' which is implicit)
     const { error: delErr } = await supabaseAdmin
       .from("user_roles")
@@ -80,5 +84,27 @@ export const setTeamRole = createServerFn({ method: "POST" })
         .insert({ user_id: data.user_id, role: data.role });
       if (insErr) throw insErr;
     }
+
+    try {
+      const { broadcastToTeam } = await import("./telegram.functions");
+      const { data: actor } = await supabaseAdmin
+        .from("profiles")
+        .select("full_name,email")
+        .eq("id", userId)
+        .maybeSingle();
+      const who = (actor?.full_name as string | null)?.trim() || actor?.email || userId;
+      await broadcastToTeam(
+        [
+          `👤 <b>Смена роли в команде</b>`,
+          `Пользователь: <code>${targetEmail}</code>`,
+          `Новая роль: <b>${data.role}</b>`,
+          `Кто изменил: ${who}`,
+        ].join("\n"),
+        "team_role",
+      );
+    } catch (e) {
+      console.error("telegram team role notify failed", e);
+    }
+
     return { ok: true };
   });

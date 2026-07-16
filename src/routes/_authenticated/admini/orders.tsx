@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChevronDown, Loader2, Phone, MessageCircle, LayoutGrid, List, History, Save, Download } from "lucide-react";
 import * as XLSX from "xlsx";
 import { useI18n } from "@/lib/i18n";
+import { updateOrderStatus } from "@/lib/orders.functions";
 
 export const Route = createFileRoute("/_authenticated/admini/orders")({
   component: AdminOrders,
@@ -86,6 +88,7 @@ function AdminOrders() {
   const [view, setView] = useState<"list" | "kanban">("list");
   const [search, setSearch] = useState("");
   const qc = useQueryClient();
+  const updateStatusFn = useServerFn(updateOrderStatus);
 
   const orders = useQuery({
     queryKey: ["admin-orders", filter, search],
@@ -107,8 +110,12 @@ function AdminOrders() {
 
   const setStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase.from("orders").update({ status }).eq("id", id);
-      if (error) throw error;
+      await updateStatusFn({
+        data: {
+          order_id: id,
+          status: status as "new" | "in_progress" | "confirmed" | "shipped" | "done" | "cancelled",
+        },
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-orders"] });

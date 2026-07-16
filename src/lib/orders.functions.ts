@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const ItemSchema = z.object({
   sku: z.string().min(1).max(64),
@@ -108,10 +109,67 @@ export const createOrder = createServerFn({ method: "POST" })
         `Доставка: ${data.delivery_method} · Оплата: ${data.payment_method}`,
         ...(data.comment ? [`Комментарий: ${data.comment}`] : []),
       ];
-      await broadcastToTeam(lines.join("\n"));
+      await broadcastToTeam(lines.join("\n"), "order_new");
     } catch (e) {
       console.error("telegram notify failed", e);
     }
 
     return { id: order.id, order_no: order.order_no, total_amd: total };
+  });
+
+const StatusSchema = z.object({
+  order_id: z.string().uuid(),
+  status: z.enum(["new", "in_progress", "confirmed", "shipped", "done", "cancelled"]),
+});
+
+/** Manager/admin order status change — notifies team on cancel. */
+export const updateOrderStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => StatusSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: meRole, error: roleErr } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .in("role", ["admin", "manager"])
+      .maybeSingle();
+    if (roleErr) throw new Error(roleErr.message);
+    if (!meRole) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: order, error: oErr } = await supabaseAdmin
+      .from("orders")
+      .select("id,order_no,status,customer_name,customer_phone,total_amd")
+      .eq("id", data.order_id)
+      .single();
+    if (oErr || !order) throw new Error(oErr?.message ?? "Заказ не найден");
+
+    const prev = order.status as string;
+    if (prev === data.status) return { ok: true, status: data.status };
+
+    const { error: uErr } = await supabaseAdmin
+      .from("orders")
+      .update({ status: data.status })
+      .eq("id", data.order_id);
+    if (uErr) throw new Error(uErr.message);
+
+    if (data.status === "cancelled" && prev !== "cancelled") {
+      try {
+        const { broadcastToTeam } = await import("./telegram.functions");
+        await broadcastToTeam(
+          [
+            `🚫 <b>Заказ №${order.order_no} отменён</b>`,
+            `Клиент: ${order.customer_name}`,
+            `Телефон: ${order.customer_phone}`,
+            `Сумма: ${Number(order.total_amd ?? 0).toLocaleString("ru-RU")} ֏`,
+            `Было: ${prev}`,
+          ].join("\n"),
+          "order_cancelled",
+        );
+      } catch (e) {
+        console.error("telegram cancel notify failed", e);
+      }
+    }
+
+    return { ok: true, status: data.status };
   });

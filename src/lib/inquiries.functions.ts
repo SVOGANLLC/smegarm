@@ -43,7 +43,7 @@ export const submitInquiry = createServerFn({ method: "POST" })
         ...(row.product_sku ? [`Товар: <code>${row.product_sku}</code>`] : []),
         ...(row.message ? [`Сообщение: ${row.message}`] : []),
       ];
-      await broadcastToTeam(lines.join("\n"));
+      await broadcastToTeam(lines.join("\n"), "inquiry_new");
     } catch (e) {
       console.error("telegram inquiry notify failed", e);
     }

@@ -687,6 +687,7 @@ export type Database = {
           full_name: string | null
           id: string
           telegram_chat_id: string | null
+          telegram_notify_prefs: Json
           updated_at: string
         }
         Insert: {
@@ -696,6 +697,7 @@ export type Database = {
           full_name?: string | null
           id: string
           telegram_chat_id?: string | null
+          telegram_notify_prefs?: Json
           updated_at?: string
         }
         Update: {
@@ -705,6 +707,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           telegram_chat_id?: string | null
+          telegram_notify_prefs?: Json
           updated_at?: string
         }
         Relationships: []

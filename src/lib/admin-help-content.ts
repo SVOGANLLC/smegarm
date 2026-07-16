@@ -213,9 +213,9 @@ export const ADMIN_HELP_SECTIONS: HelpSection[] = [
     title: ["Уведомления Telegram", "Telegram notifications", "Telegram ծանուցումներ"],
     paragraphs: [
       [
-        "Привяжите личный chat_id бота @smegarmbot, чтобы получать уведомления о новых заказах и заявках. Инструкция на странице. Кнопка «Тест» проверяет связь.",
-        "Link your Telegram chat_id via @smegarmbot for new order/inquiry alerts.",
-        "Կապել Telegram chat_id-ն։",
+        "Привяжите chat_id бота @smegarmbot и выберите типы: новый заказ, заявка, оплата, отмена заказа, смена роли. Кнопка «Тест» проверяет связь.",
+        "Link @smegarmbot chat_id and choose alert types: orders, inquiries, payments, cancellations, role changes. Use Test to verify.",
+        "Կապել @smegarmbot chat_id-ն և ընտրել ծանուցումների տեսակները։",
       ],
     ],
     link: { to: "/admini/notifications", label: ["Открыть уведомления", "Open notifications", "Բացել ծանուցումները"] },
