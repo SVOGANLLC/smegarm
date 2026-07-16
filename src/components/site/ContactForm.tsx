@@ -1,10 +1,20 @@
 import { useState, type FormEvent } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
 import { useI18n } from "@/lib/i18n";
+import { submitInquiry } from "@/lib/inquiries.functions";
 import { toast } from "sonner";
 
-export function ContactForm({ className, variant = "light" }: { className?: string; variant?: "light" | "dark" }) {
+export function ContactForm({
+  className,
+  variant = "light",
+  productSku,
+}: {
+  className?: string;
+  variant?: "light" | "dark";
+  productSku?: string;
+}) {
   const { t, lang } = useI18n();
+  const send = useServerFn(submitInquiry);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -30,18 +40,23 @@ export function ContactForm({ className, variant = "light" }: { className?: stri
     e.preventDefault();
     if (!name.trim()) return;
     setBusy(true);
-    const { error } = await supabase.from("inquiries").insert({
-      name: name.trim().slice(0, 200),
-      phone: phone.trim().slice(0, 50) || null,
-      email: email.trim().slice(0, 255) || null,
-      message: message.trim().slice(0, 2000) || null,
-      lang,
-    });
-    setBusy(false);
-    if (error) {
+    try {
+      await send({
+        data: {
+          name: name.trim(),
+          phone: phone.trim(),
+          email: email.trim(),
+          message: message.trim(),
+          product_sku: productSku,
+          lang,
+        },
+      });
+    } catch {
+      setBusy(false);
       toast.error(t("contact.error"));
       return;
     }
+    setBusy(false);
     setSent(true);
     setName("");
     setPhone("");
