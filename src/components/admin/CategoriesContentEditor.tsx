@@ -57,6 +57,10 @@ export function CategoriesContentEditor({
         <Link to="/admini/menu" className="underline hover:text-foreground">
           {t("admin.nav.menuGroups")}
         </Link>
+        .{" "}
+        <Link to="/admini/categories" className="underline hover:text-foreground">
+          {t("admin.categories.editNamesLink")}
+        </Link>
       </p>
 
       <div>

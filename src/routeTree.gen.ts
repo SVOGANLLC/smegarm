@@ -9,90 +9,55 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as ServiceRouteImport } from './routes/service'
-import { Route as SaleRouteImport } from './routes/sale'
-import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
-import { Route as NewsRouteImport } from './routes/news'
-import { Route as HouseOfCoffeeRouteImport } from './routes/house-of-coffee'
-import { Route as CheckoutRouteImport } from './routes/checkout'
-import { Route as CatalogRouteImport } from './routes/catalog'
-import { Route as BusinessRouteImport } from './routes/business'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as NewsIndexRouteImport } from './routes/news.index'
-import { Route as ProductSkuRouteImport } from './routes/product.$sku'
-import { Route as OrderIdRouteImport } from './routes/order.$id'
-import { Route as NewsSlugRouteImport } from './routes/news.$slug'
-import { Route as CollectionSlugRouteImport } from './routes/collection.$slug'
-import { Route as AdminChar123SplatChar125RouteImport } from './routes/admin.{-$splat}'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BusinessRouteImport } from './routes/business'
+import { Route as CatalogRouteImport } from './routes/catalog'
+import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as HouseOfCoffeeRouteImport } from './routes/house-of-coffee'
+import { Route as NewsRouteImport } from './routes/news'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as SaleRouteImport } from './routes/sale'
+import { Route as ServiceRouteImport } from './routes/service'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedAdminiRouteRouteImport } from './routes/_authenticated/admini/route'
+import { Route as AdminChar123SplatChar125RouteImport } from './routes/admin.{-$splat}'
+import { Route as CollectionSlugRouteImport } from './routes/collection.$slug'
+import { Route as NewsIndexRouteImport } from './routes/news.index'
+import { Route as NewsSlugRouteImport } from './routes/news.$slug'
+import { Route as OrderIdRouteImport } from './routes/order.$id'
+import { Route as ProductSkuRouteImport } from './routes/product.$sku'
 import { Route as AuthenticatedAdminiIndexRouteImport } from './routes/_authenticated/admini/index'
-import { Route as PaymentConverseReturnRouteImport } from './routes/payment.converse.return'
-import { Route as AuthenticatedAdminiToolsRouteImport } from './routes/_authenticated/admini/tools'
-import { Route as AuthenticatedAdminiTeamRouteImport } from './routes/_authenticated/admini/team'
-import { Route as AuthenticatedAdminiProductsRouteImport } from './routes/_authenticated/admini/products'
-import { Route as AuthenticatedAdminiPartnersRouteImport } from './routes/_authenticated/admini/partners'
-import { Route as AuthenticatedAdminiOrdersRouteImport } from './routes/_authenticated/admini/orders'
-import { Route as AuthenticatedAdminiNotificationsRouteImport } from './routes/_authenticated/admini/notifications'
-import { Route as AuthenticatedAdminiNewsRouteImport } from './routes/_authenticated/admini/news'
-import { Route as AuthenticatedAdminiMenuRouteImport } from './routes/_authenticated/admini/menu'
-import { Route as AuthenticatedAdminiInquiriesRouteImport } from './routes/_authenticated/admini/inquiries'
-import { Route as AuthenticatedAdminiHelpRouteImport } from './routes/_authenticated/admini/help'
-import { Route as AuthenticatedAdminiGroupsRouteImport } from './routes/_authenticated/admini/groups'
-import { Route as AuthenticatedAdminiContentRouteImport } from './routes/_authenticated/admini/content'
-import { Route as AuthenticatedAdminiCollectionsRouteImport } from './routes/_authenticated/admini/collections'
 import { Route as AuthenticatedAdminiAnalyticsRouteImport } from './routes/_authenticated/admini/analytics'
+import { Route as AuthenticatedAdminiCategoriesRouteImport } from './routes/_authenticated/admini/categories'
+import { Route as AuthenticatedAdminiCollectionsRouteImport } from './routes/_authenticated/admini/collections'
+import { Route as AuthenticatedAdminiContentRouteImport } from './routes/_authenticated/admini/content'
+import { Route as AuthenticatedAdminiGroupsRouteImport } from './routes/_authenticated/admini/groups'
+import { Route as AuthenticatedAdminiHelpRouteImport } from './routes/_authenticated/admini/help'
+import { Route as AuthenticatedAdminiInquiriesRouteImport } from './routes/_authenticated/admini/inquiries'
+import { Route as AuthenticatedAdminiMenuRouteImport } from './routes/_authenticated/admini/menu'
+import { Route as AuthenticatedAdminiNewsRouteImport } from './routes/_authenticated/admini/news'
+import { Route as AuthenticatedAdminiNotificationsRouteImport } from './routes/_authenticated/admini/notifications'
+import { Route as AuthenticatedAdminiOrdersRouteImport } from './routes/_authenticated/admini/orders'
+import { Route as AuthenticatedAdminiPartnersRouteImport } from './routes/_authenticated/admini/partners'
+import { Route as AuthenticatedAdminiProductsRouteImport } from './routes/_authenticated/admini/products'
+import { Route as AuthenticatedAdminiTeamRouteImport } from './routes/_authenticated/admini/team'
+import { Route as AuthenticatedAdminiToolsRouteImport } from './routes/_authenticated/admini/tools'
+import { Route as PaymentConverseReturnRouteImport } from './routes/payment.converse.return'
 import { Route as AuthenticatedAdminiProductsIndexRouteImport } from './routes/_authenticated/admini/products.index'
-import { Route as ApiPublicTranslateTickRouteImport } from './routes/api/public/translate/tick'
-import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as AuthenticatedAdminiProductsSkuRouteImport } from './routes/_authenticated/admini/products.$sku'
+import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
+import { Route as ApiPublicTranslateTickRouteImport } from './routes/api/public/translate/tick'
 import { Route as ApiPublicEmailQueueProcessRouteImport } from './routes/api/public/email/queue/process'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ServiceRoute = ServiceRouteImport.update({
-  id: '/service',
-  path: '/service',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SaleRoute = SaleRouteImport.update({
-  id: '/sale',
-  path: '/sale',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
-  id: '/robots.txt',
-  path: '/robots.txt',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NewsRoute = NewsRouteImport.update({
-  id: '/news',
-  path: '/news',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HouseOfCoffeeRoute = HouseOfCoffeeRouteImport.update({
-  id: '/house-of-coffee',
-  path: '/house-of-coffee',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CheckoutRoute = CheckoutRouteImport.update({
-  id: '/checkout',
-  path: '/checkout',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CatalogRoute = CatalogRouteImport.update({
-  id: '/catalog',
-  path: '/catalog',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BusinessRoute = BusinessRouteImport.update({
-  id: '/business',
-  path: '/business',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -100,13 +65,66 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const BusinessRoute = BusinessRouteImport.update({
+  id: '/business',
+  path: '/business',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const CatalogRoute = CatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HouseOfCoffeeRoute = HouseOfCoffeeRouteImport.update({
+  id: '/house-of-coffee',
+  path: '/house-of-coffee',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsRoute = NewsRouteImport.update({
+  id: '/news',
+  path: '/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SaleRoute = SaleRouteImport.update({
+  id: '/sale',
+  path: '/sale',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServiceRoute = ServiceRouteImport.update({
+  id: '/service',
+  path: '/service',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminiRouteRoute =
+  AuthenticatedAdminiRouteRouteImport.update({
+    id: '/admini',
+    path: '/admini',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AdminChar123SplatChar125Route =
+  AdminChar123SplatChar125RouteImport.update({
+    id: '/admin/{-$splat}',
+    path: '/admin/{-$splat}',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CollectionSlugRoute = CollectionSlugRouteImport.update({
+  id: '/collection/$slug',
+  path: '/collection/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NewsIndexRoute = NewsIndexRouteImport.update({
@@ -114,121 +132,25 @@ const NewsIndexRoute = NewsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => NewsRoute,
 } as any)
-const ProductSkuRoute = ProductSkuRouteImport.update({
-  id: '/product/$sku',
-  path: '/product/$sku',
-  getParentRoute: () => rootRouteImport,
+const NewsSlugRoute = NewsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => NewsRoute,
 } as any)
 const OrderIdRoute = OrderIdRouteImport.update({
   id: '/order/$id',
   path: '/order/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const NewsSlugRoute = NewsSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => NewsRoute,
-} as any)
-const CollectionSlugRoute = CollectionSlugRouteImport.update({
-  id: '/collection/$slug',
-  path: '/collection/$slug',
+const ProductSkuRoute = ProductSkuRouteImport.update({
+  id: '/product/$sku',
+  path: '/product/$sku',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminChar123SplatChar125Route =
-  AdminChar123SplatChar125RouteImport.update({
-    id: '/admin/{-$splat}',
-    path: '/admin/{-$splat}',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthenticatedAdminiRouteRoute =
-  AuthenticatedAdminiRouteRouteImport.update({
-    id: '/admini',
-    path: '/admini',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedAdminiIndexRoute =
   AuthenticatedAdminiIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AuthenticatedAdminiRouteRoute,
-  } as any)
-const PaymentConverseReturnRoute = PaymentConverseReturnRouteImport.update({
-  id: '/payment/converse/return',
-  path: '/payment/converse/return',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedAdminiToolsRoute =
-  AuthenticatedAdminiToolsRouteImport.update({
-    id: '/tools',
-    path: '/tools',
-    getParentRoute: () => AuthenticatedAdminiRouteRoute,
-  } as any)
-const AuthenticatedAdminiTeamRoute = AuthenticatedAdminiTeamRouteImport.update({
-  id: '/team',
-  path: '/team',
-  getParentRoute: () => AuthenticatedAdminiRouteRoute,
-} as any)
-const AuthenticatedAdminiProductsRoute =
-  AuthenticatedAdminiProductsRouteImport.update({
-    id: '/products',
-    path: '/products',
-    getParentRoute: () => AuthenticatedAdminiRouteRoute,
-  } as any)
-const AuthenticatedAdminiPartnersRoute =
-  AuthenticatedAdminiPartnersRouteImport.update({
-    id: '/partners',
-    path: '/partners',
-    getParentRoute: () => AuthenticatedAdminiRouteRoute,
-  } as any)
-const AuthenticatedAdminiOrdersRoute =
-  AuthenticatedAdminiOrdersRouteImport.update({
-    id: '/orders',
-    path: '/orders',
-    getParentRoute: () => AuthenticatedAdminiRouteRoute,
-  } as any)
-const AuthenticatedAdminiNotificationsRoute =
-  AuthenticatedAdminiNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
-    getParentRoute: () => AuthenticatedAdminiRouteRoute,
-  } as any)
-const AuthenticatedAdminiNewsRoute = AuthenticatedAdminiNewsRouteImport.update({
-  id: '/news',
-  path: '/news',
-  getParentRoute: () => AuthenticatedAdminiRouteRoute,
-} as any)
-const AuthenticatedAdminiMenuRoute = AuthenticatedAdminiMenuRouteImport.update({
-  id: '/menu',
-  path: '/menu',
-  getParentRoute: () => AuthenticatedAdminiRouteRoute,
-} as any)
-const AuthenticatedAdminiInquiriesRoute =
-  AuthenticatedAdminiInquiriesRouteImport.update({
-    id: '/inquiries',
-    path: '/inquiries',
-    getParentRoute: () => AuthenticatedAdminiRouteRoute,
-  } as any)
-const AuthenticatedAdminiHelpRoute = AuthenticatedAdminiHelpRouteImport.update({
-  id: '/help',
-  path: '/help',
-  getParentRoute: () => AuthenticatedAdminiRouteRoute,
-} as any)
-const AuthenticatedAdminiGroupsRoute =
-  AuthenticatedAdminiGroupsRouteImport.update({
-    id: '/groups',
-    path: '/groups',
-    getParentRoute: () => AuthenticatedAdminiRouteRoute,
-  } as any)
-const AuthenticatedAdminiContentRoute =
-  AuthenticatedAdminiContentRouteImport.update({
-    id: '/content',
-    path: '/content',
-    getParentRoute: () => AuthenticatedAdminiRouteRoute,
-  } as any)
-const AuthenticatedAdminiCollectionsRoute =
-  AuthenticatedAdminiCollectionsRouteImport.update({
-    id: '/collections',
-    path: '/collections',
     getParentRoute: () => AuthenticatedAdminiRouteRoute,
   } as any)
 const AuthenticatedAdminiAnalyticsRoute =
@@ -237,22 +159,96 @@ const AuthenticatedAdminiAnalyticsRoute =
     path: '/analytics',
     getParentRoute: () => AuthenticatedAdminiRouteRoute,
   } as any)
+const AuthenticatedAdminiCategoriesRoute =
+  AuthenticatedAdminiCategoriesRouteImport.update({
+    id: '/categories',
+    path: '/categories',
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
+  } as any)
+const AuthenticatedAdminiCollectionsRoute =
+  AuthenticatedAdminiCollectionsRouteImport.update({
+    id: '/collections',
+    path: '/collections',
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
+  } as any)
+const AuthenticatedAdminiContentRoute =
+  AuthenticatedAdminiContentRouteImport.update({
+    id: '/content',
+    path: '/content',
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
+  } as any)
+const AuthenticatedAdminiGroupsRoute =
+  AuthenticatedAdminiGroupsRouteImport.update({
+    id: '/groups',
+    path: '/groups',
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
+  } as any)
+const AuthenticatedAdminiHelpRoute = AuthenticatedAdminiHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => AuthenticatedAdminiRouteRoute,
+} as any)
+const AuthenticatedAdminiInquiriesRoute =
+  AuthenticatedAdminiInquiriesRouteImport.update({
+    id: '/inquiries',
+    path: '/inquiries',
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
+  } as any)
+const AuthenticatedAdminiMenuRoute = AuthenticatedAdminiMenuRouteImport.update({
+  id: '/menu',
+  path: '/menu',
+  getParentRoute: () => AuthenticatedAdminiRouteRoute,
+} as any)
+const AuthenticatedAdminiNewsRoute = AuthenticatedAdminiNewsRouteImport.update({
+  id: '/news',
+  path: '/news',
+  getParentRoute: () => AuthenticatedAdminiRouteRoute,
+} as any)
+const AuthenticatedAdminiNotificationsRoute =
+  AuthenticatedAdminiNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
+  } as any)
+const AuthenticatedAdminiOrdersRoute =
+  AuthenticatedAdminiOrdersRouteImport.update({
+    id: '/orders',
+    path: '/orders',
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
+  } as any)
+const AuthenticatedAdminiPartnersRoute =
+  AuthenticatedAdminiPartnersRouteImport.update({
+    id: '/partners',
+    path: '/partners',
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
+  } as any)
+const AuthenticatedAdminiProductsRoute =
+  AuthenticatedAdminiProductsRouteImport.update({
+    id: '/products',
+    path: '/products',
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
+  } as any)
+const AuthenticatedAdminiTeamRoute = AuthenticatedAdminiTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AuthenticatedAdminiRouteRoute,
+} as any)
+const AuthenticatedAdminiToolsRoute =
+  AuthenticatedAdminiToolsRouteImport.update({
+    id: '/tools',
+    path: '/tools',
+    getParentRoute: () => AuthenticatedAdminiRouteRoute,
+  } as any)
+const PaymentConverseReturnRoute = PaymentConverseReturnRouteImport.update({
+  id: '/payment/converse/return',
+  path: '/payment/converse/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminiProductsIndexRoute =
   AuthenticatedAdminiProductsIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedAdminiProductsRoute,
-  } as any)
-const ApiPublicTranslateTickRoute = ApiPublicTranslateTickRouteImport.update({
-  id: '/api/public/translate/tick',
-  path: '/api/public/translate/tick',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicTelegramWebhookRoute =
-  ApiPublicTelegramWebhookRouteImport.update({
-    id: '/api/public/telegram/webhook',
-    path: '/api/public/telegram/webhook',
-    getParentRoute: () => rootRouteImport,
   } as any)
 const AuthenticatedAdminiProductsSkuRoute =
   AuthenticatedAdminiProductsSkuRouteImport.update({
@@ -260,6 +256,17 @@ const AuthenticatedAdminiProductsSkuRoute =
     path: '/$sku',
     getParentRoute: () => AuthenticatedAdminiProductsRoute,
   } as any)
+const ApiPublicTelegramWebhookRoute =
+  ApiPublicTelegramWebhookRouteImport.update({
+    id: '/api/public/telegram/webhook',
+    path: '/api/public/telegram/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTranslateTickRoute = ApiPublicTranslateTickRouteImport.update({
+  id: '/api/public/translate/tick',
+  path: '/api/public/translate/tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicEmailQueueProcessRoute =
   ApiPublicEmailQueueProcessRouteImport.update({
     id: '/api/public/email/queue/process',
@@ -287,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/product/$sku': typeof ProductSkuRoute
   '/news/': typeof NewsIndexRoute
   '/admini/analytics': typeof AuthenticatedAdminiAnalyticsRoute
+  '/admini/categories': typeof AuthenticatedAdminiCategoriesRoute
   '/admini/collections': typeof AuthenticatedAdminiCollectionsRoute
   '/admini/content': typeof AuthenticatedAdminiContentRoute
   '/admini/groups': typeof AuthenticatedAdminiGroupsRoute
@@ -326,6 +334,7 @@ export interface FileRoutesByTo {
   '/product/$sku': typeof ProductSkuRoute
   '/news': typeof NewsIndexRoute
   '/admini/analytics': typeof AuthenticatedAdminiAnalyticsRoute
+  '/admini/categories': typeof AuthenticatedAdminiCategoriesRoute
   '/admini/collections': typeof AuthenticatedAdminiCollectionsRoute
   '/admini/content': typeof AuthenticatedAdminiContentRoute
   '/admini/groups': typeof AuthenticatedAdminiGroupsRoute
@@ -368,6 +377,7 @@ export interface FileRoutesById {
   '/product/$sku': typeof ProductSkuRoute
   '/news/': typeof NewsIndexRoute
   '/_authenticated/admini/analytics': typeof AuthenticatedAdminiAnalyticsRoute
+  '/_authenticated/admini/categories': typeof AuthenticatedAdminiCategoriesRoute
   '/_authenticated/admini/collections': typeof AuthenticatedAdminiCollectionsRoute
   '/_authenticated/admini/content': typeof AuthenticatedAdminiContentRoute
   '/_authenticated/admini/groups': typeof AuthenticatedAdminiGroupsRoute
@@ -411,6 +421,7 @@ export interface FileRouteTypes {
     | '/product/$sku'
     | '/news/'
     | '/admini/analytics'
+    | '/admini/categories'
     | '/admini/collections'
     | '/admini/content'
     | '/admini/groups'
@@ -450,6 +461,7 @@ export interface FileRouteTypes {
     | '/product/$sku'
     | '/news'
     | '/admini/analytics'
+    | '/admini/categories'
     | '/admini/collections'
     | '/admini/content'
     | '/admini/groups'
@@ -491,6 +503,7 @@ export interface FileRouteTypes {
     | '/product/$sku'
     | '/news/'
     | '/_authenticated/admini/analytics'
+    | '/_authenticated/admini/categories'
     | '/_authenticated/admini/collections'
     | '/_authenticated/admini/content'
     | '/_authenticated/admini/groups'
@@ -538,74 +551,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/service': {
-      id: '/service'
-      path: '/service'
-      fullPath: '/service'
-      preLoaderRoute: typeof ServiceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sale': {
-      id: '/sale'
-      path: '/sale'
-      fullPath: '/sale'
-      preLoaderRoute: typeof SaleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/robots.txt': {
-      id: '/robots.txt'
-      path: '/robots.txt'
-      fullPath: '/robots.txt'
-      preLoaderRoute: typeof RobotsDottxtRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/news': {
-      id: '/news'
-      path: '/news'
-      fullPath: '/news'
-      preLoaderRoute: typeof NewsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/house-of-coffee': {
-      id: '/house-of-coffee'
-      path: '/house-of-coffee'
-      fullPath: '/house-of-coffee'
-      preLoaderRoute: typeof HouseOfCoffeeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/checkout': {
-      id: '/checkout'
-      path: '/checkout'
-      fullPath: '/checkout'
-      preLoaderRoute: typeof CheckoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/catalog': {
-      id: '/catalog'
-      path: '/catalog'
-      fullPath: '/catalog'
-      preLoaderRoute: typeof CatalogRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/business': {
-      id: '/business'
-      path: '/business'
-      fullPath: '/business'
-      preLoaderRoute: typeof BusinessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -615,53 +565,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/news/': {
-      id: '/news/'
-      path: '/'
-      fullPath: '/news/'
-      preLoaderRoute: typeof NewsIndexRouteImport
-      parentRoute: typeof NewsRoute
-    }
-    '/product/$sku': {
-      id: '/product/$sku'
-      path: '/product/$sku'
-      fullPath: '/product/$sku'
-      preLoaderRoute: typeof ProductSkuRouteImport
+    '/business': {
+      id: '/business'
+      path: '/business'
+      fullPath: '/business'
+      preLoaderRoute: typeof BusinessRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/order/$id': {
-      id: '/order/$id'
-      path: '/order/$id'
-      fullPath: '/order/$id'
-      preLoaderRoute: typeof OrderIdRouteImport
+    '/catalog': {
+      id: '/catalog'
+      path: '/catalog'
+      fullPath: '/catalog'
+      preLoaderRoute: typeof CatalogRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/news/$slug': {
-      id: '/news/$slug'
-      path: '/$slug'
-      fullPath: '/news/$slug'
-      preLoaderRoute: typeof NewsSlugRouteImport
-      parentRoute: typeof NewsRoute
-    }
-    '/collection/$slug': {
-      id: '/collection/$slug'
-      path: '/collection/$slug'
-      fullPath: '/collection/$slug'
-      preLoaderRoute: typeof CollectionSlugRouteImport
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/{-$splat}': {
-      id: '/admin/{-$splat}'
-      path: '/admin/{-$splat}'
-      fullPath: '/admin/{-$splat}'
-      preLoaderRoute: typeof AdminChar123SplatChar125RouteImport
+    '/house-of-coffee': {
+      id: '/house-of-coffee'
+      path: '/house-of-coffee'
+      fullPath: '/house-of-coffee'
+      preLoaderRoute: typeof HouseOfCoffeeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news': {
+      id: '/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof NewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sale': {
+      id: '/sale'
+      path: '/sale'
+      fullPath: '/sale'
+      preLoaderRoute: typeof SaleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/service': {
+      id: '/service'
+      path: '/service'
+      fullPath: '/service'
+      preLoaderRoute: typeof ServiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admini': {
@@ -671,109 +642,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminiRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/admin/{-$splat}': {
+      id: '/admin/{-$splat}'
+      path: '/admin/{-$splat}'
+      fullPath: '/admin/{-$splat}'
+      preLoaderRoute: typeof AdminChar123SplatChar125RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/collection/$slug': {
+      id: '/collection/$slug'
+      path: '/collection/$slug'
+      fullPath: '/collection/$slug'
+      preLoaderRoute: typeof CollectionSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news/': {
+      id: '/news/'
+      path: '/'
+      fullPath: '/news/'
+      preLoaderRoute: typeof NewsIndexRouteImport
+      parentRoute: typeof NewsRoute
+    }
+    '/news/$slug': {
+      id: '/news/$slug'
+      path: '/$slug'
+      fullPath: '/news/$slug'
+      preLoaderRoute: typeof NewsSlugRouteImport
+      parentRoute: typeof NewsRoute
+    }
+    '/order/$id': {
+      id: '/order/$id'
+      path: '/order/$id'
+      fullPath: '/order/$id'
+      preLoaderRoute: typeof OrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/$sku': {
+      id: '/product/$sku'
+      path: '/product/$sku'
+      fullPath: '/product/$sku'
+      preLoaderRoute: typeof ProductSkuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admini/': {
       id: '/_authenticated/admini/'
       path: '/'
       fullPath: '/admini/'
       preLoaderRoute: typeof AuthenticatedAdminiIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminiRouteRoute
-    }
-    '/payment/converse/return': {
-      id: '/payment/converse/return'
-      path: '/payment/converse/return'
-      fullPath: '/payment/converse/return'
-      preLoaderRoute: typeof PaymentConverseReturnRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/admini/tools': {
-      id: '/_authenticated/admini/tools'
-      path: '/tools'
-      fullPath: '/admini/tools'
-      preLoaderRoute: typeof AuthenticatedAdminiToolsRouteImport
-      parentRoute: typeof AuthenticatedAdminiRouteRoute
-    }
-    '/_authenticated/admini/team': {
-      id: '/_authenticated/admini/team'
-      path: '/team'
-      fullPath: '/admini/team'
-      preLoaderRoute: typeof AuthenticatedAdminiTeamRouteImport
-      parentRoute: typeof AuthenticatedAdminiRouteRoute
-    }
-    '/_authenticated/admini/products': {
-      id: '/_authenticated/admini/products'
-      path: '/products'
-      fullPath: '/admini/products'
-      preLoaderRoute: typeof AuthenticatedAdminiProductsRouteImport
-      parentRoute: typeof AuthenticatedAdminiRouteRoute
-    }
-    '/_authenticated/admini/partners': {
-      id: '/_authenticated/admini/partners'
-      path: '/partners'
-      fullPath: '/admini/partners'
-      preLoaderRoute: typeof AuthenticatedAdminiPartnersRouteImport
-      parentRoute: typeof AuthenticatedAdminiRouteRoute
-    }
-    '/_authenticated/admini/orders': {
-      id: '/_authenticated/admini/orders'
-      path: '/orders'
-      fullPath: '/admini/orders'
-      preLoaderRoute: typeof AuthenticatedAdminiOrdersRouteImport
-      parentRoute: typeof AuthenticatedAdminiRouteRoute
-    }
-    '/_authenticated/admini/notifications': {
-      id: '/_authenticated/admini/notifications'
-      path: '/notifications'
-      fullPath: '/admini/notifications'
-      preLoaderRoute: typeof AuthenticatedAdminiNotificationsRouteImport
-      parentRoute: typeof AuthenticatedAdminiRouteRoute
-    }
-    '/_authenticated/admini/news': {
-      id: '/_authenticated/admini/news'
-      path: '/news'
-      fullPath: '/admini/news'
-      preLoaderRoute: typeof AuthenticatedAdminiNewsRouteImport
-      parentRoute: typeof AuthenticatedAdminiRouteRoute
-    }
-    '/_authenticated/admini/menu': {
-      id: '/_authenticated/admini/menu'
-      path: '/menu'
-      fullPath: '/admini/menu'
-      preLoaderRoute: typeof AuthenticatedAdminiMenuRouteImport
-      parentRoute: typeof AuthenticatedAdminiRouteRoute
-    }
-    '/_authenticated/admini/inquiries': {
-      id: '/_authenticated/admini/inquiries'
-      path: '/inquiries'
-      fullPath: '/admini/inquiries'
-      preLoaderRoute: typeof AuthenticatedAdminiInquiriesRouteImport
-      parentRoute: typeof AuthenticatedAdminiRouteRoute
-    }
-    '/_authenticated/admini/help': {
-      id: '/_authenticated/admini/help'
-      path: '/help'
-      fullPath: '/admini/help'
-      preLoaderRoute: typeof AuthenticatedAdminiHelpRouteImport
-      parentRoute: typeof AuthenticatedAdminiRouteRoute
-    }
-    '/_authenticated/admini/groups': {
-      id: '/_authenticated/admini/groups'
-      path: '/groups'
-      fullPath: '/admini/groups'
-      preLoaderRoute: typeof AuthenticatedAdminiGroupsRouteImport
-      parentRoute: typeof AuthenticatedAdminiRouteRoute
-    }
-    '/_authenticated/admini/content': {
-      id: '/_authenticated/admini/content'
-      path: '/content'
-      fullPath: '/admini/content'
-      preLoaderRoute: typeof AuthenticatedAdminiContentRouteImport
-      parentRoute: typeof AuthenticatedAdminiRouteRoute
-    }
-    '/_authenticated/admini/collections': {
-      id: '/_authenticated/admini/collections'
-      path: '/collections'
-      fullPath: '/admini/collections'
-      preLoaderRoute: typeof AuthenticatedAdminiCollectionsRouteImport
       parentRoute: typeof AuthenticatedAdminiRouteRoute
     }
     '/_authenticated/admini/analytics': {
@@ -783,6 +698,111 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminiAnalyticsRouteImport
       parentRoute: typeof AuthenticatedAdminiRouteRoute
     }
+    '/_authenticated/admini/categories': {
+      id: '/_authenticated/admini/categories'
+      path: '/categories'
+      fullPath: '/admini/categories'
+      preLoaderRoute: typeof AuthenticatedAdminiCategoriesRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
+    '/_authenticated/admini/collections': {
+      id: '/_authenticated/admini/collections'
+      path: '/collections'
+      fullPath: '/admini/collections'
+      preLoaderRoute: typeof AuthenticatedAdminiCollectionsRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
+    '/_authenticated/admini/content': {
+      id: '/_authenticated/admini/content'
+      path: '/content'
+      fullPath: '/admini/content'
+      preLoaderRoute: typeof AuthenticatedAdminiContentRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
+    '/_authenticated/admini/groups': {
+      id: '/_authenticated/admini/groups'
+      path: '/groups'
+      fullPath: '/admini/groups'
+      preLoaderRoute: typeof AuthenticatedAdminiGroupsRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
+    '/_authenticated/admini/help': {
+      id: '/_authenticated/admini/help'
+      path: '/help'
+      fullPath: '/admini/help'
+      preLoaderRoute: typeof AuthenticatedAdminiHelpRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
+    '/_authenticated/admini/inquiries': {
+      id: '/_authenticated/admini/inquiries'
+      path: '/inquiries'
+      fullPath: '/admini/inquiries'
+      preLoaderRoute: typeof AuthenticatedAdminiInquiriesRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
+    '/_authenticated/admini/menu': {
+      id: '/_authenticated/admini/menu'
+      path: '/menu'
+      fullPath: '/admini/menu'
+      preLoaderRoute: typeof AuthenticatedAdminiMenuRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
+    '/_authenticated/admini/news': {
+      id: '/_authenticated/admini/news'
+      path: '/news'
+      fullPath: '/admini/news'
+      preLoaderRoute: typeof AuthenticatedAdminiNewsRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
+    '/_authenticated/admini/notifications': {
+      id: '/_authenticated/admini/notifications'
+      path: '/notifications'
+      fullPath: '/admini/notifications'
+      preLoaderRoute: typeof AuthenticatedAdminiNotificationsRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
+    '/_authenticated/admini/orders': {
+      id: '/_authenticated/admini/orders'
+      path: '/orders'
+      fullPath: '/admini/orders'
+      preLoaderRoute: typeof AuthenticatedAdminiOrdersRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
+    '/_authenticated/admini/partners': {
+      id: '/_authenticated/admini/partners'
+      path: '/partners'
+      fullPath: '/admini/partners'
+      preLoaderRoute: typeof AuthenticatedAdminiPartnersRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
+    '/_authenticated/admini/products': {
+      id: '/_authenticated/admini/products'
+      path: '/products'
+      fullPath: '/admini/products'
+      preLoaderRoute: typeof AuthenticatedAdminiProductsRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
+    '/_authenticated/admini/team': {
+      id: '/_authenticated/admini/team'
+      path: '/team'
+      fullPath: '/admini/team'
+      preLoaderRoute: typeof AuthenticatedAdminiTeamRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
+    '/_authenticated/admini/tools': {
+      id: '/_authenticated/admini/tools'
+      path: '/tools'
+      fullPath: '/admini/tools'
+      preLoaderRoute: typeof AuthenticatedAdminiToolsRouteImport
+      parentRoute: typeof AuthenticatedAdminiRouteRoute
+    }
+    '/payment/converse/return': {
+      id: '/payment/converse/return'
+      path: '/payment/converse/return'
+      fullPath: '/payment/converse/return'
+      preLoaderRoute: typeof PaymentConverseReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admini/products/': {
       id: '/_authenticated/admini/products/'
       path: '/'
@@ -790,12 +810,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminiProductsIndexRouteImport
       parentRoute: typeof AuthenticatedAdminiProductsRoute
     }
-    '/api/public/translate/tick': {
-      id: '/api/public/translate/tick'
-      path: '/api/public/translate/tick'
-      fullPath: '/api/public/translate/tick'
-      preLoaderRoute: typeof ApiPublicTranslateTickRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/admini/products/$sku': {
+      id: '/_authenticated/admini/products/$sku'
+      path: '/$sku'
+      fullPath: '/admini/products/$sku'
+      preLoaderRoute: typeof AuthenticatedAdminiProductsSkuRouteImport
+      parentRoute: typeof AuthenticatedAdminiProductsRoute
     }
     '/api/public/telegram/webhook': {
       id: '/api/public/telegram/webhook'
@@ -804,12 +824,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admini/products/$sku': {
-      id: '/_authenticated/admini/products/$sku'
-      path: '/$sku'
-      fullPath: '/admini/products/$sku'
-      preLoaderRoute: typeof AuthenticatedAdminiProductsSkuRouteImport
-      parentRoute: typeof AuthenticatedAdminiProductsRoute
+    '/api/public/translate/tick': {
+      id: '/api/public/translate/tick'
+      path: '/api/public/translate/tick'
+      fullPath: '/api/public/translate/tick'
+      preLoaderRoute: typeof ApiPublicTranslateTickRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/email/queue/process': {
       id: '/api/public/email/queue/process'
@@ -840,6 +860,7 @@ const AuthenticatedAdminiProductsRouteWithChildren =
 
 interface AuthenticatedAdminiRouteRouteChildren {
   AuthenticatedAdminiAnalyticsRoute: typeof AuthenticatedAdminiAnalyticsRoute
+  AuthenticatedAdminiCategoriesRoute: typeof AuthenticatedAdminiCategoriesRoute
   AuthenticatedAdminiCollectionsRoute: typeof AuthenticatedAdminiCollectionsRoute
   AuthenticatedAdminiContentRoute: typeof AuthenticatedAdminiContentRoute
   AuthenticatedAdminiGroupsRoute: typeof AuthenticatedAdminiGroupsRoute
@@ -859,6 +880,7 @@ interface AuthenticatedAdminiRouteRouteChildren {
 const AuthenticatedAdminiRouteRouteChildren: AuthenticatedAdminiRouteRouteChildren =
   {
     AuthenticatedAdminiAnalyticsRoute: AuthenticatedAdminiAnalyticsRoute,
+    AuthenticatedAdminiCategoriesRoute: AuthenticatedAdminiCategoriesRoute,
     AuthenticatedAdminiCollectionsRoute: AuthenticatedAdminiCollectionsRoute,
     AuthenticatedAdminiContentRoute: AuthenticatedAdminiContentRoute,
     AuthenticatedAdminiGroupsRoute: AuthenticatedAdminiGroupsRoute,
@@ -930,13 +952,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

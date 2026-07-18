@@ -20,6 +20,7 @@ const STATIC: Result[] = [
   { id: "analytics", label: "Аналитика", to: "/admini/analytics" },
   { id: "inquiries", label: "Заявки", to: "/admini/inquiries" },
   { id: "products", label: "Товары", to: "/admini/products" },
+  { id: "categories", label: "Категории", to: "/admini/categories" },
   { id: "collections", label: "Коллекции", to: "/admini/collections" },
   { id: "menu", label: "Подборки меню", to: "/admini/menu" },
   { id: "groups", label: "Цветовые группы", to: "/admini/groups" },

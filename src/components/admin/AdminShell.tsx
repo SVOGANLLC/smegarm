@@ -21,6 +21,7 @@ import {
   Palette,
   BarChart3,
   Newspaper,
+  Tags,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n, type Lang } from "@/lib/i18n";
@@ -36,6 +37,7 @@ const mainNav: NavItem[] = [
   { to: "/admini/analytics", labelKey: "admin.nav.analytics", icon: BarChart3 },
   { to: "/admini/inquiries", labelKey: "admin.nav.inquiries", icon: Inbox },
   { to: "/admini/products", labelKey: "admin.nav.products", icon: Package },
+  { to: "/admini/categories", labelKey: "admin.nav.categories", icon: Tags },
   { to: "/admini/collections", labelKey: "admin.nav.collections", icon: Layers },
   { to: "/admini/menu", labelKey: "admin.nav.menuGroups", icon: LayoutGrid, adminOnly: true },
   { to: "/admini/groups", labelKey: "admin.nav.variantGroups", icon: Palette, adminOnly: true },
