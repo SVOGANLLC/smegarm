@@ -437,6 +437,9 @@ export async function fetchTheme(key: string): Promise<Theme | null> {
 const VARIANT_COLS =
   "sku,colour,colour_en,colour_hy,main_image,price_amd,model_group,name,name_en,name_hy,availability,stock_qty,stock_reserved,lead_time_days";
 
+/** Max colour variants loaded per model group (art lines can exceed 80). */
+const VARIANT_FETCH_LIMIT = 200;
+
 export async function fetchProductVariants(modelGroup: string, sku?: string): Promise<Variant[]> {
   const key = sku ? variantGroupKey({ sku, model_group: modelGroup }) : modelGroup;
   if (/^HBAC\d+$/i.test(key)) {
@@ -447,7 +450,7 @@ export async function fetchProductVariants(modelGroup: string, sku?: string): Pr
       .eq("is_published", true)
       .not("colour", "is", null)
       .order("sku", { ascending: true })
-      .limit(40);
+      .limit(VARIANT_FETCH_LIMIT);
     if (error) throw error;
     return dedupeVariants((data ?? []) as Variant[]);
   }
@@ -458,7 +461,7 @@ export async function fetchProductVariants(modelGroup: string, sku?: string): Pr
     .eq("is_published", true)
     .not("colour", "is", null)
     .order("sku", { ascending: true })
-    .limit(40);
+    .limit(VARIANT_FETCH_LIMIT);
   if (error) throw error;
   return dedupeVariants((data ?? []) as Variant[]);
 }
@@ -483,7 +486,7 @@ export async function fetchVariantsByModelGroups(modelGroups: string[]): Promise
           .eq("is_published", true)
           .not("colour", "is", null)
           .order("sku", { ascending: true })
-          .limit(40);
+          .limit(VARIANT_FETCH_LIMIT);
         if (error) throw error;
         allRows.push(...((data ?? []) as Variant[]));
       }),

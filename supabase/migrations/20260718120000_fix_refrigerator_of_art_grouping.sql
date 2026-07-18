@@ -1,20 +1,15 @@
--- Refrigerator of Art: each painted fridge is a unique design, not a colour variant.
--- Manual variant_group 'REFRIGERATOR OF ART' collapsed ~85 SKUs into one catalog card.
+-- Restore intentional Refrigerator of Art colour group and include missing DG fridges.
+-- Previous mistaken "split" set variant_group = sku; group was meant to stay one card.
 
-UPDATE public.products
+UPDATE public.products p
 SET
-  variant_group = sku,
-  model_group = upper(trim(sku))
-WHERE upper(trim(COALESCE(variant_group, ''))) = 'REFRIGERATOR OF ART'
-   OR (
-     sku IN (
-       SELECT product_sku FROM public.collection_products
-       WHERE collection_id = (SELECT id FROM collections WHERE slug = 'refrigerator-of-art')
-     )
-     AND upper(trim(COALESCE(model_group, ''))) = 'REFRIGERATOR OF ART'
-   );
+  variant_group = 'REFRIGERATOR OF ART',
+  model_group = 'REFRIGERATOR OF ART'
+WHERE p.is_published
+  AND p.category_en = 'Refrigerators'
+  AND p.theme_key LIKE 'dg_%';
 
--- Link missing published D&G refrigerators into refrigerator-of-art
+-- Ensure collection membership for all published DG refrigerators
 INSERT INTO public.collection_products (collection_id, product_sku, sort_weight)
 SELECT c.id, p.sku, 0
 FROM public.collections c
@@ -24,7 +19,7 @@ JOIN public.products p ON p.is_published
 WHERE c.slug = 'refrigerator-of-art'
 ON CONFLICT (collection_id, product_sku) DO NOTHING;
 
--- Auto-sync: refrigerator-of-art gets all published DG refrigerators
+-- Keep auto-sync for refrigerator-of-art (DG refrigerators)
 CREATE OR REPLACE FUNCTION public.sync_product_collections()
 RETURNS trigger
 LANGUAGE plpgsql
