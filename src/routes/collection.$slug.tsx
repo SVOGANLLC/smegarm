@@ -157,6 +157,9 @@ function CollectionPage() {
                 search={search}
                 onSearchChange={(next) => navigate({ search: next })}
                 filtersOnPanel={!!themeQ.data}
+                // Art / special painted lines are unique designs sharing one colour label —
+                // colour-variant grouping would collapse the whole collection into one card.
+                groupByColor={slug !== "refrigerator-of-art"}
               />
             )}
           </>
