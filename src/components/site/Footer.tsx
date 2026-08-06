@@ -101,6 +101,16 @@ export function Footer() {
           <p>
             {t("footer.designed")}{" "}
             <a
+              href="https://b2ub2b.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="smeg-underline text-background"
+            >
+              b2ub2b
+            </a>
+            {" "}
+            {t("footer.designedAnd")}{" "}
+            <a
               href="https://edgarmanukyan.com"
               target="_blank"
               rel="noopener noreferrer"
