@@ -519,7 +519,7 @@ function EditProduct() {
         className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]"
       >
         <div className="space-y-6">
-          <I18nContent sku={sku} form={form} setForm={setFormField} />
+          <I18nContent sku={sku} form={form} setFormField={setFormField} />
           <Field label={t("admin.product.mainPhoto")}>
             <input
               value={form.main_image}

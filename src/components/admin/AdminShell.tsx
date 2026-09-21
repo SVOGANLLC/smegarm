@@ -142,7 +142,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const currentTitle = currentLabel ? t(currentLabel.labelKey) : t("admin.nav.brand");
 
   return (
-    <div className="admin-shell min-h-screen bg-background text-foreground" data-admin-theme={theme}>
+    <div className="admin-shell min-h-screen bg-background text-foreground" data-admin-theme={theme} translate="no">
       <AdminCommandPalette />
       <div className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur md:hidden">
         <button
