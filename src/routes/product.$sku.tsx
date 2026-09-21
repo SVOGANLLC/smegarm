@@ -8,10 +8,12 @@ import { ThemePageBackground } from "@/components/site/ThemePageBackground";
 import { ProductImageZoom } from "@/components/site/ProductImageZoom";
 import { ColorSwitcher } from "@/components/site/ColorSwitcher";
 import { AddToCartButton } from "@/components/site/AddToCartButton";
+import { PriceBlock } from "@/components/site/ProductCard";
 import { useState, useEffect } from "react";
 import { useI18n, pickLocalized, pickLocalizedSpecs } from "@/lib/i18n";
 import { localizedProductColour } from "@/lib/colour-i18n";
 import { canonicalCategoryKey, categoryLabel } from "@/lib/category-i18n";
+import type { ProductCard as ProductCardType } from "@/lib/products";
 import { deliveryLeadDays, isProductInStock } from "@/lib/availability";
 import {
   breadcrumbJsonLd,
@@ -58,7 +60,10 @@ export const Route = createFileRoute("/product/$sku")({
     ];
     if (catKey && catSlug) {
       crumbs.push({
-        name: categoryLabel(catKey, "hy", p.category_en, p.category_hy),
+        name: categoryLabel(catKey, "hy", {
+          en: p.category_en,
+          hy: p.category_hy,
+        }),
         path: `/catalog?category=${encodeURIComponent(catSlug)}`,
       });
     }
@@ -263,21 +268,19 @@ function ProductPage() {
               </div>
 
               <div className="mt-10 flex flex-wrap gap-3">
-                {(product as unknown as { price_amd?: number | null }).price_amd != null && (
-                  <p className="w-full font-serif text-3xl">
-                    {(product as unknown as { price_amd: number }).price_amd.toLocaleString("ru-RU")} ֏
-                  </p>
-                )}
+                <div className="w-full">
+                  <PriceBlock p={product as ProductCardType} size="pdp" />
+                </div>
                 <AvailabilityBadge product={product} />
                 <div className="hidden lg:contents">
                   <AddToCartButton
                     sku={product.sku}
                     name={name || product.name}
                     image={product.main_image}
-                    price={(product as unknown as { price_amd?: number | null }).price_amd ?? null}
+                    price={product.price_amd ?? null}
                   />
                 </div>
-                {((product as unknown as { price_amd?: number | null }).price_amd == null) && (
+                {product.price_amd == null && (
                   <Link
                     to="/"
                     hash="dealer"
@@ -343,17 +346,15 @@ function ProductPage() {
       {/* Mobile sticky buy bar */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
         <div className="flex items-center gap-3">
-          {(product as unknown as { price_amd?: number | null }).price_amd != null && (
-            <p className="shrink-0 font-serif text-xl">
-              {(product as unknown as { price_amd: number }).price_amd.toLocaleString("ru-RU")} ֏
-            </p>
-          )}
+          <div className="shrink-0">
+            <PriceBlock p={product as ProductCardType} size="pdp-mobile" />
+          </div>
           <div className="min-w-0 flex-1">
             <AddToCartButton
               sku={product.sku}
               name={name || product.name}
               image={product.main_image}
-              price={(product as unknown as { price_amd?: number | null }).price_amd ?? null}
+              price={product.price_amd ?? null}
               className="w-full justify-center"
             />
           </div>

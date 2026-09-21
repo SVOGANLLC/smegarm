@@ -40,10 +40,12 @@ export function PriceBlock({
   p,
   priceFrom,
   variantCount,
+  size = "card",
 }: {
   p: ProductCardType;
   priceFrom?: number | null;
   variantCount?: number;
+  size?: "card" | "pdp" | "pdp-mobile";
 }) {
   const { t } = useI18n();
   const showFrom = (variantCount ?? 0) > 1 && priceFrom != null;
@@ -52,15 +54,23 @@ export function PriceBlock({
   if (!price && !old) {
     return <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{t("product.requestPrice")}</span>;
   }
+  const priceCls =
+    size === "pdp"
+      ? "font-serif text-3xl text-foreground"
+      : size === "pdp-mobile"
+        ? "font-serif text-xl text-foreground"
+        : "text-sm font-medium text-foreground md:text-base";
+  const oldCls =
+    size === "pdp" ? "text-base text-muted-foreground line-through" : "text-xs text-muted-foreground line-through";
   return (
     <div className="flex flex-wrap items-baseline gap-2">
       {price && (
-        <span className="text-sm font-medium text-foreground md:text-base">
+        <span className={priceCls}>
           {showFrom ? `${t("product.priceFrom")} ${price}` : price}
         </span>
       )}
       {!showFrom && old && p.price_old && p.price_amd && p.price_old > p.price_amd && (
-        <span className="text-xs text-muted-foreground line-through">{old}</span>
+        <span className={oldCls}>{old}</span>
       )}
     </div>
   );

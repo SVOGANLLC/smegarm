@@ -108,12 +108,10 @@ function EditProduct() {
   const [renameSku, setRenameSku] = useState("");
   const formDirtyRef = useRef(false);
   const formRef = useRef<FormState | null>(null);
-  const skipHydrateRef = useRef(false);
 
   type FormPatch = Partial<FormState> | ((prev: FormState) => FormState);
 
   const setFormField = useCallback((patch: FormPatch) => {
-    skipHydrateRef.current = false;
     formDirtyRef.current = true;
     setForm((prev) => {
       if (!prev) return prev;
@@ -162,26 +160,28 @@ function EditProduct() {
     const next = productToForm(saved);
     setForm(next);
     formRef.current = next;
-    skipHydrateRef.current = true;
-    qc.setQueryData(["admin-product", sku], saved);
     formDirtyRef.current = false;
+    qc.setQueryData(["admin-product", sku], saved);
     invalidateProductListCaches(qc, sku);
   };
 
   useEffect(() => {
     formDirtyRef.current = false;
-    skipHydrateRef.current = false;
     formRef.current = null;
     setForm(null);
   }, [sku]);
 
+  // Hydrate once per SKU. Never clobber local edits when react-query refetches.
   useEffect(() => {
-    if (!q.data || formDirtyRef.current || skipHydrateRef.current) return;
+    if (!q.data) return;
     const row = q.data as { sku?: string };
     if (row.sku !== sku) return;
-    const next = productToForm(q.data as Record<string, unknown>);
-    setForm(next);
-    formRef.current = next;
+    setForm((prev) => {
+      if (prev !== null) return prev;
+      const next = productToForm(q.data as Record<string, unknown>);
+      formRef.current = next;
+      return next;
+    });
   }, [sku, q.data]);
 
   const parseImageLines = (text: string): string[] =>
@@ -243,7 +243,7 @@ function EditProduct() {
       const leadRaw = f.lead_time_days.trim();
       const leadDays = leadRaw === "" ? null : Math.max(0, Math.min(365, parseInt(leadRaw, 10) || 0));
 
-      const { error: commerceErr } = await supabase
+      const { data, error } = await supabase
         .from("products")
         .update({
           price_amd: price,
@@ -251,13 +251,6 @@ function EditProduct() {
           discount_percent: disc,
           stock_qty: stockQty,
           lead_time_days: leadDays,
-        })
-        .eq("sku", sku);
-      if (commerceErr) throw commerceErr;
-
-      const { data, error } = await supabase
-        .from("products")
-        .update({
           name: f.name.trim().slice(0, 500),
           description: f.description.slice(0, 10000),
           name_en: f.name_en.trim().slice(0, 500) || null,

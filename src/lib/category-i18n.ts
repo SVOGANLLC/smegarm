@@ -108,14 +108,14 @@ export const FAMILY_LABELS: Record<string, { ru: string; en: string; hy: string 
 
 /** Normalize DB category values to a single English canonical key for grouping/filtering. */
 export function canonicalCategoryKey(
-  raw: string,
+  raw: string | null | undefined,
   category_en?: string | null,
   category_hy?: string | null,
 ): string {
   const en = category_en?.trim();
   if (en === "Oven") return "Ovens";
   if (en) return en;
-  const r = raw.trim();
+  const r = (raw ?? "").trim();
   if (!r) return r;
   if (CATEGORY_LABELS[r]) return r;
   const hy = category_hy?.trim();

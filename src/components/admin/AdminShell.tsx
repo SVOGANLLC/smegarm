@@ -166,8 +166,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm md:hidden" onClick={() => setOpen(false)} />
         )}
         <aside
-          className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transform border-r border-border bg-background p-6 transition-transform md:static md:z-auto md:w-auto md:max-w-none md:transform-none md:bg-secondary/30 ${
-            open ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transform border-r border-border bg-background p-6 transition-transform md:static md:z-auto md:w-auto md:max-w-none md:transform-none md:bg-secondary/30 md:pointer-events-auto ${
+            open ? "translate-x-0 pointer-events-auto" : "-translate-x-full pointer-events-none md:translate-x-0"
           }`}
         >
           <div className="flex items-center justify-between md:block">

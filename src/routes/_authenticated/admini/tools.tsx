@@ -401,12 +401,39 @@ function ImportSection() {
 }
 
 // ---------- BULK PRICE ----------
+type PriceRow = { sku: string; name: string; price_amd: number | null; price_old: number | null };
+type PriceMode = "increase" | "decrease" | "set_discount" | "clear_discount";
+
+async function fetchPricedProducts(scope: "all" | "category" | "family", value: string): Promise<PriceRow[]> {
+  const PAGE = 1000;
+  const all: PriceRow[] = [];
+  let from = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    let q = supabase
+      .from("products")
+      .select("sku,name,price_amd,price_old")
+      .not("price_amd", "is", null)
+      .order("sku", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (scope === "category" && value) q = q.eq("category", value);
+    else if (scope === "family" && value) q = q.eq("family", value);
+    const { data, error } = await q;
+    if (error) throw error;
+    const chunk = (data ?? []) as PriceRow[];
+    all.push(...chunk);
+    if (chunk.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
+
 function BulkPriceSection() {
   const { t } = useI18n();
   const [scope, setScope] = useState<"all" | "category" | "family">("category");
   const [value, setValue] = useState("");
   const [percent, setPercent] = useState("5");
-  const [mode, setMode] = useState<"increase" | "decrease" | "set_discount">("increase");
+  const [mode, setMode] = useState<PriceMode>("increase");
   const [roundTo, setRoundTo] = useState("100");
   const [busy, setBusy] = useState(false);
   const qc = useQueryClient();
@@ -430,54 +457,81 @@ function BulkPriceSection() {
   });
 
   const preview = useMutation({
-    mutationFn: async () => {
-      let q = supabase.from("products").select("sku,name,price_amd,price_old");
-      if (scope === "category" && value) q = q.eq("category", value);
-      else if (scope === "family" && value) q = q.eq("family", value);
-      q = q.not("price_amd", "is", null).limit(1000);
-      const { data, error } = await q;
-      if (error) throw error;
-      return data ?? [];
-    },
+    mutationFn: async () => fetchPricedProducts(scope, value),
   });
 
   const pct = Number(percent) || 0;
   const round = Math.max(1, Number(roundTo) || 1);
 
-  function newPrice(curr: number): { price: number; old: number | null } {
-    if (mode === "increase") {
-      const p = Math.round((curr * (1 + pct / 100)) / round) * round;
-      return { price: p, old: null };
-    }
-    if (mode === "decrease") {
-      const p = Math.round((curr * (1 - pct / 100)) / round) * round;
-      return { price: p, old: null };
-    }
-    // set_discount: keep price as old, set new lower price
-    const p = Math.round((curr * (1 - pct / 100)) / round) * round;
-    return { price: p, old: curr };
+  function alreadyOnSale(it: PriceRow): boolean {
+    return it.price_old != null && it.price_amd != null && it.price_old > it.price_amd;
   }
 
+  function newPrice(it: PriceRow): {
+    price: number;
+    old?: number | null;
+    discount?: number;
+    clearSale?: boolean;
+  } | null {
+    if (it.price_amd == null) return null;
+    if (mode === "clear_discount") {
+      if (!alreadyOnSale(it) || it.price_old == null) return null;
+      return { price: it.price_old, old: null, discount: 0, clearSale: true };
+    }
+    if (mode === "increase") {
+      const p = Math.round((it.price_amd * (1 + pct / 100)) / round) * round;
+      return { price: p };
+    }
+    if (mode === "decrease") {
+      const p = Math.round((it.price_amd * (1 - pct / 100)) / round) * round;
+      return { price: p };
+    }
+    // set_discount: skip already-discounted to avoid stacking
+    if (alreadyOnSale(it)) return null;
+    const p = Math.round((it.price_amd * (1 - pct / 100)) / round) * round;
+    return { price: p, old: it.price_amd, discount: pct, clearSale: true };
+  }
+
+  const previewRows = (preview.data ?? [])
+    .map((it) => {
+      const np = newPrice(it);
+      if (!np) return null;
+      return { it, np };
+    })
+    .filter(Boolean) as Array<{
+    it: PriceRow;
+    np: { price: number; old?: number | null; discount?: number; clearSale?: boolean };
+  }>;
+
+  const skippedCount = (preview.data?.length ?? 0) - previewRows.length;
+
   async function apply() {
-    const items = preview.data;
-    if (!items?.length) {
+    if (!previewRows.length) {
       toast.error(t("admin.tools.previewFirst"));
       return;
     }
-    if (!confirm(t("admin.tools.applyConfirm", { n: items.length }))) return;
+    if (!confirm(t("admin.tools.applyConfirm", { n: previewRows.length }))) return;
     setBusy(true);
     try {
       let ok = 0;
-      for (const it of items as Array<{ sku: string; price_amd: number | null }>) {
-        if (it.price_amd == null) continue;
-        const np = newPrice(it.price_amd);
+      for (const { it, np } of previewRows) {
         const patch: Record<string, unknown> = { price_amd: np.price };
-        if (mode === "set_discount") patch.price_old = np.old;
-        const { error } = await supabase.from("products").update(patch as never).eq("sku", it.sku);
+        if (np.clearSale) {
+          patch.price_old = np.old ?? null;
+          patch.discount_percent = Math.max(0, Math.min(90, np.discount ?? 0));
+        }
+        const { data, error } = await supabase
+          .from("products")
+          .update(patch as never)
+          .eq("sku", it.sku)
+          .select("sku")
+          .maybeSingle();
         if (error) throw error;
+        if (!data) throw new Error(t("admin.saveNoRow"));
         ok++;
       }
       toast.success(t("admin.tools.pricesUpdated", { n: ok }));
+      if (skippedCount > 0) toast.message(t("admin.tools.pricesSkipped", { n: skippedCount }));
       qc.invalidateQueries({ queryKey: ["admin-products"] });
       preview.reset();
     } catch (e) {
@@ -526,33 +580,41 @@ function BulkPriceSection() {
           <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">{t("admin.tools.operation")}</span>
           <select
             value={mode}
-            onChange={(e) => setMode(e.target.value as typeof mode)}
+            onChange={(e) => setMode(e.target.value as PriceMode)}
             className="mt-1 w-full rounded-sm border border-border bg-background px-3 py-2"
           >
             <option value="increase">{t("admin.tools.increase")}</option>
             <option value="decrease">{t("admin.tools.decrease")}</option>
             <option value="set_discount">{t("admin.tools.setDiscount")}</option>
+            <option value="clear_discount">{t("admin.tools.clearDiscount")}</option>
           </select>
         </label>
-        <label className="block text-sm">
-          <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">{t("admin.tools.percent")}</span>
-          <input
-            type="number"
-            value={percent}
-            onChange={(e) => setPercent(e.target.value)}
-            className="mt-1 w-full rounded-sm border border-border bg-background px-3 py-2"
-          />
-        </label>
-        <label className="block text-sm">
-          <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">{t("admin.tools.roundTo")}</span>
-          <input
-            type="number"
-            value={roundTo}
-            onChange={(e) => setRoundTo(e.target.value)}
-            className="mt-1 w-full rounded-sm border border-border bg-background px-3 py-2"
-          />
-        </label>
+        {mode !== "clear_discount" && (
+          <label className="block text-sm">
+            <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">{t("admin.tools.percent")}</span>
+            <input
+              type="number"
+              value={percent}
+              onChange={(e) => setPercent(e.target.value)}
+              className="mt-1 w-full rounded-sm border border-border bg-background px-3 py-2"
+            />
+          </label>
+        )}
+        {mode !== "clear_discount" && (
+          <label className="block text-sm">
+            <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground">{t("admin.tools.roundTo")}</span>
+            <input
+              type="number"
+              value={roundTo}
+              onChange={(e) => setRoundTo(e.target.value)}
+              className="mt-1 w-full rounded-sm border border-border bg-background px-3 py-2"
+            />
+          </label>
+        )}
       </div>
+      {mode === "clear_discount" && (
+        <p className="text-xs text-muted-foreground">{t("admin.tools.clearDiscountHint")}</p>
+      )}
       <div className="flex gap-3">
         <button
           onClick={() => preview.mutate()}
@@ -563,7 +625,7 @@ function BulkPriceSection() {
         </button>
         <button
           onClick={apply}
-          disabled={busy || !preview.data?.length}
+          disabled={busy || !previewRows.length}
           className="inline-flex items-center gap-2 rounded-sm bg-foreground px-5 py-2.5 text-sm uppercase tracking-[0.15em] text-background disabled:opacity-50"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
@@ -571,39 +633,38 @@ function BulkPriceSection() {
         </button>
       </div>
       {preview.data && (
-        <div className="max-h-80 overflow-auto rounded-sm border border-border">
-          <table className="w-full text-xs">
-            <thead className="bg-secondary/50 text-left">
-              <tr>
-                <th className="p-2">SKU</th>
-                <th className="p-2">{t("admin.products.nameLabel")}</th>
-                <th className="p-2 text-right">{t("admin.tools.colWas")}</th>
-                <th className="p-2 text-right">{t("admin.tools.colWill")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(preview.data as Array<{ sku: string; name: string; price_amd: number | null }>)
-                .slice(0, 200)
-                .map((it) => {
-                  const np = it.price_amd != null ? newPrice(it.price_amd) : null;
-                  return (
-                    <tr key={it.sku} className="border-t border-border">
-                      <td className="p-2 font-mono">{it.sku}</td>
-                      <td className="p-2">{it.name}</td>
-                      <td className="p-2 text-right">{it.price_amd?.toLocaleString("ru-RU")}</td>
-                      <td className="p-2 text-right font-semibold">
-                        {np?.price.toLocaleString("ru-RU")}
-                      </td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </table>
-          {preview.data.length > 200 && (
-            <div className="border-t border-border p-2 text-center text-xs text-muted-foreground">
-              {t("admin.tools.moreRows", { n: preview.data.length - 200 })}
-            </div>
-          )}
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            {t("admin.tools.applyConfirm", { n: previewRows.length }).replace("?", "")}
+            {skippedCount > 0 ? ` · ${t("admin.tools.pricesSkipped", { n: skippedCount })}` : ""}
+          </p>
+          <div className="max-h-80 overflow-auto rounded-sm border border-border">
+            <table className="w-full text-xs">
+              <thead className="bg-secondary/50 text-left">
+                <tr>
+                  <th className="p-2">SKU</th>
+                  <th className="p-2">{t("admin.products.nameLabel")}</th>
+                  <th className="p-2 text-right">{t("admin.tools.colWas")}</th>
+                  <th className="p-2 text-right">{t("admin.tools.colWill")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {previewRows.slice(0, 200).map(({ it, np }) => (
+                  <tr key={it.sku} className="border-t border-border">
+                    <td className="p-2 font-mono">{it.sku}</td>
+                    <td className="p-2">{it.name}</td>
+                    <td className="p-2 text-right">{it.price_amd?.toLocaleString("ru-RU")}</td>
+                    <td className="p-2 text-right font-semibold">{np.price.toLocaleString("ru-RU")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {previewRows.length > 200 && (
+              <div className="border-t border-border p-2 text-center text-xs text-muted-foreground">
+                {t("admin.tools.moreRows", { n: previewRows.length - 200 })}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </Card>
