@@ -32,6 +32,8 @@ https://github.com/edmanukyan1994/smeg-armenia-boutique
 ## 2. Подключение по SSH (терминал)
 
 Нужны **IP, логин и пароль** (или SSH-ключ) из панели Reg.ru.
+Пароли сервера и DNS-панели хранятся локально в **`.secrets/server-access.md`**
+(папка в `.gitignore`, в git не попадает).
 
 ### Windows
 
@@ -78,7 +80,7 @@ docker logs smeg-db --tail 30
 | Протокол | **SFTP** |
 | Хост | `89.108.66.148` |
 | Порт | `22` |
-| Логин / пароль | из панели Reg.ru |
+| Логин / пароль | `root` / см. `.secrets/server-access.md` |
 
 Программы: [FileZilla](https://filezilla-project.org/), [WinSCP](https://winscp.net/) (Windows), встроенный SFTP в VS Code / Cursor.
 
@@ -167,6 +169,7 @@ docker compose up -d web
 |---|---|
 | `/opt/smeg/.env` | Ключи Supabase, ConverseBank, Telegram, `PUBLIC_BASE_URL` |
 | `/opt/smeg/deploy/supabase/.env` | Пароль Postgres, JWT, ANON_KEY, SERVICE_ROLE_KEY |
+| `.secrets/server-access.md` (локально, вне git) | Пароли SSH (`root`) и панели DNS Reg.ru |
 
 **Не публикуйте** эти файлы и не коммитьте в git.
 
