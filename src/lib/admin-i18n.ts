@@ -75,9 +75,9 @@ const E: Record<string, T3> = {
   "admin.nav.banners": ["Баннеры", "Banners", "Բաններներ"],
   "admin.banners.title": ["Баннеры на главной", "Home banners", "Բաններներ գլխավոր էջում"],
   "admin.banners.intro": [
-    "Баннеры под первым экраном главной страницы. Все поля необязательные: можно оставить только фото, только текст или ссылку. Пустые переводы подставляют RU. Если нет активных баннеров, блок на сайте не показывается.",
-    "Banners right under the home hero. Every field is optional: an image only, text only or a link. Empty translations fall back to RU. When no banner is active the block is not rendered at all.",
-    "Բաններներ գլխավոր էջի առաջին էկրանի տակ։ Բոլոր դաշտերը պարտադիր չեն՝ կարելի է թողնել միայն լուսանկար, միայն տեքստ կամ հղում։ Թարգմանությունների բացակայության դեպքում օգտագործվում է RU-ն։ Ակտիվ բաններների բացակայության դեպքում բլոկը չի ցուցադրվում։",
+    "Баннеры под первым экраном главной страницы. Один баннер показывается карточкой, два и больше — каруселью со стрелками, точками и свайпом. Все поля необязательные: можно оставить только фото, только текст или ссылку. Пустые переводы подставляют RU. Если нет активных баннеров, блок на сайте не показывается.",
+    "Banners right under the home hero. A single banner renders as one card; two or more become a carousel with arrows, dots and swipe. Every field is optional: an image only, text only or a link. Empty translations fall back to RU. When no banner is active the block is not rendered at all.",
+    "Բաններներ գլխավոր էջի առաջին էկրանի տակ։ Մեկ բանները ցուցադրվում է որպես քարտ, երկուսը և ավելին՝ կարուսելով՝ սլաքներով, կետերով և սվայփով։ Բոլոր դաշտերը պարտադիր չեն՝ կարելի է թողնել միայն լուսանկար, միայն տեքստ կամ հղում։ Թարգմանությունների բացակայության դեպքում օգտագործվում է RU-ն։ Ակտիվ բաններների բացակայության դեպքում բլոկը չի ցուցադրվում։",
   ],
   "admin.banners.add": ["Добавить баннер", "Add banner", "Ավելացնել բաններ"],
   "admin.banners.added": ["Баннер добавлен", "Banner added", "Բանները ավելացված է"],

@@ -1,7 +1,18 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
+import useEmblaCarousel from "embla-carousel-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useReducedMotion } from "motion/react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
+import { useI18n, type Lang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Reveal } from "./Section";
 import {
@@ -15,8 +26,12 @@ import {
   type HomeBanner,
 } from "@/lib/banners";
 
+/** Pointer travel (px) after which a click on a slide is treated as a swipe. */
+const SWIPE_CLICK_TOLERANCE = 8;
+
 /**
  * Optional promo banners directly under the home hero.
+ * One banner renders as a plain card, two or more become a swipeable carousel.
  * Renders nothing at all while there are no active banners, so the home page
  * stays exactly as before until an admin adds the first one.
  */
@@ -34,40 +49,194 @@ export function HeroBanners() {
   return (
     <section className="pt-8 md:pt-16">
       <div className="mx-auto max-w-[1400px] px-4 md:px-10">
-        <div
-          className={cn(
-            "grid gap-3 md:gap-4",
-            items.length === 1 && "grid-cols-1",
-            items.length === 2 && "grid-cols-1 md:grid-cols-2",
-            items.length > 2 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
-          )}
-        >
+        {items.length === 1 ? (
+          <Reveal>
+            <BannerCard
+              banner={items[0]}
+              wide
+              eager
+              title={bannerTitle(items[0], lang)}
+              subtitle={bannerSubtitle(items[0], lang)}
+              ctaLabel={bannerCtaLabel(items[0], lang)}
+            />
+          </Reveal>
+        ) : (
+          <Reveal>
+            <BannerCarousel items={items} lang={lang} />
+          </Reveal>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function BannerCarousel({ items, lang }: { items: HomeBanner[]; lang: Lang }) {
+  const { t } = useI18n();
+  const reduce = useReducedMotion();
+
+  const [viewportRef, embla] = useEmblaCarousel({
+    loop: true,
+    align: "start",
+    slidesToScroll: 1,
+    duration: reduce ? 0 : 24,
+  });
+
+  const [selected, setSelected] = useState(0);
+  const [snapCount, setSnapCount] = useState(items.length);
+
+  useEffect(() => {
+    if (!embla) return;
+    const sync = () => {
+      setSelected(embla.selectedScrollSnap());
+      setSnapCount(embla.scrollSnapList().length);
+    };
+    sync();
+    embla.on("select", sync).on("reInit", sync);
+    return () => {
+      embla.off("select", sync).off("reInit", sync);
+    };
+  }, [embla]);
+
+  /** Embla does not swallow clicks after a drag, so a swipe must cancel the link. */
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const suppressClick = useRef(false);
+
+  const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    pointerStart.current = { x: event.clientX, y: event.clientY };
+    suppressClick.current = false;
+  }, []);
+
+  const handlePointerMove = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    const start = pointerStart.current;
+    if (!start) return;
+    if (
+      Math.abs(event.clientX - start.x) > SWIPE_CLICK_TOLERANCE ||
+      Math.abs(event.clientY - start.y) > SWIPE_CLICK_TOLERANCE
+    ) {
+      suppressClick.current = true;
+    }
+  }, []);
+
+  const handlePointerUp = useCallback(() => {
+    pointerStart.current = null;
+  }, []);
+
+  const handleClickCapture = useCallback((event: ReactMouseEvent<HTMLDivElement>) => {
+    if (!suppressClick.current) return;
+    event.preventDefault();
+    event.stopPropagation();
+    suppressClick.current = false;
+  }, []);
+
+  const handleKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLDivElement>) => {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        embla?.scrollPrev();
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        embla?.scrollNext();
+      }
+    },
+    [embla],
+  );
+
+  const arrowClass =
+    "inline-flex h-9 w-9 items-center justify-center rounded-full border border-foreground/25 text-foreground transition-colors hover:border-foreground hover:bg-foreground hover:text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground";
+
+  return (
+    <div
+      role="region"
+      aria-roledescription="carousel"
+      aria-label={t("banners.region")}
+      onKeyDown={handleKeyDown}
+    >
+      <div
+        ref={viewportRef}
+        className="cursor-grab overflow-hidden active:cursor-grabbing"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onClickCapture={handleClickCapture}
+      >
+        <div className="flex touch-pan-y">
           {items.map((banner, i) => (
-            <Reveal key={banner.id} delay={i * 0.06}>
+            <div
+              key={banner.id}
+              role="group"
+              aria-roledescription={t("banners.slide")}
+              aria-label={t("banners.slideLabel", { index: i + 1, total: items.length })}
+              className="min-w-0 shrink-0 grow-0 basis-full"
+            >
               <BannerCard
                 banner={banner}
-                wide={items.length === 1}
+                wide
+                eager={i === 0}
                 title={bannerTitle(banner, lang)}
                 subtitle={bannerSubtitle(banner, lang)}
                 ctaLabel={bannerCtaLabel(banner, lang)}
               />
-            </Reveal>
+            </div>
           ))}
         </div>
       </div>
-    </section>
+
+      <div className="mt-3 flex items-center gap-6 md:mt-4">
+        <div className="flex items-center">
+          {Array.from({ length: snapCount }).map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => embla?.scrollTo(i)}
+              aria-label={t("banners.goTo", { index: i + 1 })}
+              aria-current={selected === i ? "true" : undefined}
+              className="group inline-flex h-6 w-8 items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+            >
+              <span
+                className={cn(
+                  "h-px w-full transition-colors",
+                  selected === i
+                    ? "bg-foreground"
+                    : "bg-foreground/25 group-hover:bg-foreground/60",
+                )}
+              />
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => embla?.scrollPrev()}
+            aria-label={t("banners.prev")}
+            className={arrowClass}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => embla?.scrollNext()}
+            aria-label={t("banners.next")}
+            className={arrowClass}
+          >
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
 function BannerCard({
   banner,
   wide,
+  eager,
   title,
   subtitle,
   ctaLabel,
 }: {
   banner: HomeBanner;
   wide: boolean;
+  eager?: boolean;
   title: string;
   subtitle: string;
   ctaLabel: string;
@@ -91,7 +260,8 @@ function BannerCard({
           <img
             src={image}
             alt={title}
-            loading="lazy"
+            loading={eager ? "eager" : "lazy"}
+            draggable={false}
             className="absolute inset-0 h-full w-full object-cover transition duration-[900ms] group-hover:scale-[1.03]"
           />
           <span
