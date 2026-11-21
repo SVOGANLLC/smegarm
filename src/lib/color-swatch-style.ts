@@ -1,6 +1,8 @@
 /** Visual treatment for colour swatch circles (matte vs gloss, dark rim). */
 
-const MATTE_COLOUR = /\b(matt|matte|mat\b|satin|brushed|inox look)\b/i;
+import { COLOUR_LABELS } from "@/lib/colour-i18n";
+
+const MATTE_COLOUR = /\b(matt|matte|mat\b|satin|brushed|inox look)\b|матов|сатин/i;
 
 export function isMatteColour(colourName: string): boolean {
   return MATTE_COLOUR.test(colourName);
@@ -35,7 +37,7 @@ export function swatchBorderClass(hex: string, colourName: string): string {
   if (isDarkSwatchHex(hex)) {
     return "border border-white/30 ring-1 ring-inset ring-white/25";
   }
-  if (/white|cream/i.test(colourName) && hexToLuminance(hex) > 0.85) {
+  if (/white|cream|бел|кремов|светл/i.test(colourName) && hexToLuminance(hex) > 0.85) {
     return "border border-black/10";
   }
   return "border border-border";
@@ -46,19 +48,70 @@ export const DEFAULT_SWATCH_HEX = "#d4d4d4";
 
 export type SwatchRow = { colour: string; hex: string };
 
-const FINISH_PREFIX = /^(matt|matte|mat|gloss|glossy|satin|shiny|polished|brushed)\s+/i;
-const FINISH_SUFFIX = /\s+(matt|matte|mat|gloss|glossy|satin|shiny|polished|brushed)$/i;
+const FINISH_WORDS =
+  "matt|matte|mat|gloss|glossy|satin|shiny|polished|brushed|матовый|мат|глянцевый|сатин";
+const FINISH_PREFIX = new RegExp(`^(?:${FINISH_WORDS})\\s+`, "i");
+const FINISH_SUFFIX = new RegExp(`\\s+(?:${FINISH_WORDS})$`, "i");
 
-const normalizeColour = (name: string) => name.trim().replace(/\s+/g, " ").toLowerCase();
+/** Case/space/ё-insensitive key so "Матовый чёрный" and "матовый черный" match. */
+const normalizeColour = (name: string) =>
+  name.trim().replace(/ё/gi, "е").replace(/\s+/g, " ").toLowerCase();
 
 /**
- * Colour name without its finish prefix/suffix: "Matt Storm Blue" → "Storm Blue".
+ * Colour name without its finish prefix/suffix: "Matt Storm Blue" → "Storm Blue",
+ * "Матовый черный" → "черный".
  * `color_swatches` keeps base colours plus a few explicit "Matt …" rows, while
  * products often carry the finish in the colour name itself.
  */
 export function baseColourName(name: string): string {
   const trimmed = name.trim().replace(/\s+/g, " ");
-  return trimmed.replace(FINISH_PREFIX, "").replace(FINISH_SUFFIX, "").trim();
+  const stripped = trimmed.replace(FINISH_PREFIX, "").replace(FINISH_SUFFIX, "").trim();
+  return stripped || trimmed;
+}
+
+export function isFinishWordName(name: string): boolean {
+  const stripped = name.trim().replace(FINISH_PREFIX, "").replace(FINISH_SUFFIX, "").trim();
+  return stripped !== name.trim();
+}
+
+/**
+ * `color_swatches.colour` holds the English name, while `products.colour` holds the
+ * localised one ("Нержавеющая сталь" / "Матовый черный"). The label dictionary is the
+ * bridge between the two, so every swatch row also answers to its RU/HY spellings.
+ */
+let labelIndexCache: Map<string, string> | null = null;
+
+/** Localised spelling → canonical English colour name. */
+function labelIndex(): Map<string, string> {
+  if (labelIndexCache) return labelIndexCache;
+  const map = new Map<string, string>();
+  const add = (name: string, canonical: string) => {
+    const key = normalizeColour(name);
+    if (key && !map.has(key)) map.set(key, canonical);
+  };
+  for (const [key, value] of Object.entries(COLOUR_LABELS)) {
+    add(key, key);
+    add(value.en, key);
+    add(value.ru, key);
+    add(value.hy, key);
+  }
+  labelIndexCache = map;
+  return map;
+}
+
+function colourAliases(canonical: string): string[] {
+  const canonicalEn = labelIndex().get(normalizeColour(canonical));
+  if (!canonicalEn || canonicalEn === canonical) return [];
+  const entry = COLOUR_LABELS[canonicalEn];
+  return entry ? [entry.en, entry.ru, entry.hy] : [];
+}
+
+/**
+ * "Decorated / Special" swatch in any language ("Декорированный / Специальный").
+ * Those rows render the product photo instead of a flat colour.
+ */
+export function isDecoratedColour(name: string): boolean {
+  return labelIndex().get(normalizeColour(name)) === "Decorated / Special";
 }
 
 const swatchIndexCache = new WeakMap<object, Map<string, string>>();
@@ -67,9 +120,15 @@ function swatchIndex(swatches: ReadonlyArray<SwatchRow>): Map<string, string> {
   const cached = swatchIndexCache.get(swatches);
   if (cached) return cached;
   const map = new Map<string, string>();
+  const add = (name: string, hex: string) => {
+    const key = normalizeColour(name);
+    if (key && !map.has(key)) map.set(key, hex);
+  };
   for (const s of swatches) {
-    const key = normalizeColour(s.colour ?? "");
-    if (key && !map.has(key)) map.set(key, s.hex);
+    const canonical = (s.colour ?? "").trim();
+    if (!canonical) continue;
+    add(canonical, s.hex);
+    for (const alias of colourAliases(canonical)) add(alias, s.hex);
   }
   swatchIndexCache.set(swatches, map);
   return map;
@@ -77,8 +136,9 @@ function swatchIndex(swatches: ReadonlyArray<SwatchRow>): Map<string, string> {
 
 /**
  * Hex for a product colour name.
- * Exact match first, then the same name without its finish word, so
- * "Matt Emerald Green" resolves to the "Emerald Green" swatch instead of grey.
+ * Lookup order: exact name (EN or localised), then the same name without its finish
+ * word, so "Матовый Emerald Green" and "Matt Emerald Green" both resolve to the
+ * "Emerald Green" swatch instead of falling back to grey.
  */
 export function resolveSwatchHex(
   swatches: ReadonlyArray<SwatchRow> | null | undefined,
@@ -96,7 +156,7 @@ export function resolveSwatchHex(
     if (withoutFinish) return withoutFinish;
   }
 
-  return undefined;
+  return index.get(normalizeColour(base));
 }
 
 /** Same as {@link resolveSwatchHex} but never returns undefined. */

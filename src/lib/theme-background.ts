@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { Theme } from "@/lib/products";
+import { isDecoratedColour } from "@/lib/color-swatch-style";
 
 type ColourSource = {
   sku?: string | null;
@@ -34,15 +35,20 @@ export function swatchImageForProduct(
   mainImage?: string | null,
 ): string | null {
   if (isBluMediterraneoSku(sku)) return BLU_MEDITERRANEO_SWATCH_IMAGE;
-  if (colourEn === "Decorated / Special") return mainImage ?? null;
+  if (isDecoratedColour(colourEn ?? "")) return mainImage ?? null;
   return null;
 }
 
 export function swatchImageForDecoratedFacet(
-  products: Array<{ sku: string; colour_en?: string | null; main_image?: string | null }>,
+  products: Array<{
+    sku: string;
+    colour?: string | null;
+    colour_en?: string | null;
+    main_image?: string | null;
+  }>,
 ): string | null {
   if (products.some((p) => isBluMediterraneoSku(p.sku))) return BLU_MEDITERRANEO_SWATCH_IMAGE;
-  const decorated = products.find((p) => (p.colour_en ?? "") === "Decorated / Special");
+  const decorated = products.find((p) => isDecoratedColour(p.colour_en ?? p.colour ?? ""));
   return decorated?.main_image ?? null;
 }
 

@@ -1,4 +1,5 @@
 import type { Variant } from "@/lib/products";
+import { isDecoratedColour } from "@/lib/color-swatch-style";
 
 export type GroupSkuRow = {
   sku: string;
@@ -119,7 +120,7 @@ export function dedupeVariants(variants: Variant[]): Variant[] {
   const out: Variant[] = [];
   for (const v of variants) {
     const colourKey = v.colour_en ?? v.colour ?? "";
-    const key = colourKey === "Decorated / Special" ? v.sku : colourKey;
+    const key = isDecoratedColour(colourKey) ? v.sku : colourKey;
     if (!key || seen.has(key)) continue;
     seen.add(key);
     out.push(v);

@@ -5,7 +5,7 @@ import { colourLabel } from "@/lib/colour-i18n";
 import { fetchColorSwatches, fetchProductVariants } from "@/lib/products";
 import { swatchImageForProduct } from "@/lib/theme-background";
 import { ColorSwatchDot } from "@/components/site/ColorSwatchDot";
-import { swatchHexFor } from "@/lib/color-swatch-style";
+import { swatchHexFor, isDecoratedColour } from "@/lib/color-swatch-style";
 
 export function ColorSwitcher({
   modelGroup,
@@ -34,7 +34,7 @@ export function ColorSwitcher({
   });
 
   const canonicalEn = currentColourEn ?? currentColour ?? "";
-  const isDecorated = canonicalEn === "Decorated / Special";
+  const isDecorated = isDecoratedColour(canonicalEn);
 
   const items = useMemo(() => {
     const list = variants ?? [];
@@ -42,7 +42,7 @@ export function ColorSwitcher({
     const out: typeof list = [];
     for (const v of list) {
       const colourKey = v.colour_en ?? v.colour ?? "";
-      const key = colourKey === "Decorated / Special" ? v.sku : colourKey;
+      const key = isDecoratedColour(colourKey) ? v.sku : colourKey;
       if (!key || seen.has(key)) continue;
       seen.add(key);
       out.push(v);

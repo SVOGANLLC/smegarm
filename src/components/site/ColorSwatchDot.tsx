@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import {
   GLOSS_HIGHLIGHT,
+  isDecoratedColour,
   isMatteColour,
   SWATCH_SIZE_CLASS,
   swatchBorderClass,
@@ -33,7 +34,7 @@ export function ColorSwatchDot({
   href,
 }: Props) {
   const matte = isMatteColour(colourName);
-  const decorated = imageUrl && colourName === "Decorated / Special";
+  const decorated = Boolean(imageUrl) && isDecoratedColour(colourName);
   const border = swatchBorderClass(hex, colourName);
   const ring = active ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "";
 

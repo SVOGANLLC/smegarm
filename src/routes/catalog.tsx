@@ -33,7 +33,7 @@ import { SpecFiltersPanel } from "@/components/site/SpecFiltersPanel";
 import type { ProductCard as ProductCardType } from "@/lib/products";
 import { colourLabel as colourI18n } from "@/lib/colour-i18n";
 import { ColorSwatchDot } from "@/components/site/ColorSwatchDot";
-import { swatchHexFor } from "@/lib/color-swatch-style";
+import { swatchHexFor, isDecoratedColour } from "@/lib/color-swatch-style";
 import {
   countActiveSpecFilters,
   fetchSpecFacets,
@@ -722,7 +722,7 @@ function CatalogPage() {
       <FacetGroup label={t("facet.colour")}>
         <div className="flex flex-wrap gap-2">
           {activeFacets?.colours
-            .filter((c) => (c.value_en ?? c.value) !== "Decorated / Special")
+            .filter((c) => !isDecoratedColour(c.value_en ?? c.value))
             .slice(0, 30)
             .map((c) => {
             const shareValue = (c.value_en?.trim() || c.value).trim();

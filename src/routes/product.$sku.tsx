@@ -12,6 +12,7 @@ import { PriceBlock } from "@/components/site/ProductCard";
 import { useState, useEffect } from "react";
 import { useI18n, pickLocalized, pickLocalizedSpecs } from "@/lib/i18n";
 import { localizedProductColour } from "@/lib/colour-i18n";
+import { isDecoratedColour } from "@/lib/color-swatch-style";
 import { canonicalCategoryKey, categoryLabel } from "@/lib/category-i18n";
 import type { ProductCard as ProductCardType } from "@/lib/products";
 import { deliveryLeadDays, isProductInStock } from "@/lib/availability";
@@ -247,7 +248,7 @@ function ProductPage() {
                     search={{ aesthetic: product.aesthetic, page: 1 }}
                   />
                 )}
-                {product.colour && product.colour !== "Decorated / Special" && (
+                {product.colour && !isDecoratedColour(product.colour) && (
                   <InfoLink
                     label={t("product.colour")}
                     value={colour || product.colour}
@@ -255,7 +256,9 @@ function ProductPage() {
                     search={{ colour: product.colour, page: 1 }}
                   />
                 )}
-                {product.colour === "Decorated / Special" && <Info label={t("product.colour")} value={colour || product.colour} />}
+                {product.colour && isDecoratedColour(product.colour) && (
+                  <Info label={t("product.colour")} value={colour || product.colour} />
+                )}
                 {product.family && (
                   <InfoLink
                     label={t("product.family")}
