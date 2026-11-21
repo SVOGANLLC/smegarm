@@ -5,6 +5,7 @@ import { colourLabel } from "@/lib/colour-i18n";
 import { fetchColorSwatches, fetchProductVariants } from "@/lib/products";
 import { swatchImageForProduct } from "@/lib/theme-background";
 import { ColorSwatchDot } from "@/components/site/ColorSwatchDot";
+import { swatchHexFor } from "@/lib/color-swatch-style";
 
 export function ColorSwitcher({
   modelGroup,
@@ -55,7 +56,7 @@ export function ColorSwitcher({
 
   if (!items.length) return null;
 
-  const hexFor = (c: string) => swatches?.find((s) => s.colour === c)?.hex ?? "#d4d4d4";
+  const hexFor = (c: string) => swatchHexFor(swatches, c);
 
   const labelFor = (v: { colour_en: string | null; colour: string | null; colour_hy?: string | null }) =>
     pickLocalized(v as unknown as Record<string, unknown>, "colour", lang) ||

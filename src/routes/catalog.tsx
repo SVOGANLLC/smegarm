@@ -33,6 +33,7 @@ import { SpecFiltersPanel } from "@/components/site/SpecFiltersPanel";
 import type { ProductCard as ProductCardType } from "@/lib/products";
 import { colourLabel as colourI18n } from "@/lib/colour-i18n";
 import { ColorSwatchDot } from "@/components/site/ColorSwatchDot";
+import { swatchHexFor } from "@/lib/color-swatch-style";
 import {
   countActiveSpecFilters,
   fetchSpecFacets,
@@ -497,8 +498,7 @@ function CatalogPage() {
     trackSiteSearch(term, productsQuery.data.total, "catalog");
   }, [q, productsQuery.data?.total, productsQuery.isLoading]);
 
-  const swatchHex = (canonical: string) =>
-    swatchesQuery.data?.find((s) => s.colour === canonical)?.hex ?? "#d4d4d4";
+  const swatchHex = (canonical: string) => swatchHexFor(swatchesQuery.data, canonical);
 
   const total = productsQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -726,7 +726,7 @@ function CatalogPage() {
             .slice(0, 30)
             .map((c) => {
             const shareValue = (c.value_en?.trim() || c.value).trim();
-            const hex = swatchesQuery.data?.find((s) => s.colour === (c.value_en ?? c.value))?.hex ?? "#d4d4d4";
+            const hex = swatchHexFor(swatchesQuery.data, c.value_en ?? c.value);
             const active = colours.includes(c.value) || colours.includes(shareValue);
             const label = colourLabel(c.value);
             const canonical = c.value_en ?? c.value;

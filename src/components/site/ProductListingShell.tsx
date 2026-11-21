@@ -26,6 +26,7 @@ import { SpecFiltersPanel } from "@/components/site/SpecFiltersPanel";
 import { ProductGrid } from "@/components/site/ProductCard";
 import { colourLabel as colourI18n } from "@/lib/colour-i18n";
 import { swatchImageForDecoratedFacet, swatchImageForProduct } from "@/lib/theme-background";
+import { swatchHexFor } from "@/lib/color-swatch-style";
 
 export type ListingSearch = {
   colour?: string;
@@ -139,7 +140,7 @@ export function ProductListingShell({
   const colourFacets = useMemo(() => tallyListingFacet(products, "colour"), [products]);
   const aestheticFacets = useMemo(() => tallyListingFacet(products, "aesthetic"), [products]);
 
-  const swatchHex = (canonical: string) => swatchesQuery.data?.find((s) => s.colour === canonical)?.hex ?? "#d4d4d4";
+  const swatchHex = (canonical: string) => swatchHexFor(swatchesQuery.data, canonical);
 
   const colourLabel = (value: string) => {
     const row = products.find((p) => p.colour === value);
