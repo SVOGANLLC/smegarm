@@ -120,6 +120,25 @@ curl -I http://127.0.0.1:3000          # HTTP 200
 docker ps --format "{{.Names}} {{.Status}}"
 ```
 
+### Сборка на VPS с 2 ГБ RAM
+
+`npm run build` на таком сервере не влезает в дефолтный heap: Node падает с
+`Reached heap limit Allocation failed - JavaScript heap out of memory`
+(exit code 134). Поэтому в `Dockerfile` размер heap вынесен в build-arg
+`NODE_HEAP_MB` (по умолчанию `1792` МБ):
+
+```bash
+# обычная сборка — дефолт подходит
+docker compose build web
+
+# если снова OOM: сначала освободить кэш и память, затем поднять heap
+docker builder prune -f
+docker compose build --build-arg NODE_HEAP_MB=2560 web
+```
+
+Сборка использует swap, поэтому идёт медленнее — это нормально.
+Проверить память до сборки: `free -h` (нужно ≥ 1.2 ГБ available).
+
 ---
 
 ## 5. nginx + SSL
