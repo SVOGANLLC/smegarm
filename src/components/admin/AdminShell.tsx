@@ -21,6 +21,7 @@ import {
   Palette,
   BarChart3,
   Newspaper,
+  Images,
   Tags,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -43,6 +44,7 @@ const mainNav: NavItem[] = [
   { to: "/admini/groups", labelKey: "admin.nav.variantGroups", icon: Palette, adminOnly: true },
   { to: "/admini/content", labelKey: "admin.nav.content", icon: FileText, adminOnly: true },
   { to: "/admini/news", labelKey: "admin.nav.news", icon: Newspaper, adminOnly: true },
+  { to: "/admini/banners", labelKey: "admin.nav.banners", icon: Images, adminOnly: true },
 ];
 
 const extraNav: NavItem[] = [

@@ -4,6 +4,7 @@ import { getI18nDefaults } from "@/lib/i18n";
 import { scrollToHomeSection } from "@/lib/hash-scroll";
 import { Header } from "@/components/site/Header";
 import { Hero } from "@/components/site/Hero";
+import { HeroBanners } from "@/components/site/HeroBanners";
 import { Featured } from "@/components/site/Featured";
 import { Marquee } from "@/components/site/Marquee";
 import { Collections } from "@/components/site/Collections";
@@ -56,6 +57,7 @@ function Index() {
       <Header />
       <main>
         <Hero />
+        <HeroBanners />
         <Featured />
         <Marquee />
         <ShowcaseStrip flag="is_bestseller" eyebrow="showcase.bestsellers.eyebrow" title="showcase.bestsellers.title" to="/catalog" ctaLabel="cta.allProducts" bg />
